@@ -54,13 +54,10 @@
     border-top: 1px solid var(--dev-panel-border-color);
 }
 
-.vscs-dev-panel-section__body p {
+.vscs-dev-panel-section__body p,
+.vscs-dev-panel-section__body pre {
     margin: calc(.5 * var(--grid-unit)) 0;
 }
-
-/* .vscs-dev-panel-section__body p:first-child {
-    margin-top: 0;
-} */
 
 .vscs-dev-panel-section__body .vscs-dev-panel-section__footer {
     margin-top: calc(1.5 * var(--grid-unit));
@@ -84,4 +81,8 @@
     float: left;
     margin-left: 0;
     margin-right: calc(1 * var(--grid-unit));
+}
+
+.vscs-dev-panel__current-github-api-endpoint {
+    font-size: 9px;
 }

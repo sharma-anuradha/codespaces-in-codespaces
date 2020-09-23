@@ -1,3 +1,5 @@
+import { getGitHubApiEndpoint } from '../utils/getGithubApiEndpoint';
+
 export class GitHubApi {
     static async getHeadOfPullRequest(
         org: string,
@@ -14,8 +16,10 @@ export class GitHubApi {
             method: 'GET',
             headers: headers,
         };
+
+        const githubApiEndpoint = await getGitHubApiEndpoint(`/repos/${org}/${repository}/pulls/${pullNumber}`);
         const result = await fetch(
-            `https://api.github.com/repos/${org}/${repository}/pulls/${pullNumber}`,
+            githubApiEndpoint,
             fetchParams
         );
 

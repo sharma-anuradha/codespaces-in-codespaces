@@ -5,6 +5,7 @@ import { AuthenticationError } from '../errors/AuthenticationError';
 import { RateLimitingError } from '../errors/ReteLimitingError';
 import { HttpError } from '../errors/HttpError';
 import { authService } from '../auth/authService';
+import { appendUrlPath } from '../utils/appendUrlPath';
 
 const cache: { [key: string]: Promise<IEnvironment> | undefined } = {};
 
@@ -102,8 +103,9 @@ export class VsoAPI {
             throw new AuthenticationError('Cannot find auth token.');
         }
 
+        const endpoint = await config.getProxiedApiEndpoint(codespace);
         return await this.requestToStartCodespace(
-            `${config.getProxiedApiEndpoint(codespace)}/environments/${codespace.id}/start`,
+            appendUrlPath(endpoint, `/environments/${codespace.id}/start`),
             token,
             headers
         );

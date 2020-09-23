@@ -61,6 +61,11 @@
     border: none;
 }
 
+.vscs-dev-panel__input--button:disabled {
+    opacity: .2;
+    cursor: default;
+}
+
 .vscs-dev-panel__toggle-button {
     position: absolute;
     top: 0;
