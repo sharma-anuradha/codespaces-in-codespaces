@@ -105,6 +105,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             Disposed = true;
         }
 
+        /// <summary>
+        /// Get run times for tasks in a job
+        /// </summary>
+        /// <param name="jobID">Job ID</param>
+        /// <param name="taskQuery">Query to get specific task</param>
+        /// <param name="runTimes">Array to hold result</param>
+        /// <param name="batchClient">Batch Client</param>
+        /// <returns>List of Tasks inside Job</returns>
         private async Task GetTaskTimes(string jobID, ODATADetailLevel taskQuery, List<double> runTimes, BatchClient batchClient)
         {
             var tasks = batchClient.JobOperations.ListTasks(jobID, taskQuery);
@@ -115,63 +123,140 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             });
         }
 
+        /// <summary>
+        /// Get Statistics on pool and write to logger
+        /// </summary>
+        /// <param name="logger">Logger used to create child loggers</param>
+        /// <param name="batchClient">Batch client</param>
+        /// <returns>Number of Pools</returns>
         public async Task<int> GetPoolStats(IDiagnosticsLogger logger, BatchClient batchClient)
         {
             var pools = batchClient.PoolOperations.ListPoolNodeCounts();
             await pools.ForEachAsync(delegate(PoolNodeCounts nodeCounts)
             {
-                var poolLogger = logger.NewChildLogger();
-
-                poolLogger.FluentAddValue("PoolId", nodeCounts.PoolId)
-                .FluentAddValue("TotalDedicatedNodes", nodeCounts.Dedicated.Total)
-                .FluentAddValue("RunningNodes", nodeCounts.Dedicated.Running)
-                .FluentAddValue("IdleNodes", nodeCounts.Dedicated.Idle)
-                .FluentAddValue("OfflineNodes", nodeCounts.Dedicated.Offline)
-                .FluentAddValue("UnusableNodes", nodeCounts.Dedicated.Unusable)
-                .FluentAddValue("UnknownNodes", nodeCounts.Dedicated.Unknown)
-                .FluentAddValue("StartingNodes", nodeCounts.Dedicated.Starting)
-                .FluentAddValue("StoppingNodes", nodeCounts.Dedicated.LeavingPool)
-                .LogInfo($"{LogBaseName}_pool_status");
+                logger.OperationScopeAsync(
+                    $"{LogBaseName}_pool_status",
+                    (childLogger) =>
+                    {
+                        var poolLogger = logger.NewChildLogger();
+                        poolLogger.FluentAddValue("PoolId", nodeCounts.PoolId)
+                            .FluentAddValue("TotalDedicatedNodes", nodeCounts.Dedicated.Total)
+                            .FluentAddValue("RunningNodes", nodeCounts.Dedicated.Running)
+                            .FluentAddValue("IdleNodes", nodeCounts.Dedicated.Idle)
+                            .FluentAddValue("OfflineNodes", nodeCounts.Dedicated.Offline)
+                            .FluentAddValue("UnusableNodes", nodeCounts.Dedicated.Unusable)
+                            .FluentAddValue("UnknownNodes", nodeCounts.Dedicated.Unknown)
+                            .FluentAddValue("StartingNodes", nodeCounts.Dedicated.Starting)
+                            .FluentAddValue("StoppingNodes", nodeCounts.Dedicated.LeavingPool)
+                            .LogInfo($"{LogBaseName}_pool_status");
+                        return Task.FromResult(!Disposed);
+                    },
+                    (e, childLogger) => Task.FromResult(!Disposed),
+                    swallowException: true);
             });
             return pools.Count();
         }
 
-        public async void LogJobStats(IDiagnosticsLogger logger, CloudJob job, BatchClient batchClient, ODATADetailLevel taskQuery, TaskCounts taskCounts)
+        /// <summary>
+        /// Log statistics about job to logger
+        /// </summary>
+        /// <param name="logger">Logger to write to</param>
+        /// <param name="job">Job to check </param>
+        /// <param name="batchClient">Batch client</param>
+        /// <param name="taskQuery">Query to get tasks inside the job</param>
+        /// <param name="taskCounts">Array to hold task information</param>
+        public void LogJobStats(IDiagnosticsLogger logger, CloudJob job, BatchClient batchClient, ODATADetailLevel taskQuery, TaskCounts taskCounts)
         {
-            List<double> taskTimes = new List<double>();
-            var displayName = job.DisplayName;
-            logger.FluentAddValue("ActiveTasks", taskCounts.Active)
-                    .FluentAddValue("RunningTasks", taskCounts.Running)
-                    .FluentAddValue("CompletedTasks", taskCounts.Completed)
-                    .FluentAddValue("SucceededTasks", taskCounts.Succeeded)
-                    .FluentAddValue("FailedTasks", taskCounts.Failed)
-                    .FluentAddValue("DisplayName", job.DisplayName)
-                    .FluentAddValue("JobId", job.Id);
+            logger.OperationScopeAsync(
+                    $"{LogBaseName}_job_status",
+                    async (childLogger) =>
+                    {
+                        List<double> taskTimes = new List<double>();
+                        var displayName = job.DisplayName;
+                        logger.FluentAddValue("ActiveTasks", taskCounts.Active)
+                                .FluentAddValue("RunningTasks", taskCounts.Running)
+                                .FluentAddValue("CompletedTasks", taskCounts.Completed)
+                                .FluentAddValue("SucceededTasks", taskCounts.Succeeded)
+                                .FluentAddValue("FailedTasks", taskCounts.Failed)
+                                .FluentAddValue("DisplayName", job.DisplayName)
+                                .FluentAddValue("JobId", job.Id);
 
-            if (taskCounts.Completed > 0)
+                        if (taskCounts.Completed > 0)
+                        {
+                            logger.FluentAddValue("SuccessRate", taskCounts.Succeeded / (double)taskCounts.Completed);
+                        }
+
+                        await GetTaskTimes(job.Id, taskQuery, taskTimes, batchClient);
+
+                        if (displayName.Equals(ArchiveTaskDisplayName))
+                        {
+                            logger.FluentAddValue("TaskType", "Archive");
+                        }
+                        else if (displayName.Equals(PrepareTaskDisplayName))
+                        {
+                            logger.FluentAddValue("TaskType", "Prepare");
+                        }
+
+                        if (taskTimes.Count > 0)
+                        {
+                            logger.FluentAddValue("AverageExecutionTimeSec", taskTimes.Average())
+                                  .FluentAddValue("MinExecutionTimeSec", taskTimes.Min())
+                                  .FluentAddValue("MaxExecutionTimeSec", taskTimes.Max())
+                                  .FluentAddValue("TaskCount", taskTimes.Count());
+                        }
+
+                        logger.LogInfo($"{LogBaseName}_job_status");
+                    },
+                    (e, childLogger) => Task.FromResult(!Disposed),
+                    swallowException: true);
+        }
+
+        /// <summary>
+        /// Gets info on failed tasks and writes to logger
+        /// </summary>
+        /// <param name="logger">Logger used to create child loggers.</param>
+        /// <param name="job">Job to check for tasks.</param>
+        /// <param name="batchClient">Batch client</param>
+        /// <param name="failedTaskQuery"> Query to get recent failed tasks</param>
+        public async void LogFailedTasks(IDiagnosticsLogger logger, CloudJob job, BatchClient batchClient, ODATADetailLevel failedTaskQuery)
+        {
+            var tasks = batchClient.JobOperations.ListTasks(job.Id, failedTaskQuery);
+            string taskType = string.Empty;
+            if (job.DisplayName.Equals(ArchiveTaskDisplayName))
             {
-                logger.FluentAddValue("SuccessRate", taskCounts.Succeeded / taskCounts.Completed);
+                taskType = "Archive";
+            }
+            else if (job.DisplayName.Equals(PrepareTaskDisplayName))
+            {
+                taskType = "Prepare";
             }
 
-            await GetTaskTimes(job.Id, taskQuery, taskTimes, batchClient);
-
-            if (displayName.Equals(ArchiveTaskDisplayName))
+            await tasks.ForEachAsync(delegate(CloudTask task)
             {
-                logger.FluentAddValue("TaskType", "Archive");
-            }
-            else if (displayName.Equals(PrepareTaskDisplayName))
-            {
-                logger.FluentAddValue("TaskType", "Prepare");
-            }
+                logger.OperationScopeAsync(
+                    $"{LogBaseName}_task_failure",
+                    (childlogger) =>
+                    {
+                        var childLogger = logger.NewChildLogger();
+                        childLogger.FluentAddValue("ExitCode", task.ExecutionInformation.ExitCode)
+                        .FluentAddValue("EndTime", task.ExecutionInformation.EndTime)
+                        .FluentAddValue("StartTime", task.ExecutionInformation.StartTime)
+                        .FluentAddValue("RetryCount", task.ExecutionInformation.RetryCount)
+                        .FluentAddValue("ReqeueCount", task.ExecutionInformation.RequeueCount)
+                        .FluentAddValue("TaskType", taskType);
+                        if (task.ExecutionInformation.FailureInformation != null)
+                        {
+                            childLogger.FluentAddValue("FailureCategory", task.ExecutionInformation.FailureInformation.Category)
+                            .FluentAddValue("FailureCode", task.ExecutionInformation.FailureInformation.Code)
+                            .FluentAddValue("FailureMessage", task.ExecutionInformation.FailureInformation.Message);
+                        }
 
-            if (taskTimes.Count > 0)
-            {
-                logger.FluentAddValue("AverageExecutionTimeSec", taskTimes.Average())
-                      .FluentAddValue("MinExecutionTimeSec", taskTimes.Min())
-                      .FluentAddValue("MaxExecutionTimeSec", taskTimes.Max());
-            }
-
-            logger.LogInfo($"{LogBaseName}_job_status");
+                        childLogger.LogInfo($"{LogBaseName}_task_failure");
+                        return Task.FromResult(!Disposed);
+                    },
+                    (e, childLogger) => Task.FromResult(!Disposed),
+                    swallowException: true);
+            });
         }
 
         /// <summary>
@@ -186,24 +271,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             {
                 List<double> archiveTimes = new List<double>();
                 List<double> prepareTimes = new List<double>();
+                List<string> displayNames = new List<string>();
                 int activeTasks = 0;
                 int runningTasks = 0;
                 int completedTasks = 0;
                 int succeededTasks = 0;
                 int failedTasks = 0;
                 var finishedAfter = DateTime.UtcNow.AddMinutes(-30);
+                var lastFiveMin = DateTime.UtcNow.AddMinutes(-5);
                 var jobsOdataQuery = new ODATADetailLevel(
                     filterClause: $"executionInfo/poolId eq '{StorageProviderSettings.WorkerBatchPoolId}' and state eq 'active'",
                     selectClause: "id,displayName");
                 var taskOdataQuery = new ODATADetailLevel(
                     filterClause: $"executionInfo/endTime ge DateTime'{finishedAfter:o}' and state eq 'Completed' and executionInfo/result eq 'Success'");
+                var failedTaskQuery = new ODATADetailLevel(
+                    filterClause: $"executionInfo/endTime ge DateTime'{lastFiveMin:o}' and state eq 'Completed' and executionInfo/result ne 'Success'");
 
                 var jobs = batchClient.JobOperations.ListJobs(jobsOdataQuery);
+                var count = jobs.Count();
                 await jobs.ForEachAsync(async delegate(CloudJob job)
                 {
                     var displayName = job.DisplayName;
                     TaskCounts taskCounts = await batchClient.JobOperations.GetJobTaskCountsAsync(job.Id);
                     LogJobStats(logger.NewChildLogger(), job, batchClient, taskOdataQuery, taskCounts);
+                    LogFailedTasks(logger, job, batchClient, failedTaskQuery);
                     activeTasks += taskCounts.Active;
                     runningTasks += taskCounts.Running;
                     completedTasks += taskCounts.Completed;
@@ -218,17 +309,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     {
                        await GetTaskTimes(job.Id, taskOdataQuery, prepareTimes, batchClient);
                     }
+                    else
+                    {
+                        displayNames.Add(displayName);
+                    }
                 });
 
                 logger.FluentAddValue("ActiveTasks", activeTasks)
                     .FluentAddValue("RunningTasks", runningTasks)
                     .FluentAddValue("CompletedTasks", completedTasks)
                     .FluentAddValue("SucceededTasks", succeededTasks)
-                    .FluentAddValue("FailedTasks", failedTasks);
+                    .FluentAddValue("FailedTasks", failedTasks)
+                    .FluentAddValue("IrregularDisplayNames", string.Join(",", displayNames.ToArray()));
 
                 if (completedTasks > 0)
                 {
-                    logger.FluentAddValue("SuccessRate", succeededTasks / completedTasks);
+                    logger.FluentAddValue("SuccessRate", (succeededTasks / (double)completedTasks));
                 }
 
                 if (archiveTimes.Count > 0)
