@@ -5,9 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Bond;
 using Microsoft.Azure.Batch;
+using Microsoft.Azure.Batch.Common;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -113,14 +115,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// <param name="runTimes">Array to hold result</param>
         /// <param name="batchClient">Batch Client</param>
         /// <returns>List of Tasks inside Job</returns>
-        private async Task GetTaskTimes(string jobID, ODATADetailLevel taskQuery, List<double> runTimes, BatchClient batchClient)
+        private async Task<double?> GetTaskTimes(string jobID, ODATADetailLevel taskQuery, List<double> runTimes, BatchClient batchClient)
         {
+            var succeededTasks = 0;
+            var failedTasks = 0;
             var tasks = batchClient.JobOperations.ListTasks(jobID, taskQuery);
             await tasks.ForEachAsync(delegate(CloudTask task)
             {
-                TimeSpan executionTime = (TimeSpan)(task.ExecutionInformation.EndTime - task.ExecutionInformation.StartTime);
-                runTimes.Add(executionTime.TotalSeconds);
+                if (task.ExecutionInformation.Result == TaskExecutionResult.Success)
+                {
+                    TimeSpan executionTime = (TimeSpan)(task.ExecutionInformation.EndTime - task.ExecutionInformation.StartTime);
+                    runTimes.Add(executionTime.TotalSeconds);
+                    Interlocked.Increment(ref succeededTasks);
+                }
+                else
+                {
+                    Interlocked.Increment(ref failedTasks);
+                }
             });
+            if (succeededTasks + failedTasks > 0)
+            {
+                return (succeededTasks * 100 / (double)(succeededTasks + failedTasks));
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
@@ -180,13 +200,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                                 .FluentAddValue("FailedTasks", taskCounts.Failed)
                                 .FluentAddValue("DisplayName", job.DisplayName)
                                 .FluentAddValue("JobId", job.Id);
-
                         if (taskCounts.Completed > 0)
                         {
-                            logger.FluentAddValue("SuccessRate", taskCounts.Succeeded / (double)taskCounts.Completed);
+                            logger.FluentAddValue("TotalSuccessRate", taskCounts.Succeeded / (double)taskCounts.Completed);
                         }
 
-                        await GetTaskTimes(job.Id, taskQuery, taskTimes, batchClient);
+                        var successRate = await GetTaskTimes(job.Id, taskQuery, taskTimes, batchClient);
+                        if (successRate.HasValue)
+                        {
+                            logger.FluentAddValue("CurrentSuccessRate", successRate);
+                        }
 
                         if (displayName.Equals(ArchiveTaskDisplayName))
                         {
@@ -233,29 +256,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
             await tasks.ForEachAsync(delegate(CloudTask task)
             {
-                logger.OperationScopeAsync(
-                    $"{LogBaseName}_task_failure",
-                    (childlogger) =>
-                    {
-                        var childLogger = logger.NewChildLogger();
-                        childLogger.FluentAddValue("ExitCode", task.ExecutionInformation.ExitCode)
-                        .FluentAddValue("EndTime", task.ExecutionInformation.EndTime)
-                        .FluentAddValue("StartTime", task.ExecutionInformation.StartTime)
-                        .FluentAddValue("RetryCount", task.ExecutionInformation.RetryCount)
-                        .FluentAddValue("ReqeueCount", task.ExecutionInformation.RequeueCount)
-                        .FluentAddValue("TaskType", taskType);
-                        if (task.ExecutionInformation.FailureInformation != null)
+                if (task.ExecutionInformation.Result != Microsoft.Azure.Batch.Common.TaskExecutionResult.Success)
+                {
+                    logger.OperationScopeAsync(
+                        $"{LogBaseName}_task_failure",
+                        (childlogger) =>
                         {
-                            childLogger.FluentAddValue("FailureCategory", task.ExecutionInformation.FailureInformation.Category)
-                            .FluentAddValue("FailureCode", task.ExecutionInformation.FailureInformation.Code)
-                            .FluentAddValue("FailureMessage", task.ExecutionInformation.FailureInformation.Message);
-                        }
+                            var childLogger = logger.NewChildLogger();
+                            childLogger.FluentAddValue("ExitCode", task.ExecutionInformation.ExitCode)
+                            .FluentAddValue("EndTime", task.ExecutionInformation.EndTime)
+                            .FluentAddValue("StartTime", task.ExecutionInformation.StartTime)
+                            .FluentAddValue("RetryCount", task.ExecutionInformation.RetryCount)
+                            .FluentAddValue("ReqeueCount", task.ExecutionInformation.RequeueCount)
+                            .FluentAddValue("TaskType", taskType);
+                            if (task.ExecutionInformation.FailureInformation != null)
+                            {
+                                var details = task.ExecutionInformation.FailureInformation.Details;
+                                var detailsString = string.Join(System.Environment.NewLine, details.Select((detail) => $"{detail.Name} : {detail.Value}"));
 
-                        childLogger.LogInfo($"{LogBaseName}_task_failure");
-                        return Task.FromResult(!Disposed);
-                    },
-                    (e, childLogger) => Task.FromResult(!Disposed),
-                    swallowException: true);
+                                childLogger.FluentAddValue("FailureCategory", task.ExecutionInformation.FailureInformation.Category)
+                                .FluentAddValue("FailureCode", task.ExecutionInformation.FailureInformation.Code)
+                                .FluentAddValue("FailureMessage", task.ExecutionInformation.FailureInformation.Message)
+                                .FluentAddValue("FailureDetails", detailsString);
+                            }
+
+                            childLogger.LogInfo($"{LogBaseName}_task_failure");
+                            return Task.FromResult(!Disposed);
+                        },
+                        (e, childLogger) => Task.FromResult(!Disposed),
+                        swallowException: true);
+                }
             });
         }
 
@@ -283,9 +313,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     filterClause: $"executionInfo/poolId eq '{StorageProviderSettings.WorkerBatchPoolId}' and state eq 'active'",
                     selectClause: "id,displayName");
                 var taskOdataQuery = new ODATADetailLevel(
-                    filterClause: $"executionInfo/endTime ge DateTime'{finishedAfter:o}' and state eq 'Completed' and executionInfo/result eq 'Success'");
+                    filterClause: $"executionInfo/endTime ge DateTime'{finishedAfter:o}' and state eq 'Completed'");
                 var failedTaskQuery = new ODATADetailLevel(
-                    filterClause: $"executionInfo/endTime ge DateTime'{lastFiveMin:o}' and state eq 'Completed' and executionInfo/result ne 'Success'");
+                    filterClause: $"executionInfo/endTime ge DateTime'{lastFiveMin:o}' and state eq 'Completed'");
 
                 var jobs = batchClient.JobOperations.ListJobs(jobsOdataQuery);
                 var count = jobs.Count();
@@ -324,7 +354,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
                 if (completedTasks > 0)
                 {
-                    logger.FluentAddValue("SuccessRate", (succeededTasks / (double)completedTasks));
+                    logger.FluentAddValue("SuccessRate", (succeededTasks * 100 / (double)completedTasks));
                 }
 
                 if (archiveTimes.Count > 0)
