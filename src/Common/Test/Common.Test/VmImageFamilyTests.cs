@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
@@ -52,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     ImageKind.Custom,
                     "NexusWindowsImage",
                     "2019.1111.001",
+                    "aka.ms/channelUrl",
                     "16.7.1",
                     subscriptionId,
                     currentImageInfoProvider.Object

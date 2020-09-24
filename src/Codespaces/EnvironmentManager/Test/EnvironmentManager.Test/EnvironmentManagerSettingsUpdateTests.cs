@@ -703,6 +703,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     ImageKind.Canonical,
                     "vmImageName",
                     "vmImageVersion",
+                    "vsChannelUrl",
                     "vsVersion",
                     "vmImageSubscriptionId",
                     currentImageInfoProvider.Object),

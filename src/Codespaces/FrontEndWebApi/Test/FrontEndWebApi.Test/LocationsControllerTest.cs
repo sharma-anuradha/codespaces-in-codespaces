@@ -67,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         ImageKind.Canonical,
                         "vmImageName",
                         "vmImageVersion",
+                        "vsChannelUrl",
                         "vsVersion",
                         "vmImageSubscriptionId",
                         currentImageInfoProvider.Object),

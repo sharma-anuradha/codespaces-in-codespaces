@@ -31,6 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ImageKind imageKind,
             string defaultImageName,
             string defaultImageVersion,
+            string vsChannelUrl,
             string vsVersion,
             string vmImageSubscriptionId,
             ICurrentImageInfoProvider currentImageInfoProvider)
@@ -51,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ImageKind = imageKind;
             DefaultImageName = defaultImageName;
             DefaultImageVersion = defaultImageVersion;
+            VsChannelUrl = vsChannelUrl;
             VsVersion = vsVersion;
             VmImageSubscriptionId = vmImageSubscriptionId;
             StampInfo = stampInfo;

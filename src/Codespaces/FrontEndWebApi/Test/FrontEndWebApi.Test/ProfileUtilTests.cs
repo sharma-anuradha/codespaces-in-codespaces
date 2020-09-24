@@ -1,4 +1,4 @@
-﻿using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -107,6 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     ImageKind.Canonical,
                     "vmImageName",
                     "vmImageVersion",
+                    "vsChannelUrl",
                     "vsVersion",
                     "vmImageSubscriptionId",
                     currentImageInfoProvider.Object),
@@ -159,6 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     ImageKind.Canonical,
                     "vmImageName",
                     "vmImageVersion",
+                    "vsChannelUrl",
                     "vsVersion",
                     "vmImageSubscriptionId",
                     currentImageInfoProvider.Object),
@@ -211,6 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     ImageKind.Canonical,
                     "vmImageName",
                     "vmImageVersion",
+                    "vsChannelUrl",
                     "vsVersion",
                     "vmImageSubscriptionId",
                     currentImageInfoProvider.Object),

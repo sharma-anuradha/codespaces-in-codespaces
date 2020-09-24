@@ -1,4 +1,4 @@
-// <copyright file="GetSkuImageVersionCommand.cs" company="Microsoft">
+// <copyright file="GetSkuVsVersionCommand.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,14 +9,14 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 {
     /// <summary>
-    /// Gets the specified SKU's image version.
+    /// Gets the specified SKU's VS version.
     /// </summary>
-    [Verb("getskuimageversion", HelpText = "Gets the specified SKU's image version.")]
-    public class GetSkuImageVersionCommand : GetSkuPropertyCommandBase
+    [Verb("getskuvsversion", HelpText = "Gets the specified SKU's VS version.")]
+    public class GetSkuVsVersionCommand : GetSkuPropertyCommandBase
     {
         protected override void WriteProperty(ICloudEnvironmentSku sku, TextWriter stdout)
         {
-            stdout.WriteLine(sku.ComputeImage.DefaultImageVersion);
+            stdout.WriteLine(sku.ComputeImage.VsVersion);
         }
     }
 }

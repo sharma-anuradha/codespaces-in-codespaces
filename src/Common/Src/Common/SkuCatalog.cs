@@ -1,4 +1,4 @@
-﻿// <copyright file="SkuCatalog.cs" company="Microsoft">
+// <copyright file="SkuCatalog.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -267,6 +267,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 imageFamilySettings.ImageKind,
                 imageFamilySettings.ImageName,
                 imageFamilySettings.ImageVersion,
+                imageFamilySettings.VsChannelUrl,
                 imageFamilySettings.VsVersion,
                 vmImageSubscriptionId,
                 currentImageInfoProvider);
