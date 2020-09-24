@@ -13,11 +13,13 @@ import { isSupportedBrowser, isPartiallySupportedBrowser } from './utils/detecti
 import { injectMessageParametersJSX } from './utils/injectMessageParameters';
 import classnames from 'classnames';
 import { withTranslation, WithTranslation } from 'react-i18next';
+import { authService } from './services/authService';
 import './loc/i18n'
 import './app.css';
 
 export interface AppState {
     isMessageBarVisible: boolean;
+    isLoggedIn: boolean;
 }
 
 type StoreType = ReturnType<typeof configureStore>;
@@ -52,6 +54,7 @@ class AppRoot extends Component<AppProps, AppState> {
 
         this.state = {
             isMessageBarVisible,
+            isLoggedIn: false
         };
     }
 
@@ -61,6 +64,12 @@ class AppRoot extends Component<AppProps, AppState> {
 
         try {
             await this.props.init();
+            await authService.getCachedToken()
+                .then(cachedToken => {
+                    this.setState({
+                        isLoggedIn: cachedToken != null
+                    });
+            });
         } catch {
             // ignore
         }
@@ -122,7 +131,16 @@ class AppRoot extends Component<AppProps, AppState> {
             </div>
         );
 
-        const vsoSunsetBar = (
+        let requestBetaAccess;
+        if (this.state.isLoggedIn) {
+            requestBetaAccess = (
+                <Link href='https://aka.ms/vscs-transition-portal' target='_blank'>
+                    {translation('requestBetaAccess')}
+                </Link>
+            )
+        }
+
+        let vsoSunsetBar = (
             <div>
                 <MessageBar messageBarType={MessageBarType.warning}>
                     {injectMessageParametersJSX(translation('vsoSunset'),
@@ -130,6 +148,7 @@ class AppRoot extends Component<AppProps, AppState> {
                             GitHub
                         </Link>
                     )}
+                    {requestBetaAccess}
                     <Link href='https://aka.ms/vscs-moving' target='_blank'>
                         {translation('learnMore')}
                     </Link>

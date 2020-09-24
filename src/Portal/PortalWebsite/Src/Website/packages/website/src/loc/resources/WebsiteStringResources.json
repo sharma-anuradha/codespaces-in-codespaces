@@ -125,6 +125,7 @@
     "privateRepoNoAuth": "Repository doesn’t appear to exist. If it’s private, then you’ll need to authenticate.",
     "repository": "Repository",
     "requestedAutoShutdownDelayMinutesIsInvalid": "Requested auto-suspend delay is invalid.",
+    "requestBetaAccess": "Request beta access.",
     "requestedSkuIsInvalid": "Codespace's current instance type does not support the requested instance type.",
     "retry": "Retry",
     "secretEnvVarCreateHeader": "Add Environment Variable",
