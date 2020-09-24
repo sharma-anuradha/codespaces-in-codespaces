@@ -151,6 +151,12 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Runner
                 var contents = File.ReadAllText(file);
                 var result = AdminProvider.ExecuteControlCommand(contents);
                 Console.WriteLine($"Running {file} successful.");
+
+                // Following adds team as the admin, so we all have the ability to update stored functions.
+                var functionName = Path.GetFileNameWithoutExtension(file);
+                var permissionCommand = $".add function {functionName} admins ('aadgroup=76ed1206-72df-4116-8e6a-747439d31855;72f988bf-86f1-41af-91ab-2d7cd011db47') 'Team should have access to update the query.'";
+                var permissionResult = AdminProvider.ExecuteControlCommand(permissionCommand);
+                Console.WriteLine($"Adding permissions on {functionName} successful.");
             }
             catch
             {
