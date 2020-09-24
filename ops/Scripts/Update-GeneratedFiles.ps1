@@ -8,7 +8,8 @@ param(
     [switch]$UpdateSubscriptions,
     [string]$ExcelFile,
     [switch]$UpdateAppSettings,
-    [switch]$UpdateComponents
+    [switch]$UpdateComponents,
+    [switch]$FailIfFilesModified
 )
 
 # Global error handling -- ensure non-zero exit code on failure
@@ -137,4 +138,17 @@ if ($UpdateComponents -or $UpdateAll) {
     "Updating the Components.generated folder" | Write-Host -ForegroundColor Green
     Update-Components
     Write-Host
+}
+
+if ($FailIfFilesModified) {
+    try {
+        Push-Location (Join-Path $PSScriptRoot .. ..)
+        $gitStatusOutput = git status --porcelain=v1
+        Write-Output $gitStatusOutput
+        if ($gitStatusOutput -ne $null) {
+            Write-Error "Generator resulted in local modifications. Commit changes and try again."
+        }
+    } finally {
+        Pop-Location
+    }
 }
