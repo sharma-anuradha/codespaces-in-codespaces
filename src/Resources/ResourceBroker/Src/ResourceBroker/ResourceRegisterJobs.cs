@@ -37,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         /// <param name="jobQueueConsumerFactory">The job consumer factory instance.</param>
         /// <param name="jobHandlers">All the job handlers.</param>
+        /// <param name="jobHandlerTargets">All the job handler targets.</param>
         /// <param name="systemConfiguration">The system configuration.</param>
         /// <param name="watchPoolSizeJob">Target watch pool size job.</param>
         /// <param name="watchPoolVersionTask">Target watch pool version job interface.</param>
@@ -57,6 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             ITaskHelper taskHelper,
             IJobQueueConsumerFactory jobQueueConsumerFactory,
             IEnumerable<IJobHandler> jobHandlers,
+            IEnumerable<IJobHandlerTarget> jobHandlerTargets,
             ISystemConfiguration systemConfiguration,
             IWatchPoolSizeTask watchPoolSizeJob,
             IWatchPoolVersionTask watchPoolVersionTask,
@@ -77,6 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             TaskHelper = taskHelper;
             JobQueueConsumerFactory = jobQueueConsumerFactory;
             JobHandlers = jobHandlers;
+            JobHandlerTargets = jobHandlerTargets;
             SystemConfiguration = systemConfiguration;
             Random = new Random();
 
@@ -109,6 +112,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IJobQueueConsumerFactory JobQueueConsumerFactory { get; }
 
         private IEnumerable<IJobHandler> JobHandlers { get; }
+
+        private IEnumerable<IJobHandlerTarget> JobHandlerTargets { get; }
 
         private ISystemConfiguration SystemConfiguration { get; }
 
@@ -152,6 +157,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 .GetOrCreate(ResourceJobQueueConstants.GenericQueueName)
                 .RegisterJobHandlers(JobHandlers)
                 .Start(QueueMessageProducerSettings.Default);
+
+            // new job continuation handlers
+            JobQueueConsumerFactory.RegisterJobHandlers(JobHandlerTargets);
+            JobQueueConsumerFactory.Start(JobHandlerTargets, QueueMessageProducerSettings.Default);
 
             // register all the job schedulers
             foreach (var jobSchedulersRegister in JobSchedulersRegisters)

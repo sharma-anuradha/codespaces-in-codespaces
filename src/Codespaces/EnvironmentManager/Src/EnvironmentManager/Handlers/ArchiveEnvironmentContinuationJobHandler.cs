@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
@@ -21,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
     /// <summary>
     /// The archive continuation job handler.
     /// </summary>
-    public class ArchiveEnvironmentContinuationJobHandler : EnvironmentContinuationJobHandlerBase<ArchiveEnvironmentContinuationJobHandler.ArchiveContinuationInput, ArchiveEnvironmentContinuationInputState, EnvironmentContinuationResult>
+    public class ArchiveEnvironmentContinuationJobHandler : EnvironmentContinuationJobHandlerBase<ArchiveEnvironmentContinuationJobHandler.ArchiveContinuationInput, ArchiveEnvironmentContinuationInputState, EntityContinuationResult>
     {
         /// <summary>
         /// Default queue id.
@@ -67,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <inheritdoc/>
         protected override TransitionState FetchOperationTransition(
             ArchiveContinuationInput input,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             return record.Value.Transitions.Archiving;
@@ -75,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
         /// <inheritdoc/>
         protected override Task<bool> FailOperationShouldTriggerCleanupAsync(
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
@@ -84,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <inheritdoc/>
         protected override async Task FailOperationCleanupCoreAsync(
             ArchiveContinuationInput payload,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             string trigger,
             IDiagnosticsLogger logger)
         {
@@ -117,9 +118,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationJobResult<ArchiveEnvironmentContinuationInputState, EnvironmentContinuationResult>> ContinueAsync(
+        protected override async Task<ContinuationJobResult<ArchiveEnvironmentContinuationInputState, EntityContinuationResult>> ContinueAsync(
             ArchiveContinuationInput payload,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger,
             CancellationToken cancellationToken)
         {
@@ -163,8 +164,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <summary>
         /// Continuation input type.
         /// </summary>
-        public class ArchiveContinuationInput : EnvironmentContinuationInputBase<ArchiveEnvironmentContinuationInputState>, IArchiveEnvironmentContinuationPayload
+        public class ArchiveContinuationInput : EntityContinuationJobPayloadBase<ArchiveEnvironmentContinuationInputState>, IArchiveEnvironmentContinuationPayload
         {
+            /// <inheritdoc/>
+            public Guid EnvironmentId => EntityId;
+
             /// <summary>
             /// Gets or sets the Archive State.
             /// </summary>

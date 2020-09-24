@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
@@ -20,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
     /// <summary>
     /// Shutdown environment continuation handler.
     /// </summary>
-    public class ShutdownEnvironmentContinuationJobHandler : EnvironmentContinuationJobHandlerBase<ShutdownEnvironmentContinuationJobHandler.ShutdownEnvironmentContinuationInput, ShutdownEnvironmentContinuationInputState, EnvironmentContinuationResult>
+    public class ShutdownEnvironmentContinuationJobHandler : EnvironmentContinuationJobHandlerBase<ShutdownEnvironmentContinuationJobHandler.ShutdownEnvironmentContinuationInput, ShutdownEnvironmentContinuationInputState, EntityContinuationResult>
     {
         /// <summary>
         /// Gets target name.
@@ -74,14 +75,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         private IEnvironmentArchivalTimeCalculator ArchivalTimeCalculator { get; }
 
         /// <inheritdoc/>
-        protected override TransitionState FetchOperationTransition(ShutdownEnvironmentContinuationInput input, EnvironmentRecordRef record, IDiagnosticsLogger logger)
+        protected override TransitionState FetchOperationTransition(ShutdownEnvironmentContinuationInput input, IEntityRecordRef<CloudEnvironment> record, IDiagnosticsLogger logger)
         {
             return record.Value.Transitions.ShuttingDown;
         }
 
         /// <inheritdoc/>
         protected override Task<bool> FailOperationShouldTriggerCleanupAsync(
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
@@ -90,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <inheritdoc/>
         protected override async Task FailOperationCleanupCoreAsync(
             ShutdownEnvironmentContinuationInput operationInput,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             string trigger,
             IDiagnosticsLogger logger)
         {
@@ -101,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EnvironmentContinuationResult>> ContinueAsync(ShutdownEnvironmentContinuationInput operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        protected override async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EntityContinuationResult>> ContinueAsync(ShutdownEnvironmentContinuationInput operationInput, IEntityRecordRef<CloudEnvironment> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             if (record.Value == default || record.Value.State == CloudEnvironmentState.Shutdown)
             {
@@ -142,7 +143,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             }
         }
 
-        private async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EnvironmentContinuationResult>> CheckComputeDeleteStatusAsync(ShutdownEnvironmentContinuationInput operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
+        private async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EntityContinuationResult>> CheckComputeDeleteStatusAsync(ShutdownEnvironmentContinuationInput operationInput, IEntityRecordRef<CloudEnvironment> record, IDiagnosticsLogger logger)
         {
             var environmentId = Guid.Parse(record.Value.Id);
             var computeId = record.Value.Compute.ResourceId;
@@ -159,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             return ReturnRetry(TimeSpan.FromSeconds(2));
         }
 
-        private async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EnvironmentContinuationResult>> DeleteComputeAsync(ShutdownEnvironmentContinuationInput operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
+        private async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EntityContinuationResult>> DeleteComputeAsync(ShutdownEnvironmentContinuationInput operationInput, IEntityRecordRef<CloudEnvironment> record, IDiagnosticsLogger logger)
         {
             var environmentId = Guid.Parse(record.Value.Id);
             var computeId = record.Value.Compute.ResourceId;
@@ -176,7 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             return ReturnNextState(ShutdownEnvironmentContinuationInputState.CheckComputeDeleteStatus);
         }
 
-        private async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EnvironmentContinuationResult>> MarkShutdownAsync(ShutdownEnvironmentContinuationInput operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
+        private async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EntityContinuationResult>> MarkShutdownAsync(ShutdownEnvironmentContinuationInput operationInput, IEntityRecordRef<CloudEnvironment> record, IDiagnosticsLogger logger)
         {
             await EnvironmentStateManager.SetEnvironmentStateAsync(record.Value, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, null, logger.NewChildLogger());
 
@@ -206,7 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             return ReturnSucceeded();
         }
 
-        private async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EnvironmentContinuationResult>> CheckComputeCleanupStatusAsync(ShutdownEnvironmentContinuationInput operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
+        private async Task<ContinuationJobResult<ShutdownEnvironmentContinuationInputState, EntityContinuationResult>> CheckComputeCleanupStatusAsync(ShutdownEnvironmentContinuationInput operationInput, IEntityRecordRef<CloudEnvironment> record, IDiagnosticsLogger logger)
         {
             var environmentId = Guid.Parse(record.Value.Id);
             var computeId = record.Value.Compute.ResourceId;
@@ -234,7 +235,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <summary>
         /// Continuation input type.
         /// </summary>
-        public class ShutdownEnvironmentContinuationInput : EnvironmentContinuationInputBase<ShutdownEnvironmentContinuationInputState>
+        public class ShutdownEnvironmentContinuationInput : EntityContinuationJobPayloadBase<ShutdownEnvironmentContinuationInputState>
         {
             public bool Force { get; set; }
         }

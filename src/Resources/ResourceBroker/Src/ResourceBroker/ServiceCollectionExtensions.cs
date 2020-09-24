@@ -117,6 +117,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IResourceHeartbeatContinuationHandler>(x => x.GetRequiredService<ResourceHeartbeatContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ResourceHeartbeatContinuationHandler>());
 
+            // new job continuation handlers
+            services.AddSingleton<IJobHandlerTarget, DeleteResourceContinuationJobHandler>();
+            services.AddSingleton<IJobHandlerTarget, ResumeEnvironmentContinuationJobHandler>();
+            services.AddSingleton<IJobHandlerTarget, ExportEnvironmentContinuationJobHandler>();
+            services.AddSingleton<IJobHandlerTarget, ResourceHeartbeatJobHandler>();
+
             // Create resource strategies
             services.AddSingleton<ICreateResourceStrategy, CreateStorageFileShareStrategy>();
             services.AddSingleton<ICreateResourceStrategy, CreateKeyVaultStrategy>();

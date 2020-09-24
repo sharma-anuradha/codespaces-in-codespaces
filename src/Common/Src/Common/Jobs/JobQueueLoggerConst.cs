@@ -20,6 +20,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         public const string JobType = "JobType";
 
         /// <summary>
+        /// The job payload column.
+        /// </summary>
+        public const string JobPayload = "JobPayload";
+
+        /// <summary>
         /// The job initial visbility delay.
         /// </summary>
         public const string InitialVisibilityDelay = "InitialVisibilityDelay";

@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
@@ -41,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunAllocateStorageSnapshot(
             this IArchiveEnvironmentContinuationPayload operationInput,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             // Setup request object
@@ -69,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunAllocateStorageBlob(
             this IArchiveEnvironmentContinuationPayload operationInput,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             // Setup request object
@@ -93,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunAllocateRequest(
             this IArchiveEnvironmentContinuationPayload operationInput,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             AllocateRequestBody allocateRequest,
             ArchiveEnvironmentContinuationInputState archiveStatusIfSuccessful,
             string errorReason,
@@ -126,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunStartStorageBlob(
             this IArchiveEnvironmentContinuationPayload operationInput,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             // Setup request object
@@ -151,7 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunCheckArchiveStatus(
             this IArchiveEnvironmentContinuationPayload operationInput,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             // Make request to check on start status
@@ -180,7 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IEnvironmentStateManager environmentStateManager,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger,
             string operationName)
         {

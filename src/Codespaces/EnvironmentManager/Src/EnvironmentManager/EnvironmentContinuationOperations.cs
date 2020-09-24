@@ -59,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 await JobQueueProducerFactory.GetOrCreate(ArchiveEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
                     new ArchiveEnvironmentContinuationJobHandler.ArchiveContinuationInput()
                     {
-                        EnvironmentId = environmentId,
+                        EntityId = environmentId,
                         LastStateUpdated = lastStateUpdated,
                         Reason = reason,
                         LoggerProperties = loggingProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value).ToDictionary(),
@@ -120,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 await JobQueueProducerFactory.GetOrCreate(ShutdownEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
                     new ShutdownEnvironmentContinuationJobHandler.ShutdownEnvironmentContinuationInput()
                     {
-                        EnvironmentId = environmentId,
+                        EntityId = environmentId,
                         Reason = reason,
                         Force = forceSuspend,
                         LoggerProperties = loggingProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value).ToDictionary(),
@@ -173,7 +173,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         CloudEnvironmentOptions = cloudEnvironmentOptions,
                         ActionState = actionState,
-                        EnvironmentId = environmentId,
+                        EntityId = environmentId,
                         LastStateUpdated = lastStateUpdated,
                         CloudEnvironmentParameters = cloudEnvironmentParameters,
                         Reason = reason,

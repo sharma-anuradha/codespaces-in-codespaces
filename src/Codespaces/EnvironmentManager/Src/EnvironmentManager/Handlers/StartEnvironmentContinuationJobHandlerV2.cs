@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
@@ -25,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
     /// <summary>
     /// Start Environment Continuation Job Handler. It can be either create or resume.
     /// </summary>
-    public class StartEnvironmentContinuationJobHandlerV2 : EnvironmentContinuationJobHandlerBase<StartEnvironmentContinuationJobHandlerV2.StartEnvironmentContinuationInput, StartEnvironmentContinuationInputState, EnvironmentContinuationResult>
+    public class StartEnvironmentContinuationJobHandlerV2 : EnvironmentContinuationJobHandlerBase<StartEnvironmentContinuationJobHandlerV2.StartEnvironmentContinuationInput, StartEnvironmentContinuationInputState, EntityContinuationResult>
     {
         /// <summary>
         /// Default queue id.
@@ -102,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationJobResult<StartEnvironmentContinuationInputState, EnvironmentContinuationResult>> ContinueAsync(StartEnvironmentContinuationInput payload, EnvironmentRecordRef record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        protected override async Task<ContinuationJobResult<StartEnvironmentContinuationInputState, EntityContinuationResult>> ContinueAsync(StartEnvironmentContinuationInput payload, IEntityRecordRef<CloudEnvironment> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             // Add environment id and resource ids to logger
             payload.LogResource(logger);
@@ -153,7 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         }
 
         /// <inheritdoc/>
-        protected override TransitionState FetchOperationTransition(StartEnvironmentContinuationInput payload, EnvironmentRecordRef record, IDiagnosticsLogger logger)
+        protected override TransitionState FetchOperationTransition(StartEnvironmentContinuationInput payload, IEntityRecordRef<CloudEnvironment> record, IDiagnosticsLogger logger)
         {
             switch (payload.ActionState)
             {
@@ -175,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <inheritdoc/>
         protected override async Task FailOperationCleanupCoreAsync(
             StartEnvironmentContinuationInput payload,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             string trigger,
             IDiagnosticsLogger logger)
         {
@@ -193,7 +194,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
         private Task ForceShutdownAsync(
             StartEnvironmentContinuationInput operationInput,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             string trigger,
             IDiagnosticsLogger logger)
         {
@@ -211,8 +212,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <summary>
         /// Continuation input type.
         /// </summary>
-        public class StartEnvironmentContinuationInput : EnvironmentContinuationInputBase<StartEnvironmentContinuationInputState>, IStartEnvironmentContinuationPayloadV2
+        public class StartEnvironmentContinuationInput : EntityContinuationJobPayloadBase<StartEnvironmentContinuationInputState>, IStartEnvironmentContinuationPayloadV2
         {
+            /// <inheritdoc/>
+            public Guid EnvironmentId => EntityId;
+
             /// <inheritdoc/>
             public DateTime LastStateUpdated { get; set; }
 

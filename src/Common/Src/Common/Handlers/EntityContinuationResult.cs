@@ -1,13 +1,13 @@
-// <copyright file="EnvironmentContinuationResult.cs" company="Microsoft">
+// <copyright file="EntityContinuationResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
 {
     /// <summary>
-    /// Env continuation result.
+    /// Entity continuation result.
     /// </summary>
-    public class EnvironmentContinuationResult
+    public class EntityContinuationResult
     {
         /// <summary>
         /// Gets or sets the error reason for the result.

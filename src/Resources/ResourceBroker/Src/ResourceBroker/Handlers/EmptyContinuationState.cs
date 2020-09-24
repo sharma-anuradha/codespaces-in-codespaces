@@ -1,13 +1,14 @@
-﻿// <copyright file="IResourceComponentInput.cs" company="Microsoft">
+// <copyright file="EmptyContinuationState.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
-    /// Resource input components.
+    /// An empty continuation state for job handlers
     /// </summary>
-    public interface IResourceComponentInput
+    public enum EmptyContinuationState
     {
+        None = 0,
     }
 }

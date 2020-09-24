@@ -191,6 +191,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     {
                         childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, job.Id)
                             .FluentAddBaseValue(JobQueueLoggerConst.JobType, typeTag)
+#if DEBUG
+                            .FluentAddBaseValue(JobQueueLoggerConst.JobPayload, jobInstance.JobPayloadInfo.Payload)
+#endif
                             .FluentAddValue(JobQueueLoggerConst.JobDequeuedDuration, nowUtc - jobInstance.DequeueTime);
 
                         // pass deserialized logger properties from the producer.
@@ -199,8 +202,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                             childLogger.FluentAddBaseValue(kvp.Key, kvp.Value.ToString());
                         }
 
-                        if (jobPayloadOptions?.ExpireTimeout.HasValue == true &&
-                            nowUtc > job.Created.Add(jobPayloadOptions.ExpireTimeout.Value))
+                        // expire timeout first on patyload options and then on the job hanlder instance.
+                        var expireTimeout = jobPayloadOptions?.ExpireTimeout ?? jobHandlerOptions?.ExpireTimeout;
+
+                        if (expireTimeout.HasValue == true &&
+                            nowUtc > job.Created.Add(expireTimeout.Value))
                         {
                             await CompleteJobAsync(jobInstance, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.Expired, null);
                             childLogger.FluentAddValue(JobQueueLoggerConst.JobDidExpired, true);

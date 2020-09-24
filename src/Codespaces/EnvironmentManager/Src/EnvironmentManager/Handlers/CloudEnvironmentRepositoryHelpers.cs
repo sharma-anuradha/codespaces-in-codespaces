@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
@@ -28,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<bool> UpdateRecordAsync(
             this ICloudEnvironmentRepository cloudEnvironmentRepository,
             Guid environmentId,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             Func<CloudEnvironment, IDiagnosticsLogger, Task<bool>> mutateRecordCallback,
             IDiagnosticsLogger logger,
             string operationBaseName)
@@ -63,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <param name="resourceId">Id.</param>
         /// <param name="logger">Logger instance.</param>
         /// <returns>Completion task with env record isntance.</returns>
-        public static async Task<EnvironmentRecordRef> FetchReferenceAsync(
+        public static async Task<IEntityRecordRef<CloudEnvironment>> FetchReferenceAsync(
             this ICloudEnvironmentRepository cloudEnvironmentRepository,
             Guid resourceId,
             IDiagnosticsLogger logger)

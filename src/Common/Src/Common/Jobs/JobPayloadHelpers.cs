@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         }
 
         /// <summary>
-        /// Deserialize a json contnet into a job payload.
+        /// Deserialize a json content into a job payload.
         /// </summary>
         /// <param name="json">The json content.</param>
         /// <returns>An instance of a job payload.</returns>

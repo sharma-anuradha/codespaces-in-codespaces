@@ -1,13 +1,15 @@
-﻿// <copyright file="EnvironmentRecordRef.cs" company="Microsoft">
+// <copyright file="EnvironmentRecordRef.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
+
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models
 {
     /// <summary>
     /// Resource Record Ref.
     /// </summary>
-    public class EnvironmentRecordRef
+    public class EnvironmentRecordRef : IEntityRecordRef<CloudEnvironment>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentRecordRef"/> class.

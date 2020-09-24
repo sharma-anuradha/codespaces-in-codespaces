@@ -4,14 +4,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -33,14 +37,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="activator">Target activator.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
         /// <param name="systemConfiguration">System configuration settings.</param>
+        /// <param name="jobQueueProducerFactory">Job Queue producer factory instance.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public ResourceContinuationOperations(
             IContinuationTaskActivator activator,
             IResourceRepository resourceRepository,
-            ISystemConfiguration systemConfiguration)
+            ISystemConfiguration systemConfiguration,
+            IJobQueueProducerFactory jobQueueProducerFactory,
+            IConfigurationReader configurationReader)
         {
             Activator = activator;
             ResourceRepository = resourceRepository;
             SystemConfiguration = systemConfiguration;
+            JobQueueProducerFactory = jobQueueProducerFactory;
+            ConfigurationReader = configurationReader;
         }
 
         private IContinuationTaskActivator Activator { get; }
@@ -48,6 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IResourceRepository ResourceRepository { get; }
 
         private ISystemConfiguration SystemConfiguration { get; }
+
+        private IJobQueueProducerFactory JobQueueProducerFactory { get; }
+
+        private IConfigurationReader ConfigurationReader { get; }
 
         /// <inheritdoc/>
         public async Task<ContinuationResult> CreateAsync(
@@ -150,21 +164,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var consolidatedloggerProperties = await BuildLoggingProperties(computeResourceId, reason, logger, loggingProperties);
 
-            var input = new StartEnvironmentContinuationInput
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                EnvironmentId = environmentId,
-                ResourceId = computeResourceId,
-                OSDiskResourceId = osDiskResourceId,
-                StorageResourceId = storageResourceId,
-                ArchiveStorageResourceId = archiveStorageResourceId,
-                EnvironmentVariables = environmentVariables,
-                UserSecrets = userSecrets,
-                DevContainer = devcontainerJson,
-                Reason = reason,
-            };
-            var target = ResumeEnvironmentContinuationHandler.DefaultQueueTarget;
+                await JobQueueProducerFactory.GetOrCreate(ResumeEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                    new ResumeEnvironmentContinuationJobHandler.Payload()
+                    {
+                        EnvironmentId = environmentId,
+                        EntityId = computeResourceId,
+                        OSDiskResourceId = osDiskResourceId,
+                        StorageResourceId = storageResourceId,
+                        ArchiveStorageResourceId = archiveStorageResourceId,
+                        EnvironmentVariables = environmentVariables,
+                        UserSecrets = userSecrets,
+                        DevContainer = devcontainerJson,
+                        Reason = reason,
+                        LoggerProperties = consolidatedloggerProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value),
+                    },
+                    null,
+                    logger,
+                    CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var input = new StartEnvironmentContinuationInput
+                {
+                    EnvironmentId = environmentId,
+                    ResourceId = computeResourceId,
+                    OSDiskResourceId = osDiskResourceId,
+                    StorageResourceId = storageResourceId,
+                    ArchiveStorageResourceId = archiveStorageResourceId,
+                    EnvironmentVariables = environmentVariables,
+                    UserSecrets = userSecrets,
+                    DevContainer = devcontainerJson,
+                    Reason = reason,
+                };
+                var target = ResumeEnvironmentContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+                return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            }
         }
 
         /// <inheritdoc/>
@@ -186,20 +224,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var consolidatedloggerProperties = await BuildLoggingProperties(computeResourceId, reason, logger, loggingProperties);
 
-            var input = new StartExportContinuationInput
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                EnvironmentId = environmentId,
-                ResourceId = computeResourceId,
-                OSDiskResourceId = osDiskResourceId,
-                StorageResourceId = storageResourceId,
-                ArchiveStorageResourceId = archiveStorageResourceId,
-                EnvironmentVariables = environmentVariables,
-                UserSecrets = userSecrets,
-                Reason = reason,
-            };
-            var target = ExportEnvironmentContinuationHandler.DefaultQueueTarget;
+                await JobQueueProducerFactory.GetOrCreate(ExportEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                    new ExportEnvironmentContinuationJobHandler.Payload()
+                    {
+                        EnvironmentId = environmentId,
+                        EntityId = computeResourceId,
+                        OSDiskResourceId = osDiskResourceId,
+                        StorageResourceId = storageResourceId,
+                        ArchiveStorageResourceId = archiveStorageResourceId,
+                        EnvironmentVariables = environmentVariables,
+                        UserSecrets = userSecrets,
+                        Reason = reason,
+                        LoggerProperties = consolidatedloggerProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value),
+                    },
+                    null,
+                    logger,
+                    CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var input = new StartExportContinuationInput
+                {
+                    EnvironmentId = environmentId,
+                    ResourceId = computeResourceId,
+                    OSDiskResourceId = osDiskResourceId,
+                    StorageResourceId = storageResourceId,
+                    ArchiveStorageResourceId = archiveStorageResourceId,
+                    EnvironmentVariables = environmentVariables,
+                    UserSecrets = userSecrets,
+                    Reason = reason,
+                };
+                var target = ExportEnvironmentContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+                return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            }
         }
 
         /// <inheritdoc/>
@@ -215,7 +276,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 .FluentAddBaseValue("StorageResourceId", fileResourceId);
 
             var consolidatedloggerProperties = await BuildLoggingProperties(blobResourceId, reason, logger, loggingProperties);
-
             var input = new StartArchiveContinuationInput()
             {
                 EnvironmentId = environmentId,
@@ -238,15 +298,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             var consolidatedloggerProperties = await BuildLoggingProperties(resourceId, reason, logger, loggingProperties);
 
-            var input = new DeleteResourceContinuationInput()
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                EnvironmentId = environmentId,
-                ResourceId = resourceId,
-                Reason = reason,
-            };
-            var target = DeleteResourceContinuationHandler.DefaultQueueTarget;
+                await JobQueueProducerFactory.GetOrCreate(DeleteResourceContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                    new DeleteResourceContinuationJobHandler.Payload()
+                    {
+                        EnvironmentId = environmentId,
+                        EntityId = resourceId,
+                        Reason = reason,
+                        LoggerProperties = consolidatedloggerProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value),
+                    },
+                    null,
+                    logger,
+                    CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var input = new DeleteResourceContinuationInput()
+                {
+                    EnvironmentId = environmentId,
+                    ResourceId = resourceId,
+                    Reason = reason,
+                };
+                var target = DeleteResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+                return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            }
         }
 
         /// <inheritdoc/>
@@ -276,15 +354,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             const string reason = "HeartbeatReceived";
             var consolidatedloggerProperties = await BuildLoggingProperties(heartBeatInput.ResourceId, reason, logger, loggingProperties);
 
-            var input = new ResourceHeartbeatContinuationInput()
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                ResourceId = heartBeatInput.ResourceId,
-                HeartBeatData = heartBeatInput,
-            };
+                await JobQueueProducerFactory.GetOrCreate(ResourceHeartbeatJobHandler.DefaultQueueId).AddJobAsync(
+                    new ResourceHeartbeatJobHandler.Payload()
+                    {
+                        ResourceId = heartBeatInput.ResourceId,
+                        HeartBeatData = heartBeatInput,
+                        LoggerProperties = consolidatedloggerProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value),
+                    },
+                    null,
+                    logger,
+                    CancellationToken.None);
+            }
+            else
+            {
+                var input = new ResourceHeartbeatContinuationInput()
+                {
+                    ResourceId = heartBeatInput.ResourceId,
+                    HeartBeatData = heartBeatInput,
+                };
 
-            var target = ResourceHeartbeatContinuationHandler.DefaultQueueTarget;
+                var target = ResourceHeartbeatContinuationHandler.DefaultQueueTarget;
 
-            await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+                await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            }
         }
 
         private IDictionary<string, string> BuildLoggingProperties(
@@ -356,24 +450,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             return consolidatedloggerProperties;
         }
 
-        private IDictionary<string, string> BuildLoggingProperties(
-            Guid resourceId,
-            ResourceType type,
-            IDictionary<string, string> resourceTags,
-            string reason)
+        private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger)
         {
-            return new Dictionary<string, string>()
-                {
-                    { ResourceLoggingPropertyConstants.ResourceId, resourceId.ToString() },
-                    { ResourceLoggingPropertyConstants.OperationReason, reason },
-                    { ResourceLoggingPropertyConstants.PoolLocation, resourceTags.GetValueOrDefault(ResourceTagName.PoolLocation) },
-                    { ResourceLoggingPropertyConstants.PoolSkuName, resourceTags.GetValueOrDefault(ResourceTagName.PoolSkuName) },
-                    { ResourceLoggingPropertyConstants.PoolResourceType, type.ToString() },
-                    { ResourceLoggingPropertyConstants.PoolDefinition, resourceTags.GetValueOrDefault(ResourceTagName.PoolDefinition) },
-                    { ResourceLoggingPropertyConstants.PoolVersionDefinition, resourceTags.GetValueOrDefault(ResourceTagName.PoolVersionDefinition) },
-                    { ResourceLoggingPropertyConstants.PoolImageFamilyName, resourceTags.GetValueOrDefault(ResourceTagName.PoolImageFamilyName) },
-                    { ResourceLoggingPropertyConstants.PoolImageName, resourceTags.GetValueOrDefault(ResourceTagName.PoolImageName) },
-                };
+            return ConfigurationReader.ReadFeatureFlagAsync("job-continuation-handler", logger, false);
         }
     }
 }

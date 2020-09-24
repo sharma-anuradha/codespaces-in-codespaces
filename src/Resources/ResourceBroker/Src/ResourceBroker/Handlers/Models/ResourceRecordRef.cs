@@ -1,7 +1,8 @@
-﻿// <copyright file="ResourceRecordRef.cs" company="Microsoft">
+// <copyright file="ResourceRecordRef.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
@@ -9,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     /// <summary>
     /// Resource Record Ref.
     /// </summary>
-    public class ResourceRecordRef
+    public class ResourceRecordRef : IEntityRecordRef<ResourceRecord>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRecordRef"/> class.

@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
@@ -42,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 .FluentAddBaseValue(nameof(operationInput.ActionState), operationInput.ActionState);
         }
 
-        public static bool IsInvalidOrFailedState(EnvironmentRecordRef record, IStartEnvironmentContinuationPayloadV2 operationInput)
+        public static bool IsInvalidOrFailedState(IEntityRecordRef<CloudEnvironment> record, IStartEnvironmentContinuationPayloadV2 operationInput)
         {
             if (operationInput.ActionState == StartEnvironmentInputActionState.CreateNew)
             {
@@ -61,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunStartQueuedStateMonitor(
              this IStartEnvironmentContinuationPayloadV2 operationInput,
              IServiceProvider serviceProvider,
-             EnvironmentRecordRef record,
+             IEntityRecordRef<CloudEnvironment> record,
              IDiagnosticsLogger logger)
         {
             var cloudEnvironment = record.Value;
@@ -79,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunGetResourceAsync(
             this IStartEnvironmentContinuationPayloadV2 operationInput,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             if (operationInput.ActionState == StartEnvironmentInputActionState.CreateNew)
@@ -138,7 +139,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceSelectorFactory resourceSelector,
             IResourceAllocationManager resourceAllocationManager,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger,
             string operationBaseName)
         {
@@ -215,7 +216,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             this IStartEnvironmentContinuationPayloadV2 operationInput,
             ICloudEnvironmentHeartbeatRepository heartbeatRepository,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger,
             string operationBaseName)
         {
@@ -252,7 +253,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             this IStartEnvironmentContinuationPayloadV2 operationInput,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger,
             string operationBaseName)
         {
@@ -342,7 +343,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             IEnvironmentStateManager environmentStateManager,
             IWorkspaceManager workspaceManager,
             IServiceProvider serviceProvider,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger,
             string operationBaseName)
         {
@@ -447,7 +448,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunCheckStartComputeAsync(
             this IStartEnvironmentContinuationPayloadV2 operationInput,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             var computeStatus = await resourceBrokerHttpClient.StatusAsync(
@@ -473,7 +474,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public static async Task<ContinuationResult> RunStartEnvironmentMonitoring(
             this IStartEnvironmentContinuationPayloadV2 operationInput,
             IServiceProvider serviceProvider,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger)
         {
             var cloudEnvironment = record.Value;
@@ -506,7 +507,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             IEnvironmentStateManager environmentStateManager,
             IWorkspaceManager workspaceManager,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             string trigger,
             IDiagnosticsLogger logger,
             string operationBaseName)
@@ -569,7 +570,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         private static async Task<bool> UpdateResourceInfoAsync(
             IStartEnvironmentContinuationPayloadV2 operationInput,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
-            EnvironmentRecordRef record,
+            IEntityRecordRef<CloudEnvironment> record,
             IDiagnosticsLogger logger,
             string operationBaseName)
         {

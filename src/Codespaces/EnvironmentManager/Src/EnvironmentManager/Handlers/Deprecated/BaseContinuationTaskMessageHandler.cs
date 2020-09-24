@@ -122,7 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <returns>Reference objec to the resource.</returns>
         protected virtual async Task<EnvironmentRecordRef> FetchReferenceAsync(TI input, IDiagnosticsLogger logger)
         {
-            return await CloudEnvironmentRepository.FetchReferenceAsync(input.EnvironmentId, logger);
+            return (EnvironmentRecordRef)await CloudEnvironmentRepository.FetchReferenceAsync(input.EnvironmentId, logger);
         }
 
         /// <summary>
