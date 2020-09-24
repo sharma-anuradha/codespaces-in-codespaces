@@ -70,11 +70,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string WatchFailedResourcesJobHandler = "watch_failed_resources_job_handler";
 
         /// <summary>
-        /// Watch orphan pool Task.
-        /// </summary>
-        public const string WatchOrphanedPoolTask = "watch_orphaned_pool_task";
-
-        /// <summary>
         /// Watch Orphaned Build Artifact Image Task.
         /// </summary>
         public const string WatchOrphanedVmAgentImagesTask = "watch_orphaned_vm_agent_image_task";
@@ -194,6 +189,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// </summary>
         public const string LogSystemResourceStateJobHandler = "log_system_resource_state_job_handler";
 
+        /// <summary>
+        /// Watch orphan pool Job Handler.
+        /// </summary>
+        public const string WatchOrphanedPoolJobHandler = "watch_orphaned_pool_job_handler";
+
         // Deprecated
 
         /// <summary>
@@ -235,5 +235,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Watch Orphaned Azure Resource Task.
         /// </summary>
         public const string WatchOrphanedAzureResourceTask = "watch_orphaned_azure_resource_task";
+
+        /// <summary>
+        /// Watch orphan pool Task.
+        /// </summary>
+        public const string WatchOrphanedPoolTask = "watch_orphaned_pool_task";
     }
 }

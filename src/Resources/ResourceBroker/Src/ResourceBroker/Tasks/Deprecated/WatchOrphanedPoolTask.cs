@@ -46,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourceNameBuilder resourceNameBuilder,
             IResourcePoolDefinitionStore resourcePoolDefinitionStore,
             IResourceContinuationOperations resourceContinuationOperations,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
             : base(configurationReader)
         {
@@ -56,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
             ResourcePoolDefinitionStore = Requires.NotNull(resourcePoolDefinitionStore, nameof(resourcePoolDefinitionStore));
             ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
+            JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
         }
 
         /// <inheritdoc/>
@@ -78,6 +80,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IResourcePoolDefinitionStore ResourcePoolDefinitionStore { get; }
 
         private IResourceContinuationOperations ResourceContinuationOperations { get; }
+
+        private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
         private bool Disposed { get; set; }
 
@@ -226,8 +230,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             return deletedResourceId;
         }
 
-        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private async Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
+            // if WatchOrphanedPoolJob feature flag is on, it should never obtain the lease for the old deprecated task
+            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(WatchOrphanedPoolJobProducer.FeatureFlagName))
+            {
+                return null;
+            }
+
             return ClaimedDistributedLease.Obtain(
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }

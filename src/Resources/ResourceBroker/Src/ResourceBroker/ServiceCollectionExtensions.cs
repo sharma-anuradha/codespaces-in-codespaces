@@ -88,6 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobHandler, WatchOrphanedAzureResourceJobHandler>();
             services.AddSingleton<IJobHandler, DeleteAzureResourceJobHandler>();
             services.AddSingleton<IJobHandler, LogSystemResourceStateJobHandler>();
+            services.AddSingleton<IJobHandler, WatchOrphanedPoolJobHandler>();
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
@@ -139,10 +140,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobSchedulerRegister, DeleteResourceGroupDeploymentsJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedAzureResourceJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, LogSystemResourceStateJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, WatchOrphanedPoolJobProducer>();
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
-            services.AddSingleton<IWatchOrphanedPoolTask, WatchOrphanedPoolTask>();  
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
             services.AddSingleton<WatchOrphanedComputeImagesTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
@@ -156,6 +157,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<WatchOrphanedStorageImagesTask>();
             services.AddSingleton<IDeleteResourceGroupDeploymentsTask, DeleteResourceGroupDeploymentsTask>();
             services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
+            services.AddSingleton<IWatchOrphanedPoolTask, WatchOrphanedPoolTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {

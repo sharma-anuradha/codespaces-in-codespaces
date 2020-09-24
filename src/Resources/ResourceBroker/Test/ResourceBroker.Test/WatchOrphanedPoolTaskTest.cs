@@ -55,9 +55,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourcePoolDefinitionStore = new Mock<IResourcePoolDefinitionStore>().Object;
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourceContinuationOperations = GetMockResourceContinuationOperations();
+            var jobSchedulerFeatureFlags = new Mock<IJobSchedulerFeatureFlags>().Object;
             var configurationReader = new Mock<IConfigurationReader>().Object;
             
-            var watchOrphanedPoolTask = new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, configurationReader);
+            var watchOrphanedPoolTask = new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader);
             
             Assert.NotNull(watchOrphanedPoolTask);
         }
@@ -73,15 +74,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var logger = GetMockDiagnosticsLogger();
             var resourceContinuationOperations = GetMockResourceContinuationOperations();
+            var jobSchedulerFeatureFlags = new Mock<IJobSchedulerFeatureFlags>().Object;
             var configurationReader = new Mock<IConfigurationReader>().Object;
 
-            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(null, resourceRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, configurationReader));
-            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, null, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, configurationReader));
-            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, null, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, configurationReader));
-            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, null, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, configurationReader));
-            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, claimedDistributedLease, null, resourcePoolDefinitionStore, resourceContinuationOperations, configurationReader));
-            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, null, resourceContinuationOperations, configurationReader));
-            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, null, configurationReader));
+            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(null, resourceRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader));
+            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, null, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader));
+            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, null, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader));
+            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, null, resourceNameBuilder, resourcePoolDefinitionStore, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader));
+            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, claimedDistributedLease, null, resourcePoolDefinitionStore, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader));
+            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, null, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader));
+            Assert.Throws<ArgumentNullException>(() => new WatchOrphanedPoolTask(resourceBrokerSettings, resourceRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStore, null, jobSchedulerFeatureFlags, configurationReader));
         }
 
         [Fact]
@@ -95,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceNameBuilder = new Mock<IResourceNameBuilder>().Object;
             var taskHelper = new Mock<ITaskHelper>().Object;
             var resourcePools = await resourcePoolDefinitionStoreMoq.Object.RetrieveDefinitionsAsync();
+            var jobSchedulerFeatureFlags = new Mock<IJobSchedulerFeatureFlags>().Object;
             var configurationReader = new Mock<IConfigurationReader>().Object;
             
             var unAssignedResourceRecord = new ResourceRecord
@@ -123,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 }
             };
 
-            var watchOrphanedPoolTaskMoq = new Mock<WatchOrphanedPoolTask>(resourceBrokerSettings, resourceRepositoryMoq.Object, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStoreMoq.Object, resourceContinuationOperations, configurationReader);
+            var watchOrphanedPoolTaskMoq = new Mock<WatchOrphanedPoolTask>(resourceBrokerSettings, resourceRepositoryMoq.Object, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStoreMoq.Object, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader);
             var watchOrphanedPoolTask = watchOrphanedPoolTaskMoq.Object;
             var Active = watchOrphanedPoolTask.IsActivePool(unAssignedResourceRecord.PoolReference.Code, resourcePools);
             var InActive = watchOrphanedPoolTask.IsActivePool(assignedResourceRecord.PoolReference.Code, resourcePools);
@@ -149,6 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourcePools = await resourcePoolDefinitionStoreMoq.Object.RetrieveDefinitionsAsync();
             var documentDbKeyPassed = default(DocumentDbKey);
             var resourceRecords = new List<ResourceRecord>();
+            var jobSchedulerFeatureFlags = new Mock<IJobSchedulerFeatureFlags>().Object;
             var configurationReader = new Mock<IConfigurationReader>().Object;
             
             var unAssignedResourceRecord = new ResourceRecord
@@ -204,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                     return response.Count() > 0 ? Task.FromResult(response.First()) : null;
                 });
 
-            var watchOrphanedPoolTaskMoq = new Mock<WatchOrphanedPoolTask>(resourceBrokerSettings, resourceRepositoryMoq.Object, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStoreMoq.Object, resourceContinuationOperations, configurationReader);
+            var watchOrphanedPoolTaskMoq = new Mock<WatchOrphanedPoolTask>(resourceBrokerSettings, resourceRepositoryMoq.Object, taskHelper, claimedDistributedLease, resourceNameBuilder, resourcePoolDefinitionStoreMoq.Object, resourceContinuationOperations, jobSchedulerFeatureFlags, configurationReader);
             var watchOrphanedPoolTask = watchOrphanedPoolTaskMoq.Object;
             
             var response = watchOrphanedPoolTask.DeleteResourceAsync(assignedResourceRecord.Id, logger);
