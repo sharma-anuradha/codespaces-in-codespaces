@@ -68,7 +68,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             if (record == null && value == null)
             {
                 // User is trying to delete a non-existent feature flag.
-                throw new Exception($"System configuration setting for {id} not found.");
+                await stdout.WriteLineAsync($"System configuration setting for {id} not found, so cannot remove");
+                return;
             }
 
             if (Verbose || DryRun)
