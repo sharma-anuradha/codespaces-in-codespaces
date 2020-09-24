@@ -206,7 +206,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
-            services.AddCapacityManager(develperPersonalStamp: developerPersonalStampSettings.DeveloperStamp, mocksSettings: null);
+            services.AddCapacityManager(developerPersonalStamp: developerPersonalStampSettings.DeveloperStamp, mocksSettings: null);
             ConfigureSecretsProvider(services);
             ConfigureCommonServices(services, AppSettings, AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto, out var loggingBaseValues);
 

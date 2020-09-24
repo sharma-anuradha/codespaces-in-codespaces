@@ -21,16 +21,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// Adds the capacity manager to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>
-        /// <param name="develperPersonalStamp">True to set developer personal stamp.</param>
+        /// <param name="developerPersonalStamp">True to set developer personal stamp.</param>
         /// <param name="mocksSettings">The mocks settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddCapacityManager(
             this IServiceCollection services,
-            bool develperPersonalStamp,
+            bool developerPersonalStamp,
             MocksSettings mocksSettings = null)
         {
             // Capacity Settings
-            if (!develperPersonalStamp)
+            if (!developerPersonalStamp)
             {
                 services.AddSingleton(new CapacitySettings());
             }
