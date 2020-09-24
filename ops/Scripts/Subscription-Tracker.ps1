@@ -65,6 +65,21 @@ function ConvertTo-AzureLocation {
     throw "Unsupported region: $Region"
 }
 
+function ConvertTo-VsoUtilEnvironment {
+    [CmdletBinding()]
+    param(
+        [string]$env
+    )
+
+    switch ($env.ToLowerInvariant()) {
+        "dev" { return "Development" }
+        "ppe" { return "Staging" }
+        "prod" { return "Production" }
+    }
+
+    throw "Unsupported environment: $env"
+}
+
 function ConvertTo-AzureRegion {
     [CmdletBinding()]
     param(
@@ -688,7 +703,7 @@ function Test-VnetInjection {
                 $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
             } else {
 
-                if ($sub.serviceType -eq [ServiceType]::Compute -or $sub.serviceType -eq [ServiceType]::Network) {                    
+                if ($sub.serviceType -eq [ServiceType]::Compute -or $sub.serviceType -eq [ServiceType]::Network) {
                     if ($sub.environment -eq "dev") {
                         # The Visual Studio Services API Dev first party appid.
                         $appId = "48ef7923-268f-473d-bcf1-07f0997961f4";
@@ -699,7 +714,7 @@ function Test-VnetInjection {
 
                     $firstpartyapp = az ad sp list --filter "appId eq '$appId'" --query [0].objectId -o tsv
                     if ($null -eq $firstpartyapp) {
-                        Write-Error "Unable to find AppId: '$appId'" 
+                        Write-Error "Unable to find AppId: '$appId'"
                     } else {
                         $role = az role assignment list --role "Contributor" --assignee $firstpartyapp -o json | ConvertFrom-Json
                         if ($null -eq  $role) {
@@ -807,7 +822,7 @@ function Enable-Subscription {
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
         [Object[]]$Subscriptions,
-        [string]$vsoUtilPath = "$PSScriptRoot\..\..\bin\debug\VsoUtil\VsoUtil.dll"
+        [string]$vsoUtilDirectory = "$PSScriptRoot\..\..\bin\debug\VsoUtil\"
     )
 
     Process {
@@ -822,7 +837,11 @@ function Enable-Subscription {
                 }
             }
 
-            dotnet $vsoUtilPath enable-subscription --subscription $sub.subscriptionId $options
+            $env = ConvertTo-VsoUtilEnvironment -env $sub.environment
+
+            Push-Location $vsoUtilDirectory
+            dotnet VsoUtil.dll enable-subscription --verbose --location $sub.location --env $env --subscription $sub.subscriptionId $options
+            Pop-Location
         }
     }
 }
