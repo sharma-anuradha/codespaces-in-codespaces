@@ -308,6 +308,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddSingleton<ITriggerWarmup, TriggerWarmup>();
             services.AddSingleton<ITaskHelper, TaskHelper>();
             services.AddSingleton<IImageUrlGenerator, BlobImageUrlGenerator>();
+            services.AddSingleton<IInitScriptUrlGenerator, InitScriptUrlGenerator>();
 
             // Setup configuration
             services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(

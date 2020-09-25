@@ -1,4 +1,4 @@
-﻿// <copyright file="WindowsVirtualMachineStrategyBase.cs" company="Microsoft">
+// <copyright file="WindowsVirtualMachineStrategyBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -28,31 +28,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
     public abstract class WindowsVirtualMachineStrategyBase : ICreateVirtualMachineStrategy
     {
         /// <summary>
-        /// Name of the shim script which initializes a windows vm.
-        /// The source of the shim script lives in the vsclk-cluster repository.
-        /// When updated it release scripts for vsclk-cluster should be run on dev/ppe/prod to update the script on storage.
-        /// Ideally no changes should be made to the shim script. Any init time additions should go to
-        /// WindowsInit.ps1 in the Cascade repo.
-        /// </summary>
-        private const string WindowsInitShimScript = "WindowsInitShim.ps1";
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="WindowsVirtualMachineStrategyBase"/> class.
         /// </summary>
         /// <param name="clientFactory">client factory.</param>
         /// <param name="queueProvider">queue provider.</param>
         /// <param name="templateName">vm template name.</param>
-        /// <param name="controlPlaneAzureResourceAccessor">control plane azure resource accessor.</param>
+        /// <param name="initScriptUrlGenerator">Init script url generator.</param>
         public WindowsVirtualMachineStrategyBase(
             IClientFactory clientFactory,
             IQueueProvider queueProvider,
             string templateName,
-            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
+            IInitScriptUrlGenerator initScriptUrlGenerator)
         {
-            ClientFactory = clientFactory;
-            QueueProvider = queueProvider;
-            ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
-            VirtualMachineTemplateJson = GetVmTemplate(templateName);
+            ClientFactory = Requires.NotNull(clientFactory, nameof(clientFactory));
+            QueueProvider = Requires.NotNull(queueProvider, nameof(queueProvider));
+            VirtualMachineTemplateJson = Requires.NotNull(GetVmTemplate(templateName), nameof(templateName));
+            InitScriptUrlGenerator = Requires.NotNull(initScriptUrlGenerator, nameof(initScriptUrlGenerator));
         }
 
         /// <inheritdoc/>
@@ -68,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// </summary>
         protected IQueueProvider QueueProvider { get; }
 
-        private IControlPlaneAzureResourceAccessor ControlPlaneAzureResourceAccessor { get; }
+        private IInitScriptUrlGenerator InitScriptUrlGenerator { get; }
 
         /// <inheritdoc/>
         public abstract bool Accepts(VirtualMachineProviderCreateInput input);
@@ -94,11 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                 var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription, logger.NewChildLogger());
                 await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
 
-                // Get information about the storage account to pass into the custom script.
-                var storageInfo = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(input.AzureVmLocation);
-                var storageAccountName = storageInfo.Item1;
-                var storageAccountAccessKey = storageInfo.Item2;
-                var vmInitScriptFileUri = $"https://{storageAccountName}.blob.core.windows.net/windows-init-shim/{WindowsInitShimScript}";
+                var vmInitScriptFileUri = await InitScriptUrlGenerator.GetInitScriptUrlAsync(input.AzureVmLocation, logger);
                 var userName = "vsonline";
 
                 // Required parameters forwarded to the VM agent init script.
@@ -109,8 +96,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                      input,
                      virtualMachineName,
                      resourceTags,
-                     storageAccountName,
-                     storageAccountAccessKey,
                      vmInitScriptFileUri,
                      userName,
                      initScriptParametersBlob,
@@ -212,8 +197,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
           VirtualMachineProviderCreateInput input,
           string virtualMachineName,
           IDictionary<string, string> resourceTags,
-          string storageAccountName,
-          string storageAccountAccessKey,
           string vmInitScriptFileUri,
           string userName,
           IDictionary<string, object> initScriptParametersBlob,

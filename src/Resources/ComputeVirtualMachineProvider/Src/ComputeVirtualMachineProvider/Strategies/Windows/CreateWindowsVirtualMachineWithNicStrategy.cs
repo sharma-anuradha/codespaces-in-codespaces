@@ -1,4 +1,4 @@
-﻿// <copyright file="CreateWindowsVirtualMachineWithNicStrategy.cs" company="Microsoft">
+// <copyright file="CreateWindowsVirtualMachineWithNicStrategy.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -28,12 +28,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <param name="clientFactory">client factory.</param>
         /// <param name="queueProvider">queue provider.</param>
         /// <param name="templateName">vm template name.</param>
-        /// <param name="controlPlaneAzureResourceAccessor">control plane azure resource accessor.</param>
+        /// <param name="initScriptUrlGenerator">Init script url generator.</param>
         public CreateWindowsVirtualMachineWithNicStrategy(
             IAzureClientFPAFactory clientFactory,
             IQueueProvider queueProvider,
-            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
-            : base(clientFactory, queueProvider, TemplateName, controlPlaneAzureResourceAccessor)
+            IInitScriptUrlGenerator initScriptUrlGenerator)
+            : base(clientFactory, queueProvider, TemplateName, initScriptUrlGenerator)
         {
         }
 
@@ -50,8 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
              VirtualMachineProviderCreateInput input,
              string virtualMachineName,
              IDictionary<string, string> resourceTags,
-             string storageAccountName,
-             string storageAccountAccessKey,
              string vmInitScriptFileUri,
              string userName,
              IDictionary<string, object> initScriptParametersBlob,
@@ -82,8 +80,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                     { "resourceTags", new Dictionary<string, object>() { { VirtualMachineConstants.Key, resourceTags } } },
                     { "vmInitScriptFileUri", new Dictionary<string, object>() { { VirtualMachineConstants.Key, vmInitScriptFileUri } } },
                     { PayloadExtensions.VMAgentBlobUrl, new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.VmAgentBlobUrl } } },
-                    { "vmInitScriptStorageAccountName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, storageAccountName } } },
-                    { "vmInitScriptStorageAccountKey", new Dictionary<string, object>() { { VirtualMachineConstants.Key, storageAccountAccessKey } } },
                     { "vmInitScriptBase64ParametersBlob", new Dictionary<string, object>() { { VirtualMachineConstants.Key, b64ParametersBlob } } },
                     { "networkInterfaceName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, networkInterface.AzureResourceInfo.Name } } },
                     { "networkInterfaceSub", new Dictionary<string, object>() { { VirtualMachineConstants.Key, networkInterface.AzureResourceInfo.SubscriptionId } } },

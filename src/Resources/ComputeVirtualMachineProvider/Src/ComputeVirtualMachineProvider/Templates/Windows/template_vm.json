@@ -35,12 +35,6 @@
     "vmInitScriptFileUri": {
       "type": "string"
     },
-    "vmInitScriptStorageAccountName": {
-      "type": "string"
-    },
-    "vmInitScriptStorageAccountKey": {
-      "type": "securestring"
-    },
     "vmAgentBlobUrl": {
       "type": "string"
     },
@@ -163,9 +157,7 @@
           "properties": {
             "autoUpgradeMinorVersion": true,
             "protectedSettings": {
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'WindowsInitShim.ps1 ', ' -vmAgentBlobUrl \"', parameters('vmAgentBlobUrl'), '\" -base64ParametersBlob \"', parameters('vmInitScriptBase64ParametersBlob'), '\"')]",
-              "storageAccountName": "[parameters('vmInitScriptStorageAccountName')]",
-              "storageAccountKey": "[parameters('vmInitScriptStorageAccountKey')]"
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'WindowsInitShim.ps1 ', ' -vmAgentBlobUrl \"', parameters('vmAgentBlobUrl'), '\" -base64ParametersBlob \"', parameters('vmInitScriptBase64ParametersBlob'), '\"')]"
             },
             "publisher": "Microsoft.Compute",
             "settings": {
