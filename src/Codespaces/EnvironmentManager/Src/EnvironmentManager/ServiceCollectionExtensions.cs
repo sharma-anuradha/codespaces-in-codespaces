@@ -131,6 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IJobHandlerTarget, ShutdownEnvironmentContinuationJobHandler>();
             services.AddSingleton<IJobHandlerTarget, SoftDeleteEnvironmentJobHandler>();
             services.AddSingleton<IJobHandlerTarget, SuspendEnvironmentJobHandler>();
+            services.AddSingleton<IJobHandlerTarget, ConfirmOrphanedSystemResourceJobHandler>();
 
             // The environment manager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();

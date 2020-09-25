@@ -52,7 +52,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             WatchOrphanedVmAgentImagesTask watchOrphanedVmAgentImagesTask,
             WatchOrphanedStorageImagesTask watchOrphanedStorageImagesTask,
             WatchOrphanedComputeImagesTask watchOrphanedComputeImagesTask,
-            IWatchOrphanedSystemResourceTask watchOrphanedSystemResourceTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             ITaskHelper taskHelper,
@@ -73,7 +72,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             WatchOrphanedVmAgentImagesTask = watchOrphanedVmAgentImagesTask;
             WatchOrphanedStorageImagesTask = watchOrphanedStorageImagesTask;
             WatchOrphanedComputeImagesTask = watchOrphanedComputeImagesTask;
-            WatchOrphanedSystemResourceTask = watchOrphanedSystemResourceTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
@@ -100,8 +98,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private WatchOrphanedStorageImagesTask WatchOrphanedStorageImagesTask { get; }
 
         private WatchOrphanedComputeImagesTask WatchOrphanedComputeImagesTask { get; }
-
-        private IWatchOrphanedSystemResourceTask WatchOrphanedSystemResourceTask { get; }
 
         private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
@@ -226,15 +222,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Offset to help distribute inital load of recurring tasks
             await Task.Delay(Random.Next(5000, 7500));
 #endif
-
-            // Job: Watch Orphaned System Resources
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.WatchOrphanedSystemResourceTask}_run",
-                (childLogger) => WatchOrphanedSystemResourceTask.RunTaskAsync(TimeSpan.FromHours(2), childLogger),
-                TimeSpan.FromMinutes(20));
-
-            // Offset to help distribute inital load of recurring tasks
-            await Task.Delay(Random.Next(5000, 7500));
 
             // Job: Delete Artifact images
             TaskHelper.RunBackgroundLoop(

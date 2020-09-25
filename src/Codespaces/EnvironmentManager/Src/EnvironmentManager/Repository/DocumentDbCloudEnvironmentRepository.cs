@@ -353,5 +353,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger.NewChildLogger());
             return items;
         }
+
+        /// <inheritdoc />
+        public async Task<CloudEnvironment> GetEnvironmentUsingResource(string resourceId, ResourceType resourceType, IDiagnosticsLogger logger)
+        {
+            if (resourceType != ResourceType.ComputeVM &&
+                resourceType != ResourceType.StorageFileShare &&
+                resourceType != ResourceType.StorageArchive &&
+                resourceType != ResourceType.OSDisk &&
+                resourceType != ResourceType.Snapshot)
+            {
+                throw new ArgumentException($"Resource Type {resourceType} is not handled");
+            }
+
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c
+                FROM c
+                WHERE
+                (
+                    (@targetResourceType = @computeVmResourceType and c.compute != null and c.compute.resourceId = @targetResourceId) or
+                    (@targetResourceType = @storageFileShareResourceType and c.storage != null and c.storage.resourceId = @targetResourceId) or
+                    (@targetResourceType = @storageArchiveResourceType and c.storage != null and c.storage.resourceId = @targetResourceId) or
+                    (@targetResourceType = @osDiskResourceType and c.osDisk != null and c.osDisk.resourceId = @targetResourceId) or
+                    (@targetResourceType = @snapshotResourceType and c.osDiskSnapshot != null and c.osDiskSnapshot.resourceId = @targetResourceId)
+                )",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@count", Value = 1 },
+                    new SqlParameter { Name = "@targetResourceId", Value = resourceId },
+                    new SqlParameter { Name = "@targetResourceType", Value = resourceType },
+                    new SqlParameter { Name = "@computeVmResourceType", Value = ResourceType.ComputeVM },
+                    new SqlParameter { Name = "@storageFileShareResourceType", Value = ResourceType.StorageFileShare },
+                    new SqlParameter { Name = "@storageArchiveResourceType", Value = ResourceType.StorageArchive },
+                    new SqlParameter { Name = "@osDiskResourceType", Value = ResourceType.OSDisk },
+                    new SqlParameter { Name = "@snapshotResourceType", Value = ResourceType.Snapshot },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger.NewChildLogger());
+            return items.FirstOrDefault();
+        }
     }
 }

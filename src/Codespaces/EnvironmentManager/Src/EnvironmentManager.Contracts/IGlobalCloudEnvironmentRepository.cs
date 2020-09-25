@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -102,5 +103,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Task<IEnumerable<CloudEnvironment>> GetAllEnvironmentsInSubscriptionAsync(
             string subscriptionId,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the environment which references the given resource id if it exists.
+        /// </summary>
+        /// <param name="resourceId">The resource id</param>
+        /// <param name="resourceType">The resource type</param>
+        /// <param name="logger">The logger</param>
+        /// <returns>The environment if one exists</returns>
+        Task<CloudEnvironment> GetEnvironmentUsingResource(string resourceId, ResourceType resourceType, IDiagnosticsLogger logger);
     }
 }

@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public const string DefaultQueueId = "jobhandler-suspend-environment";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SoftDeleteEnvironmentJobHandler"/> class.
+        /// Initializes a new instance of the <see cref="SuspendEnvironmentJobHandler"/> class.
         /// </summary>
         /// <param name="environmentManager">Environment manager instance.</param>
         /// <param name="currentIdentityProvider">Target identity provider.</param>

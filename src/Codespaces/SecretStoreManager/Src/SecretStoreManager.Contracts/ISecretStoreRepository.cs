@@ -69,5 +69,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         /// <param name="logger">The Logger.</param>
         /// <returns>The secret store document.</returns>
         Task<SecretStore> GetAsync(string id, string planId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the secret store which references the given KeyVault resource if one exists.
+        /// </summary>
+        /// <param name="resourceId">The KeyVault resource id.</param>
+        /// <param name="logger">The Logger.</param>
+        /// <returns>The secret store if it exists.</returns>
+        Task<SecretStore> GetSecretStoreUsingResource(string resourceId, IDiagnosticsLogger logger);
     }
 }

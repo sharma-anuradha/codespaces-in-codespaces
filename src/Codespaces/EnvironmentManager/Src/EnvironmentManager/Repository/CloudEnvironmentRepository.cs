@@ -517,6 +517,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             }
         }
 
+        /// <inheritdoc/>
+        public async Task<CloudEnvironment> GetEnvironmentUsingResource(string resourceId, ResourceType resourceType, IDiagnosticsLogger logger)
+        {
+            if (rolloutStatus == RolloutStatus.Phase1)
+            {
+                // Note: We merge the global repository results in case the regional repository hasn't been (fully) populated by the migration yet.
+                var globalEnvironment = await GlobalRepository.GetEnvironmentUsingResource(resourceId, resourceType, logger.NewChildLogger());
+
+                if (globalEnvironment != null)
+                {
+                    return globalEnvironment;
+                }
+
+                var regionalEnvironment = await RegionalRepository.GetEnvironmentUsingResource(resourceId, resourceType, logger.NewChildLogger());
+
+                return regionalEnvironment;
+            }
+            else
+            {
+                return await RegionalRepository.GetEnvironmentUsingResource(resourceId, resourceType, logger.NewChildLogger());
+            }
+        }
+
         private IEnumerable<CloudEnvironment> MergeCloudEnvironments(IEnumerable<CloudEnvironment> globalEnvironments, IEnumerable<CloudEnvironment> regionalEnvironments)
         {
             var environments = new Dictionary<string, CloudEnvironment>();

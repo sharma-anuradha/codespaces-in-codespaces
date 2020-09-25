@@ -186,5 +186,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="pageResultsCallback">THe page results callback.</param>
         /// <returns>An awaitable task.</returns>
         Task ForEachEnvironmentWithComputeOrStorageAsync(AzureLocation controlPlaneLocation, string shardId, IDiagnosticsLogger logger, Func<CloudEnvironment, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<CloudEnvironment>, IDiagnosticsLogger, Task> pageResultsCallback = null);
+
+        /// <summary>
+        /// Gets the environment which references the given resource id if it exists.
+        /// </summary>
+        /// <param name="resourceId">The resource id</param>
+        /// <param name="resourceType">The resource type</param>
+        /// <param name="logger">The logger</param>
+        /// <returns>The environment if one exists</returns>
+        Task<CloudEnvironment> GetEnvironmentUsingResource(string resourceId, ResourceType resourceType, IDiagnosticsLogger logger);
     }
 }

@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Producers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Strategies;
@@ -89,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobHandler, DeleteAzureResourceJobHandler>();
             services.AddSingleton<IJobHandler, LogSystemResourceStateJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedPoolJobHandler>();
+            services.AddSingleton<IJobHandler, WatchOrphanedSystemResourceJobHandler>();
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
@@ -147,10 +149,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedAzureResourceJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, LogSystemResourceStateJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedPoolJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, GuidShardJobProducer>();
+
+            services.AddSingleton<IGuidShardJobScheduleDetails, WatchOrphanedSystemResourceJobHandler>();
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
-            services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
             services.AddSingleton<WatchOrphanedComputeImagesTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
            

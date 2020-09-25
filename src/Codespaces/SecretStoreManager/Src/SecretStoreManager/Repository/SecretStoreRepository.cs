@@ -6,9 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts;
 
@@ -121,6 +123,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Reposit
 
             var documentDbKey = ConstructDocumentDbKey(id, planId);
             return await GetAsync(documentDbKey, logger);
+        }
+
+        public async Task<SecretStore> GetSecretStoreUsingResource(string resourceId, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c
+                FROM c
+                WHERE c.secretResource != null and  c.secretResource.resourceId = @targetResourceId",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@count", Value = 1 },
+                    new SqlParameter { Name = "@targetResourceId", Value = resourceId },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<SecretStore>(uri, query, feedOptions).AsDocumentQuery(), logger.NewChildLogger());
+            return items.FirstOrDefault();
         }
 
         private DocumentDbKey ConstructDocumentDbKey(string id, string planId)
