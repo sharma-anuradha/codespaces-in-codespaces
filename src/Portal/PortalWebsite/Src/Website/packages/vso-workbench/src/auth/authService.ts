@@ -26,6 +26,12 @@ import { config } from '../config/config';
 
 const trace = createTrace('vso-workbench-auth-service');
 
+const isGitHubNgrokHost = (host: string) => {
+    const hostRegex = /^ghdev\-[\w\-]+\.ngrok\.io$/i;
+
+    return hostRegex.test(host.trim());
+};
+
 export class AuthService {
     private isInternalUser = false;
     private eventsEventEmitter = new Emitter<TAuthServiceEvent>();
@@ -58,8 +64,19 @@ export class AuthService {
             const { host: tokenHost } = token;
             const { environment } = config;
 
+            // allow github.com domain
+            if (tokenHost === 'github.com') {
+                return true;
+            }
+
+            // allow .review-lab.github.com domains (functionally they are the same as PROD)
+            if (tokenHost.endsWith('.review-lab.github.com')) {
+                return true;
+            }
+
+            // allow github ngrok domains if not in PROD otherwise
             return (
-                tokenHost === 'github.com' || (environment === 'local' && tokenHost.endsWith('.ngrok.io'))
+                environment !== 'production' && isGitHubNgrokHost(tokenHost)
             );
         });
 
