@@ -61,11 +61,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                         .FluentAddBaseValue("ResourceId", resourceId)
                         .FluentAddBaseValue("ResourceType", resourceType);
 
-                    var resourceIsReferenced = await CheckResourceReferencesByTypeAsync(resourceId, resourceType, childLogger);           
+                    var resourceIsReferenced = await CheckResourceReferencesByTypeAsync(resourceId, resourceType, childLogger);
+
+                    childLogger.FluentAddBaseValue("ResourceIsReferenced", resourceIsReferenced);
+
                     if (!resourceIsReferenced)
                     {
-                        childLogger.FluentAddBaseValue("ResourceIsOrphaned", true);
-
                         await ResourceBroker.DeleteAsync(Guid.Empty, Guid.Parse(resourceId), childLogger.NewChildLogger());                        
                     }
                 });
@@ -96,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
             var resourceIsReferenced = environment != null;
 
-            if (!resourceIsReferenced)
+            if (resourceIsReferenced)
             {
                 logger.FluentAddBaseValue("EnvironmentReferencingResource", environment.Id);
             }

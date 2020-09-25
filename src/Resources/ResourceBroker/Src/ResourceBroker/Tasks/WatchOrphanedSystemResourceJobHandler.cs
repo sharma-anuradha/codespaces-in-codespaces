@@ -118,7 +118,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddValue("ResourceCleanupStatus", resource.CleanupStatus)
                         .FluentAddValue("ResourceCleanupReason", resource.CleanupReason);
 
-                    var poolDefinition = await ResourcePoolDefinitionStore.MapPoolCodeToResourceSku(resource.PoolReference.Code);
+                    var poolReferenceCode = resource.PoolReference?.Code;
+
+                    var poolDefinition = poolReferenceCode != null
+                        ? await ResourcePoolDefinitionStore.MapPoolCodeToResourceSku(resource.PoolReference.Code)
+                        : null;
+
                     if (poolDefinition != null)
                     {
                         childLogger.FluentAddValue(ResourceLoggingPropertyConstants.PoolSkuName, poolDefinition.Details.SkuName);
@@ -132,7 +137,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                     // Pause to rate limit ourselves
                     await Task.Delay(QueryDelay);
-                });
+                },
+                swallowException: true);
         }
 
         private static JobPayload CreateRequestPayload(ResourceRecord resource, Guid correlationId)
