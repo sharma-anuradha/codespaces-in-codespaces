@@ -1,10 +1,17 @@
-trigger:
-- master
-
 pool:
   vmImage: 'windows-latest'
 
 steps:
+
+- pwsh: |
+    Install-Module -Name Az.Accounts -Scope CurrentUser -Force -AllowClobber
+    Install-Module -Name Az.Keyvault -Scope CurrentUser -Force -AllowClobber
+    Install-Module -Name Az.Resources -Scope CurrentUser -Force -AllowClobber
+  displayName: Install Azure PowerShell Modules
+
+- pwsh: npm install -g ts-node
+  displayName: Install ts-node
+
 - pwsh: .\Update-GeneratedFiles.ps1 -FailIfFilesModified -UpdateAppSettings -UpdateComponents
   displayName: Check generated files
-  workingDirecotry: $(build.sourcesDirectory)\ops\Scripts
+  workingDirectory: $(build.sourcesDirectory)\ops\Scripts
