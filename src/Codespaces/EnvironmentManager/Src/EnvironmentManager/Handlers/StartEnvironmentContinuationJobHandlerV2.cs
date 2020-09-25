@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceB
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Newtonsoft.Json;
@@ -54,8 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             IWorkspaceManager workspaceManager,
             IServiceProvider serviceProvider,
             IResourceSelectorFactory resourceSelector,
-            IEnvironmentSuspendAction environmentSuspendAction,
-            IEnvironmentForceSuspendAction environmentForceSuspendAction,
+            IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             IJobQueueProducerFactory jobQueueProducerFactory)
             : base(cloudEnvironmentRepository, jobQueueProducerFactory)
         {
@@ -65,9 +65,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             WorkspaceManager = Requires.NotNull(workspaceManager, nameof(workspaceManager));
             ServiceProvider = Requires.NotNull(serviceProvider, nameof(serviceProvider));
             ResourceSelector = Requires.NotNull(resourceSelector, nameof(resourceSelector));
+
+            Requires.NotNull(environmentRepairWorkflows, nameof(environmentRepairWorkflows));
+            EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
             HeartbeatRepository = Requires.NotNull(heartbeatRepository, nameof(heartbeatRepository));
-            EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(environmentForceSuspendAction));
-            EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
         }
 
         /// <inheritdoc/>
@@ -91,11 +92,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
         private IResourceSelectorFactory ResourceSelector { get; }
 
+        private Dictionary<EnvironmentRepairActions, IEnvironmentRepairWorkflow> EnvironmentRepairWorkflows { get; }
+
         private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
-
-        private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
-
-        private IEnvironmentSuspendAction EnvironmentSuspendAction { get; }
 
         /// <inheritdoc/>
         protected override StartEnvironmentContinuationInputState GetStateFromPayload(StartEnvironmentContinuationInput payload)
@@ -203,14 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 $"{LogBaseName}_force_suspend",
                 async (childLogger) =>
                 {
-                    if (record.Value.State == CloudEnvironmentState.Queued)
-                    {
-                        await EnvironmentForceSuspendAction.RunAsync(Guid.Parse(record.Value.Id), childLogger.NewChildLogger());
-                    }
-                    else
-                    {
-                        await EnvironmentSuspendAction.RunAsync(Guid.Parse(record.Value.Id), false, childLogger.NewChildLogger());
-                    }
+                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(record.Value, childLogger);
 
                     await base.FailOperationCleanupCoreAsync(operationInput, record, trigger, logger);
                 },
