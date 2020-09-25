@@ -11,9 +11,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -91,18 +91,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IResourceAllocationManager, ResourceAllocationManager>();
             services.AddSingleton<IWorkspaceManager, WorkspaceManager>();
 
-            services.AddSingleton<ForceSuspendEnvironmentWorkflow>();
-            services.AddSingleton<IForceSuspendEnvironmentWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());
-            services.AddSingleton<IEnvironmentRepairWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());
-
-            services.AddSingleton<FailEnvironmentWorkflow>();
-            services.AddSingleton<IFailEnvironmentWorkflow>(x => x.GetRequiredService<FailEnvironmentWorkflow>());
-            services.AddSingleton<IEnvironmentRepairWorkflow>(x => x.GetRequiredService<FailEnvironmentWorkflow>());
-
-            services.AddSingleton<InactiveEnvironmentWorkflow>();
-            services.AddSingleton<IInactiveEnvironmentWorkflow>(x => x.GetRequiredService<InactiveEnvironmentWorkflow>());
-            services.AddSingleton<IEnvironmentRepairWorkflow>(x => x.GetRequiredService<InactiveEnvironmentWorkflow>());
-
             services.AddSingleton<HeartbeatMonitorContinuationHandler>();
             services.AddSingleton<IHeartbeatMonitorContinuationHandler>(x => x.GetRequiredService<HeartbeatMonitorContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<HeartbeatMonitorContinuationHandler>());
@@ -156,6 +144,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IEnvironmentSuspendAction, EnvironmentSuspendAction>();
             services.AddSingleton<IEnvironmentForceSuspendAction, EnvironmentForceSuspendAction>();
             services.AddSingleton<IEnvironmentSoftDeleteAction, EnvironmentSoftDeleteAction>();
+            services.AddSingleton<IEnvironmentFailAction, EnvironmentFailAction>();
+            services.AddSingleton<IEnvironmentUnavailableAction, EnvironmentUnavailableAction>();
 
             // The environment manager action validator
             services.AddSingleton<IEnvironmentActionValidator, EnvironmentActionValidator>();

@@ -12,7 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -37,12 +37,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentMonitorSettings">Environment monitor settings.</param>
         public EnvironmentStateTransitionMonitorContinuationHandler(
             ICloudEnvironmentRepository environmentRepository,
-            IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             ILatestHeartbeatMonitor latestHeartbeatMonitor,
             IServiceProvider serviceProvider,
+            IEnvironmentSuspendAction environmentSuspendAction,
+            IEnvironmentForceSuspendAction environmentForceSuspendAction,
+            IEnvironmentFailAction environmentFailAction,
             EnvironmentMonitorSettings environmentMonitorSettings)
-            : base(environmentRepository, environmentRepairWorkflows, latestHeartbeatMonitor, serviceProvider, environmentMonitorSettings)
+            : base(environmentRepository, latestHeartbeatMonitor, serviceProvider, environmentMonitorSettings)
         {
+            EnvironmentSuspendAction = environmentSuspendAction;
+            EnvironmentForceSuspendAction = environmentForceSuspendAction;
+            EnvironmentFailAction = environmentFailAction;
         }
 
         /// <inheritdoc/>
@@ -50,6 +55,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         /// <inheritdoc/>
         protected override string DefaultTarget => DefaultQueueTarget;
+
+        private IEnvironmentSuspendAction EnvironmentSuspendAction { get; }
+
+        private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
+
+        private IEnvironmentFailAction EnvironmentFailAction { get; }
 
         /// <inheritdoc/>
         protected override ContinuationResult CreateContinuationResult(EnvironmentStateTransitionInput operationInput, IDiagnosticsLogger logger)
@@ -102,9 +113,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             switch (environment.State)
             {
                 case CloudEnvironmentState.Starting:
+                    // attempt to gracefully suspend this environment (which will kick off the suspend environment monitor as well)
+                    await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
+
+                    // state transition has timed out, return next input
+                    return CreateFinalResult(OperationState.Failed, "TimeoutInStateTransition");
+
                 case CloudEnvironmentState.ShuttingDown:
                     // Timeout Kick off force shutdown to repair environment.
-                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
+                    await EnvironmentForceSuspendAction.RunAsync(Guid.Parse(environment.Id), logger.NewChildLogger());
 
                     // state transition has timed out, return next input
                     return CreateFinalResult(OperationState.Failed, "TimeoutInStateTransition");
@@ -116,12 +133,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     if (input.TargetState == CloudEnvironmentState.Provisioning)
                     {
                         // Timeout Kick off fail to cleanup environment.
-                        await EnvironmentRepairWorkflows[EnvironmentRepairActions.Fail].ExecuteAsync(environment, logger.NewChildLogger());
+                        await EnvironmentFailAction.RunAsync(Guid.Parse(environment.Id), "TimeoutInStateTransition", logger.NewChildLogger());
                     }
                     else
                     {
                         // Timeout Kick off force shutdown to repair environment.
-                        await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
+                        await EnvironmentForceSuspendAction.RunAsync(Guid.Parse(environment.Id), logger.NewChildLogger());
                     }
 
                     // state transition has timed out, return next input
@@ -139,7 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (environment.StateTimeout == null || currentTimestamp > environment.StateTimeout.Value)
             {
                 // fail the environment because either 1.) the timeout has expired, or 2.) no job result was ever returned.
-                await EnvironmentRepairWorkflows[EnvironmentRepairActions.Fail].ExecuteAsync(environment, logger.NewChildLogger());
+                await EnvironmentFailAction.RunAsync(Guid.Parse(environment.Id), "TimeoutInStateTransition", logger.NewChildLogger());
 
                 // state transition has timed out, return next input
                 return CreateFinalResult(OperationState.Failed, "TimeoutInStateTransition");
