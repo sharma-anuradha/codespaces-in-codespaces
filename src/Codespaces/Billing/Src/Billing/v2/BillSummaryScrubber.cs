@@ -102,10 +102,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                         if (request.EnableArchiving)
                         {
-                            // Archive from oldest to newest.
-                            foreach (var olderStateChanges in olderEnvironmentStateChanges.OrderBy(x => x.Time))
+                            // Archive eligible state changes from oldest to newest.
+                            foreach (var stateChange in olderEnvironmentStateChanges.OrderBy(x => x.Time))
                             {
-                                await BillingArchivalManager.MigrateEnvironmentStateChange(olderStateChanges, childLogger.NewChildLogger());
+                                await BillingArchivalManager.MigrateEnvironmentStateChange(stateChange, childLogger.NewChildLogger());
                             }
                         }
                     }
@@ -304,7 +304,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         }
                     }
 
-                    return Task.FromResult(eventsThatAreOld.AsEnumerable());
+                    // filter list returned (if any)
+                    var obsoleteStateChanges = eventsThatAreOld
+                        .Where(x => x.NewValue != nameof(CloudEnvironmentState.Deleted) &&
+                                    x.NewValue != nameof(CloudEnvironmentState.Moved));
+
+                    return Task.FromResult(obsoleteStateChanges);
                 });
         }
     }
