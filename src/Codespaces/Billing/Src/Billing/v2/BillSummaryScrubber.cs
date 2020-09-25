@@ -296,9 +296,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             continue;
                         }
 
-                        // We have the latest billable state. Let's make sure it's not already a deleted environment.
+                        // We have the latest billable state. See if it is a terminal state.
                         var lastState = lastEnvEventChange.NewValue;
-                        if (lastState == nameof(CloudEnvironmentState.Deleted))
+                        if (lastState == nameof(CloudEnvironmentState.Deleted) || lastState == nameof(CloudEnvironmentState.Moved))
                         {
                             eventsThatAreOld.AddRange(env);
                         }
