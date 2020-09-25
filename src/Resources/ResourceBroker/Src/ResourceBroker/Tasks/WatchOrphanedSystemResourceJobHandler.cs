@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public string QueueId => ResourceJobQueueConstants.GenericQueueName;
 
         // Runs every 2 hours for up to 20 min
-        public (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => ("* 0/2 * * *", TimeSpan.FromMinutes(20));
+        public (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => ("0 0/2 * * *", TimeSpan.FromMinutes(20));
 
         public Type PayloadTagType => typeof(WatchOrphanedSystemResourceJobHandler);
 
