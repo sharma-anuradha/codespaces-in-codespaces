@@ -34,6 +34,8 @@ jest.mock('../../utils/setAuthCookie', () => {
     };
 });
 
+jest.mock('../../services/ExperimentationService');
+
 describe('actions - init', () => {
     let store: MockStore;
 

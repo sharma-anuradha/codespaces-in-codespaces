@@ -15,12 +15,15 @@ export const PortForwardingSingInPage: React.FunctionComponent<SignInProps> = (p
     const query = props.location.search;
     const portString = new URLSearchParams(props.location.search).get('port');
 
-    const { token, portForwardingDomainTemplate } = useSelector((state: ApplicationState) => {
-        return {
-            token: state.authentication.token,
-            portForwardingDomainTemplate: state.configuration?.portForwardingDomainTemplate,
-        };
-    });
+    const { token, portForwardingDomainTemplate, portForwardingServiceEnabled } = useSelector(
+            (state: ApplicationState) => {
+                return {
+                    token: state.authentication.token,
+                    portForwardingServiceEnabled: state.configuration?.portForwardingServiceEnabled,
+                    portForwardingDomainTemplate: state.configuration?.portForwardingDomainTemplate,
+                };
+            }
+        );
 
     const postUrl = new URL(
         `/authenticate-codespace/${environmentId}${query}`,
@@ -46,12 +49,17 @@ export const PortForwardingSingInPage: React.FunctionComponent<SignInProps> = (p
         return <Redirect to={`/environment/${environmentId}`} />;
     }
 
+    const featureFlags = JSON.stringify({
+        portForwardingServiceEnabled,
+    });
+
     return (
         <PortalLayout hideNavigation>
             <p className='vsonline-port-forwarding__status'>Connecting to the forwarded port...</p>
 
             <form action={postUrl.href} method='POST' ref={formRef}>
                 <input type='hidden' name='token' value={token} />
+                <input type='hidden' name='featureFlags' value={featureFlags} />
             </form>
         </PortalLayout>
     );

@@ -13,6 +13,8 @@ import {
 } from '../../utils/testUtils';
 import { ServiceContentError } from '../middleware/useWebClient';
 
+jest.mock('../../services/ExperimentationService');
+
 describe('fetchConfiguration', () => {
     let store: MockStore;
 

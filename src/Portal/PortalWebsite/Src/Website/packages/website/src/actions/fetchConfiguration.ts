@@ -1,4 +1,5 @@
 import { getServiceConfiguration, IConfiguration } from '../services/configurationService';
+import { getExpService } from '../services/ExperimentationService';
 
 import { action } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
@@ -27,7 +28,19 @@ export async function fetchConfiguration() {
         dispatch(fetchConfigurationAction());
         const configuration = await getServiceConfiguration();
 
-        dispatch(fetchConfigurationSuccessAction(configuration));
+        const expService = getExpService();
+        const isPortForwardingServiceFlightEnabled = await expService.isFlightEnabledAsync(
+            `portForwardingServiceEnabled-${configuration.environment}`
+        );
+
+        dispatch(
+            fetchConfigurationSuccessAction({
+                ...configuration,
+                portForwardingServiceEnabled:
+                    configuration.portForwardingServiceEnabled &&
+                    isPortForwardingServiceFlightEnabled,
+            })
+        );
 
         return configuration;
     } catch (err) {
