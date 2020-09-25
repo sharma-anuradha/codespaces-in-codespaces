@@ -94,7 +94,7 @@ config:
   gitHubPortForwardingManagementEndpoint: "https://management.apps.ppe.codespaces.githubusercontent.com/api/v1/PortForwardingConnections"
   portForwardingEnableEnvironmentEndpoints: "true"
   gitHubportForwardingEnableEnvironmentEndpoints: "true"
-  portForwardingServiceEnabled: "false"
+  portForwardingServiceEnabled: "true"
   gitHubPortForwardingServiceEnabled: "true"
 
 azure-secrets:
