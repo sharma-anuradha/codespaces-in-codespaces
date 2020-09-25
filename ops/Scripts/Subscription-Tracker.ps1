@@ -764,20 +764,34 @@ function Build-AppSettings {
     $subscriptions | ForEach-Object {
         $subscription = $_
 
+        # For Canary, don't even list subs that aren't really allocated to it yet.
+        # The AzureSubscriptionCatalog can get confused if it contains
+        # conflicting info about the same subscription (legacy/enabled according
+        # to prod-rel but network/disabled according to prod-can, for example).
+        if ($Canary -and ($subscription.subscriptionName -ne "vso-prod-data-001-00")) {
+            return
+        }
+
         $azureSubscriptionSettings = [PSCustomObject]@{
             subscriptionId = $subscription.subscriptionId
         }
-        if (!$subscription.enabled) {
-            $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "enabled" -Value $subscription.enabled
-        }
-        if ($subscription.location) {
-            $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "locations" -Value @($subscription.location)
-        }
-        if ($subscription.serviceType) {
-            $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "serviceType" -Value ([string]$subscription.serviceType).ToLowerInvariant()
-        }
-        if ($null -ne $subscription.maxResourceGroupCount) {
-            $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "maxResourceGroupCount" -Value $subscription.maxResourceGroupCount
+
+        # "Disabled" v1-hybrid subs should continue to be used in a legacy fashion (type-agnostic)
+        $treatAsLegacy = ($subscription.generation -eq 'v1-hybrid') -and (!$subscription.enabled)
+
+        if (!$treatAsLegacy) {
+            if (!$subscription.enabled) {
+                $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "enabled" -Value $subscription.enabled
+            }
+            if ($subscription.location) {
+                $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "locations" -Value @($subscription.location)
+            }
+            if ($subscription.serviceType) {
+                $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "serviceType" -Value ([string]$subscription.serviceType).ToLowerInvariant()
+            }
+            if ($null -ne $subscription.maxResourceGroupCount) {
+                $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "maxResourceGroupCount" -Value $subscription.maxResourceGroupCount
+            }
         }
 
         $subs.Add($subscription.subscriptionName, $azureSubscriptionSettings)
