@@ -89,5 +89,5 @@ elseif ($ReplicaCount -lt 2) {
 }
 else {
     Write-Host "Create $ReplicaCount Replicas of Image Version $ImageVersion"
-    az sig image-version update --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --target-regions "$TargetLocation=$ReplicaCount" --no-wait
+    az sig image-version update --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --target-regions "$TargetLocation=$ReplicaCount=premium_lrs" --no-wait
 }
