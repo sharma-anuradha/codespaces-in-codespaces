@@ -268,7 +268,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                             .FluentAddValue("StartTime", task.ExecutionInformation.StartTime)
                             .FluentAddValue("RetryCount", task.ExecutionInformation.RetryCount)
                             .FluentAddValue("ReqeueCount", task.ExecutionInformation.RequeueCount)
-                            .FluentAddValue("TaskType", taskType);
+                            .FluentAddValue("TaskType", taskType)
+                            .FluentAddValue("TaskId", task.Id)
+                            .FluentAddValue("ETag", task.ETag);
                             if (task.ExecutionInformation.FailureInformation != null)
                             {
                                 var details = task.ExecutionInformation.FailureInformation.Details;
@@ -278,6 +280,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                                 .FluentAddValue("FailureCode", task.ExecutionInformation.FailureInformation.Code)
                                 .FluentAddValue("FailureMessage", task.ExecutionInformation.FailureInformation.Message)
                                 .FluentAddValue("FailureDetails", detailsString);
+                            }
+
+                            if (task.ComputeNodeInformation != null)
+                            {
+                                childLogger.FluentAddValue("ComputeNodeId", task.ComputeNodeInformation.ComputeNodeId)
+                                .FluentAddValue("PoolId", task.ComputeNodeInformation.PoolId)
+                                .FluentAddValue("AffinityId", task.ComputeNodeInformation.AffinityId)
+                                .FluentAddValue("TaskRootDirectory", task.ComputeNodeInformation.TaskRootDirectory)
+                                .FluentAddValue("ComputeNodeUrl", task.ComputeNodeInformation.ComputeNodeUrl)
+                                .FluentAddValue("TaskRootDirectoryUrl", task.ComputeNodeInformation.TaskRootDirectoryUrl);
                             }
 
                             childLogger.LogInfo($"{LogBaseName}_task_failure");
