@@ -1,17 +1,18 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
+using Microsoft.VsSaaS.AspNetCore.Http;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
-using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
-using Microsoft.VsSaaS.AspNetCore.Http;
-using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
-using Newtonsoft.Json;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -34,6 +35,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             TokenExchangeUtil = tokenExchangeUtil;
         }
 
+        [HttpOperationalScope("authenticate_port_forwarder")]
         [HttpPost("~/authenticate-port-forwarder")]
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<IActionResult> AuthenticatePortForwarderAsync(
@@ -60,6 +62,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return Ok();
         }
 
+        [HttpOperationalScope("logout_port_forwarder")]
         [HttpPost("~/logout-port-forwarder")]
         public IActionResult LogoutPortForwarder()
         {
@@ -71,6 +74,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return Ok(200);
         }
 
+        [HttpOperationalScope("authenticate_codespace_step_1")]
         [HttpPost("~/authenticate-workspace/{environmentId}")]
         [Routing.HttpPost(
             "~/authenticate-codespace/{environmentId}",
@@ -138,6 +142,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         // TODO: add exception to authentication
+        [HttpOperationalScope("authenticate_codespace_step_2")]
         [HttpPost("~/authenticate-codespace/{environmentId}")]
         [Consumes("application/x-www-form-urlencoded")]
         [Routing.AllowReferer(
