@@ -6,7 +6,10 @@
     | where TimeStamp < ago(1h)
     | summarize 
         Total = count(), 
-        Failed =  countif(ResumeOutcome startswith "Infrastructure:" or ResumeOutcome startswith "Bug:" or ResponseOutcome startswith "Infrastructure:" or ResponseOutcome startswith "Bug:")
+        Failed =  countif(ResumeOutcome startswith "Infrastructure:" or 
+            ResumeOutcome startswith "Bug:" or 
+            ResponseOutcome startswith "Infrastructure:" or 
+            ResponseOutcome startswith "Bug:")
     | extend Success = Total - Failed
     | extend Rate = (Success * 100.0) / Total
     | project Rate

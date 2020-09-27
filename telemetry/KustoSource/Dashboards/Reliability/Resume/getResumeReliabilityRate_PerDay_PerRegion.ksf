@@ -1,7 +1,5 @@
-.create-or-alter function
-with (docstring = 'Computes reliability rate of resume per day.', folder='Dashboards/Reliability/Resume')
-getResumeReliabilityRate_PerDay
-(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, ResumeOutcome: string))
+#function("Computes reliability rate of resume per day per region.")
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, ResumeOutcome: string, ServiceLocation: string))
 {
     T
     | where EventAtResumeRequestStop_ResponseCode != 307
@@ -12,10 +10,10 @@ getResumeReliabilityRate_PerDay
                 ResponseOutcome startswith "Bug:" or 
                 ResumeOutcome startswith "Infrastructure:" or 
                 ResumeOutcome startswith "Bug:") 
-            on TimeStamp step 1d
+            on TimeStamp step 1d by ServiceLocation
     | mv-expand Total_, Failed_, TimeStamp
-    | project Total = toint(Total_), Failed = toint(Failed_), Time = todatetime(TimeStamp)
+    | project Total = toint(Total_), Failed = toint(Failed_), Time = todatetime(TimeStamp), ServiceLocation
     | extend Success = Total - Failed
     | extend  Rate = (Success * 100.0) / Total
-    | project Time, Rate
+    | project Time, Rate, ServiceLocation
 }

@@ -6,8 +6,13 @@ getResumeProcessSuccessFailure_PerHour
     T
     | where TimeStamp < ago(1h)
     | where EventAtResumeRequestStop_ResponseCode == 200
-    | summarize 
-        Success = count(ResumeOutcome == "Available"), 
-        Failed =  countif(ResumeOutcome startswith "Infrastructure:" or ResumeOutcome startswith "Bug:")
-        by bin(TimeStamp, 1h)
+    | make-series 
+        Available_ = countif(ResumeOutcome == "Available"),
+        Failed_ = countif(ResumeOutcome startswith "Infrastructure:" or ResumeOutcome startswith "Bug:") 
+        on TimeStamp step 1h
+    | mv-expand Available_, Failed_, TimeStamp
+    | project 
+        Time = todatetime(TimeStamp),
+        Success = toint(Available_),
+        Failure = toint(Failed_)
 }

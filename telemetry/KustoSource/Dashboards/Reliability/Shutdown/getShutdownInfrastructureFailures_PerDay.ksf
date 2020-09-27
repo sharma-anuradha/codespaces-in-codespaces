@@ -7,5 +7,7 @@
             ResponseOutcome startswith "Bug:" or 
             ShutdownOutcome startswith "Infrastructure:" or 
             ShutdownOutcome startswith "Bug:"
-    | summarize count() by bin(TimeStamp, 1d)
+    | make-series Count_ = count() on TimeStamp step 1d
+    | mv-expand Count_, TimeStamp
+    | project Time = todatetime(TimeStamp), Count=toint(Count_)
 }

@@ -6,7 +6,10 @@ getCreateProcessSuccessFailure_PerHour
     T
     | where EventAtCreateRequestStop_ResponseCode == 201
     | where TimeStamp < ago(1h)
-    | summarize 
-        Success = countif(CreateOutcome == "Available"),
-        Failure = countif(CreateOutcome startswith "Infrastructure:" or CreateOutcome startswith "Bug:") by bin(TimeStamp, 1h)
+    | make-series 
+        Available = countif(CreateOutcome == "Available"),
+        FailedOnBugsOrInfra = countif(CreateOutcome startswith "Infrastructure:" or CreateOutcome startswith "Bug:") 
+        on TimeStamp step 1h
+    | mv-expand Available, FailedOnBugsOrInfra, TimeStamp
+    | project Success=toint(Available), Failure=toint(FailedOnBugsOrInfra), Time = todatetime(TimeStamp)
 }

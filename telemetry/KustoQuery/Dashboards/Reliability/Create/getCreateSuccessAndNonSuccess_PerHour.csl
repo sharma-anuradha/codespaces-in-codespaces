@@ -8,7 +8,10 @@ getCreateSuccessAndNonSuccess_PerHour
     | where EventAtCreateRequestStop_ResponseCode != 307
     | extend SuccessResult = iff(CreateOutcome == "Available" and ResponseOutcome == "Success", 1, 0)
     | extend TotalRequests = 1
-    | summarize Success = sum(SuccessResult), Total = sum(TotalRequests) by bin(TimeStamp, 1h)
+    | make-series Success_ = sum(SuccessResult), Total_ = sum(TotalRequests) 
+        on TimeStamp step 1h
+    | mv-expand Success_, Total_, TimeStamp
+    | project Success = toint(Success_), Total = toint(Total_), Time = todatetime(TimeStamp)
     | extend NonSuccess = Total - Success
-    | project Success, NonSuccess, TimeStamp
+    | project Time, Success, NonSuccess
 }

@@ -9,5 +9,11 @@ getCreationTimePercentiles_KitchenSink
     | where CreateOutcome == "Available" and ResponseOutcome == "Success"
     | where EventAtSelectedKitchenSink == 1
     | extend DurationInSeconds = (EventAtProvisioningToAvailable_Time - EventAtCreateRequestStart_Time) / 1s
-    | summarize percentiles(DurationInSeconds, 50, 90, 99) by bin (TimeStamp, 1h)
+    | make-series percentile(DurationInSeconds, 50), percentile(DurationInSeconds, 90), percentile(DurationInSeconds, 99) on TimeStamp step 1h
+    | mv-expand percentile_DurationInSeconds_50, percentile_DurationInSeconds_90, percentile_DurationInSeconds_99, TimeStamp
+    | project 
+        Time = todatetime(TimeStamp),
+        Percentile50 = todouble(percentile_DurationInSeconds_50), 
+        Percentile90 = todouble(percentile_DurationInSeconds_90), 
+        Percentile99 = todouble(percentile_DurationInSeconds_99)
 }

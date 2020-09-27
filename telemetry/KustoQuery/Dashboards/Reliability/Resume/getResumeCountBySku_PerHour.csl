@@ -8,5 +8,5 @@ getResumeCountBySku_PerHour
     | where EventAtResumeRequestStop_ResponseCode != 307
     | where ResumeOutcome == "Available" and ResponseOutcome == "Success"
     | project SkuName, TimeStamp
-    | summarize count() by SkuName, bin(TimeStamp, 1h)
+    | make-series count=count() on TimeStamp step 1h
 }

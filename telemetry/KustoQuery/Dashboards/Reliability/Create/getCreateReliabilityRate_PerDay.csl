@@ -6,14 +6,16 @@ getCreateReliabilityRate_PerDay
     T
         | where EventAtCreateRequestStop_ResponseCode != 307
         | where TimeStamp < ago(1h)
-        | summarize 
-            Total = count(), 
-            Failed =  countif(ResponseOutcome startswith "Infrastructure:" or 
+        | make-series 
+            Total_ = count(), 
+            Failed_ =  countif(ResponseOutcome startswith "Infrastructure:" or 
                 ResponseOutcome startswith "Bug:" or 
                 CreateOutcome startswith "Infrastructure:" or 
                 CreateOutcome startswith "Bug:") 
-            by bin(TimeStamp, 1d)
+            on TimeStamp step 1d
+        | mv-expand Total_, Failed_, TimeStamp
+        | project Total = toint(Total_), Failed = toint(Failed_), Time = todatetime(TimeStamp)
         | extend Success = Total - Failed
         | extend  Rate = (Success * 100.0) / Total
-        | project Rate, TimeStamp
+        | project Time, Rate
 }

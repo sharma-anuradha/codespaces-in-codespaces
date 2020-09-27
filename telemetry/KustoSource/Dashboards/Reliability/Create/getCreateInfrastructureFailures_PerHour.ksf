@@ -9,5 +9,7 @@
             ResponseOutcome startswith "Bug:" or 
             CreateOutcome startswith "Infrastructure:" or 
             CreateOutcome startswith "Bug:"
-        | summarize count() by bin(TimeStamp, 1h)
+        | make-series Count_ = count() on TimeStamp step 1h
+        | mv-expand Count_, TimeStamp
+        | project Time = todatetime(TimeStamp), Count=toint(Count_)
 }

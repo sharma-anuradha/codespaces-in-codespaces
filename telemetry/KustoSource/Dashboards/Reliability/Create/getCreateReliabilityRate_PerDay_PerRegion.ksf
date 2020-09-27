@@ -1,5 +1,5 @@
-#function("Computes total reliability rate of create per day.")
-(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, CreateOutcome: string))
+#function("Computes total reliability rate of create per day per region.")
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, CreateOutcome: string, ServiceLocation: string))
 {
     T
         | where EventAtCreateRequestStop_ResponseCode != 307
@@ -10,10 +10,10 @@
                 ResponseOutcome startswith "Bug:" or 
                 CreateOutcome startswith "Infrastructure:" or 
                 CreateOutcome startswith "Bug:") 
-            on TimeStamp step 1d
+            on TimeStamp step 1d by ServiceLocation
         | mv-expand Total_, Failed_, TimeStamp
-        | project Total = toint(Total_), Failed = toint(Failed_), Time = todatetime(TimeStamp)
+        | project Total = toint(Total_), Failed = toint(Failed_), Time = todatetime(TimeStamp), ServiceLocation
         | extend Success = Total - Failed
         | extend  Rate = (Success * 100.0) / Total
-        | project Time, Rate
+        | project Time, Rate, ServiceLocation
 }
