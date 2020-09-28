@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             logger.FluentAddValue("TaskEnvironmentIdShard", idShard);
 
             await CloudEnvironmentRepository.GlobalRepository.ForEachAsync(
-                (x) => x.Id.StartsWith(idShard) && x.ControlPlaneLocation == ControlPlaneInfo.Stamp.Location,
+                (x) => x.Id.StartsWith(idShard) && x.Location == ControlPlaneInfo.Stamp.Location,
                 logger.NewChildLogger(),
                 (environment, childLogger) =>
                 {
