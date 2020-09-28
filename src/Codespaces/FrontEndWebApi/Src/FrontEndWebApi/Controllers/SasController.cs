@@ -94,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 // Get queue sas token
                 var queueSas = queue.GetSharedAccessSignature(new SharedAccessQueuePolicy()
                 {
-                    Permissions = SharedAccessQueuePermissions.ProcessMessages,
+                    Permissions = SharedAccessQueuePermissions.ProcessMessages | SharedAccessQueuePermissions.Read,
                     SharedAccessExpiryTime = DateTime.UtcNow.AddHours(2),
                 });
                 var token = queueSas.StartsWith("?") ? queueSas.Substring(1) : queueSas;
