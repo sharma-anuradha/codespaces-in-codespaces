@@ -89,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// Gets or sets a value indicating whether to set the local hostname from Ngrok for development.
         /// </summary>
         [JsonProperty(Required = Required.Default)]
-        public bool GenerateLocalHostNameFromNgrok { get; set; } = false;
+        public bool GenerateLocalHostNameFromNgrok { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to redirect output from standard out to the logs directory.
@@ -101,7 +101,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// Gets or sets a value indicating whether to start the Diagnostics Server.
         /// </summary>
         [JsonProperty(Required = Required.Default)]
-        public bool StartDiagnosticsServer { get; set; } = false;
+        public bool StartDiagnosticsServer { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to automatically upload VM Agents for local dev stamps.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public bool AutoUploadLocalVMAgents { get; set; }
 
         /// <summary>
         /// Gets or sets the unique identifier for developer for developer stamps.

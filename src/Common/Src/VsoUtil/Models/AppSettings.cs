@@ -33,13 +33,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models
 
         public bool DeveloperKusto { get; set; } = false;
 
-        public bool RedirectStandardOutToLogsDirectory { get; set; } = false;
+        public bool GenerateLocalHostNameFromNgrok { get; set; } = true;
 
-        public bool GenerateLocalHostNameFromNgrok { get; set; } = false;
+        public bool RedirectStandardOutToLogsDirectory { get; set; } = true;
 
-        public bool StartDiagnosticsServer { get; set; } = false;
+        public bool StartDiagnosticsServer { get; set; } = true;
 
-        public string DiagnosticsLogsDirectory { get; set; } = string.Empty;
+        public bool AutoUploadLocalVMAgents { get; set; } = true;
 
         public FrontEnd FrontEnd { get; set; }
 

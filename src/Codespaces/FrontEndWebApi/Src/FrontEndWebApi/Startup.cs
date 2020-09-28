@@ -34,6 +34,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.InnerLoop.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
@@ -453,6 +454,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             ConfigureAppCommon(app);
+
+            if (AppSettings.AutoUploadLocalVMAgents)
+            {
+                // This needs to hold up starting the server so we can make sure the agents are uploaded.
+                // And that the new settings are applied.
+                AppSettings.SkuCatalogSettings = VMAgentUploader.ExecuteCommandAsync(app.ApplicationServices).Result;
+            }
+
             var isProduction = env.IsProduction();
 
             // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
@@ -472,6 +481,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(!isProduction);
+
+            // If we're generating the DNS Hostname automatically, it needs to run as early as possible
+            // so other fields can use it properly.
+            if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)
+            {
+                var ngrokHosted = app.ApplicationServices.GetService<NgrokHostedService>();
+
+                // Normally, the Ngrok service would start up after the application has started to launch.
+                // We need it to start sooner than that, since we need the hostname in advance.
+                ngrokHosted.OnApplicationStarted().Wait();
+                var tunnels = ngrokHosted.GetTunnelsAsync().Result;
+                ConfigureLocalHostname(new Uri(tunnels.First().PublicURL).Host);
+            }
 
             var hosts = ControlPlaneAzureResourceAccessor
                 .GetCurrentStampValidHosts()
@@ -512,16 +534,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             }
 
             // Finish setting up config
-            if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)
-            {
-                var ngrokHosted = app.ApplicationServices.GetService<NgrokHostedService>();
-
-                // Normally, the Ngrok service would start up after the application has started to launch.
-                // We need it to start sooner than that, since we need the hostname in advance.
-                ngrokHosted.OnApplicationStarted().Wait();
-                var tunnels = ngrokHosted.GetTunnelsAsync().Result;
-                ConfigureLocalHostname(new Uri(tunnels.First().PublicURL).Host);
-            }
 
             var frontEndAppSettings = app.ApplicationServices.GetService<AppSettings>().FrontEnd;
             var systemConfig = app.ApplicationServices.GetService<ISystemConfiguration>();
