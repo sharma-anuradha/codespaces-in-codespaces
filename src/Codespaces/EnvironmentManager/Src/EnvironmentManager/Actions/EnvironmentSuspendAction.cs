@@ -110,6 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             {
                 case CloudEnvironmentState.Starting:
                 case CloudEnvironmentState.ShuttingDown:
+                case CloudEnvironmentState.Exporting:
                     if (!IsTimedOut(record.Value))
                     {
                         if (input.IsClientSuspend)

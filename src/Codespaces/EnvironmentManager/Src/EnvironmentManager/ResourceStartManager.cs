@@ -76,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             CloudEnvironmentOptions cloudEnvironmentOptions,
-            CloudEnvironmentParameters startCloudEnvironmentParameters,
+            CloudEnvironmentParameters cloudEnvironmentParameters,
             StartEnvironmentAction startAction,
             IDiagnosticsLogger logger)
         {
@@ -85,11 +85,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     // Base validation
-                    Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
-                    Requires.NotNullOrEmpty(startCloudEnvironmentParameters.CallbackUriFormat, nameof(startCloudEnvironmentParameters.CallbackUriFormat));
-                    Requires.NotNull(startCloudEnvironmentParameters.FrontEndServiceUri, nameof(startCloudEnvironmentParameters.FrontEndServiceUri));
+                    Requires.NotNull(cloudEnvironmentParameters, nameof(cloudEnvironmentParameters));
+                    Requires.NotNullOrEmpty(cloudEnvironmentParameters.CallbackUriFormat, nameof(cloudEnvironmentParameters.CallbackUriFormat));
+                    Requires.NotNull(cloudEnvironmentParameters.FrontEndServiceUri, nameof(cloudEnvironmentParameters.FrontEndServiceUri));
 
-                    var callbackUri = new Uri(string.Format(startCloudEnvironmentParameters.CallbackUriFormat, cloudEnvironment.Id));
+                    var callbackUri = new Uri(string.Format(cloudEnvironmentParameters.CallbackUriFormat, cloudEnvironment.Id));
                     Requires.Argument(callbackUri.IsAbsoluteUri, nameof(callbackUri), "Must be an absolute URI.");
 
                     if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku))
@@ -99,18 +99,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Geneate token
                     var connectionToken = await TokenProvider.GenerateEnvironmentConnectionTokenAsync(
-                        cloudEnvironment, sku, startCloudEnvironmentParameters.UserProfile, logger);
+                        cloudEnvironment, sku, cloudEnvironmentParameters.UserProfile, logger);
 
                     // Construct the start-compute environment variables
                     var environmentVariables = EnvironmentVariableGenerator.Generate(
                         cloudEnvironment,
-                        startCloudEnvironmentParameters.FrontEndServiceUri,
+                        cloudEnvironmentParameters.FrontEndServiceUri,
                         callbackUri,
                         connectionToken,
                         cloudEnvironmentOptions);
 
                     // Construct the data for secret filtering
-                    var filterSecrets = await ConstructFilterSecretsDataAsync(cloudEnvironment, startCloudEnvironmentParameters.CurrentUserIdSet, logger.NewChildLogger());
+                    var filterSecrets = await ConstructFilterSecretsDataAsync(cloudEnvironment, cloudEnvironmentParameters.CurrentUserIdSet, logger.NewChildLogger());
 
                     // Setup input requests
                     var resources = new List<StartRequestBody>
@@ -120,8 +120,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             ResourceId = computeResourceId,
                             Variables = environmentVariables,
                             FilterSecrets = filterSecrets,
-                            Secrets = startCloudEnvironmentParameters.Secrets,
-                            DevContainer = ((StartCloudEnvironmentParameters)startCloudEnvironmentParameters).DevContainer,
+                            Secrets = cloudEnvironmentParameters.Secrets,
+                            DevContainer = (cloudEnvironmentParameters as StartCloudEnvironmentParameters)?.DevContainer,
                         },
                     };
 
