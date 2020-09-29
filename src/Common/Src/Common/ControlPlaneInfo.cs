@@ -74,6 +74,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             $"{InstanceResourceGroupName}-{RegionCode}-regional-db";
 
         /// <inheritdoc/>
+        public string ResourcesGlobalCosmosDbAccountName =>
+            $"{InstanceResourceGroupName}-resources-db";
+
+        /// <inheritdoc/>
         public string InstanceMapsAccountName =>
             $"{InstanceResourceGroupName}-maps";
 

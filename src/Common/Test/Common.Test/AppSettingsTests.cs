@@ -275,6 +275,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal("vsclk-online-dev-ci", controlPlaneInfo.InstanceResourceGroupName);
             Assert.Equal("vsclk-online-dev-ci-db", controlPlaneInfo.GlobalCosmosDbAccountName);
             Assert.Equal("vsclk-online-dev-ci-usw2-regional-db", controlPlaneInfo.RegionalCosmosDbAccountName);
+            Assert.Equal("vsclk-online-dev-ci-resources-db", controlPlaneInfo.ResourcesGlobalCosmosDbAccountName);
             Assert.Collection(controlPlaneInfo.Stamp.DataPlaneLocations,
                 l => Assert.Equal(AzureLocation.WestUs2, l));
             westUs2Stamp(controlPlaneInfo.Stamp);
@@ -335,6 +336,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal("vsclk-online-ppe-rel", controlPlaneInfo.InstanceResourceGroupName);
             Assert.Equal("vsclk-online-ppe-rel-db", controlPlaneInfo.GlobalCosmosDbAccountName);
             Assert.Equal("vsclk-online-ppe-rel-usw2-regional-db", controlPlaneInfo.RegionalCosmosDbAccountName);
+            Assert.Equal("vsclk-online-ppe-rel-resources-db", controlPlaneInfo.ResourcesGlobalCosmosDbAccountName);
             Assert.Collection(controlPlaneInfo.Stamp.DataPlaneLocations,
                 l => Assert.Equal(AzureLocation.WestUs2, l));
             westUs2Stamp(controlPlaneInfo.Stamp);
@@ -437,6 +439,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal("vsclk-online-prod-rel", controlPlaneInfo.InstanceResourceGroupName);
             Assert.Equal("vsclk-online-prod-rel-db", controlPlaneInfo.GlobalCosmosDbAccountName);
             Assert.Equal("vsclk-online-prod-rel-usw2-regional-db", controlPlaneInfo.RegionalCosmosDbAccountName);
+            Assert.Equal("vsclk-online-prod-rel-resources-db", controlPlaneInfo.ResourcesGlobalCosmosDbAccountName);
             Assert.Collection(controlPlaneInfo.Stamp.DataPlaneLocations,
                 l => Assert.Equal(AzureLocation.WestUs2, l));
             westUs2Stamp(controlPlaneInfo.Stamp);
@@ -476,6 +479,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Equal("vsclk-online-prod-can", controlPlaneInfo.InstanceResourceGroupName);
             Assert.Equal("vsclk-online-prod-can-db", controlPlaneInfo.GlobalCosmosDbAccountName);
             Assert.Equal("vsclk-online-prod-can-usec-regional-db", controlPlaneInfo.RegionalCosmosDbAccountName);
+            Assert.Equal("vsclk-online-prod-can-resources-db", controlPlaneInfo.ResourcesGlobalCosmosDbAccountName);
             Assert.Collection(controlPlaneInfo.Stamp.DataPlaneLocations,
                 l => Assert.Equal(AzureLocation.EastUs2Euap, l));
             eastUs2EuapStamp(controlPlaneInfo.Stamp);

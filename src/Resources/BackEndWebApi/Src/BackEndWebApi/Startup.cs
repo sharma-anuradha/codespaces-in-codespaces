@@ -20,10 +20,10 @@ using Microsoft.VsSaaS.Azure.Metrics;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.DiagnosticsServer.Startup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
@@ -31,6 +31,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider;
@@ -136,6 +138,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Adding agent settings.
             services.AddSingleton(AppSettings.AgentSettings);
 
+            // Get the database id
+            var databaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(RequiresNotNullOrEmpty(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
+
+            // This also makes sure that the default DocumentDbClientOptions points to the regional backend database.
+            // If you want to use the global database then make use of the ResourcesGlobalDocumentDbClientOptions in your provider (or just use ResourcesGlobalDocumentDbClientProvider in repository class).
+            // If you use the DefaultDbClientProvider in your rrepository, it will point to regional backend database. Same would happen with the usage of ResourcesRegionalDocumentDbClientProvider.
+            // Eg. code can be seen in ctors of CosmosDbResourceRepository (points to regional db), RegionalSystemConfigurationRepository(points to regional db) and
+            // GlobalSystemConfigurationRepository (points to global db) 
             services.AddDocumentDbClientProvider(options =>
             {
                 var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetStampCosmosDbAccountAsync().Result;
@@ -143,10 +153,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
                 options.HostUrl = hostUrl;
                 options.AuthKey = authKey;
-                options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(RequiresNotNullOrEmpty(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
+                options.DatabaseId = databaseId;
                 options.PreferredLocation = CurrentAzureLocation.ToString();
                 options.UseMultipleWriteLocations = false;
+            })
+            .AddResourcesGlobalDocumentDbClientProvider(options =>
+            {
+                var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetResourcesGlobalCosmosDbAccountAsync().Result;
+                options.HostUrl = hostUrl;
+                options.AuthKey = authKey;
+                options.DatabaseId = databaseId;
+                options.UseMultipleWriteLocations = true;
+                options.PreferredLocation = CurrentAzureLocation.ToString();
             });
+
+            // Add the regional Document client provider which uses the default DocumentDbClientOptions and points to regional db.
+            services.AddResourcesRegionalDocumentDbClientProvider();
 
             // Mappers services
             var config = new MapperConfiguration(cfg =>
@@ -215,6 +237,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                     keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetClientSecretAsync;
                 })
                 .AddTokenProvider(appSettings.AuthenticationSettings);
+
+            // Setup configuration
+            services.AddVsoDocumentDbCollection<SystemConfigurationRecord, IRegionalSystemConfigurationRepository, RegionalSystemConfigurationRepository>(
+                RegionalSystemConfigurationRepository.ConfigureOptions);
+
+            services.AddVsoDocumentDbCollection<SystemConfigurationRecord, IGlobalSystemConfigurationRepository, GlobalSystemConfigurationRepository>(
+                GlobalSystemConfigurationRepository.ConfigureOptions);
+
+            services.AddSingleton<ISystemConfigurationRepository, SystemConfigurationRepository>();
+            services.AddSingleton<ICachedSystemConfigurationRepository, SystemConfigurationRepository>();
 
             // Add the cache system configuration warmup task
             services.AddCacheSystemConfigurationWarmupTask();

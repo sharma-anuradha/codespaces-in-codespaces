@@ -311,7 +311,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddSingleton<IInitScriptUrlGenerator, InitScriptUrlGenerator>();
 
             // Setup configuration
-            services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(
+            services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepositoryV2>(
                 CachedCosmosDbSystemConfigurationRepository.ConfigureOptions);
             services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ICachedSystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepositoryV2>(
                 CachedCosmosDbSystemConfigurationRepositoryV2.ConfigureOptions);

@@ -38,6 +38,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string RegionalCosmosDbAccountName { get; }
 
         /// <summary>
+        /// Gets the global resources cosmos db account name, e.g., vsclk-online-prod-rel-resources-db.
+        /// </summary>
+        string ResourcesGlobalCosmosDbAccountName { get; }
+
+        /// <summary>
         /// Gets the control-plane instance maps account name, e.g., vsclk-online-prod-rel-maps.
         /// </summary>
         string InstanceMapsAccountName { get; }

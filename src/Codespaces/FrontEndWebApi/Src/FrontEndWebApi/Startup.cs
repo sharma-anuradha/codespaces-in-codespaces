@@ -371,6 +371,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             var databaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
 
             // Both DocumentDB and Cosmos DB client providers point to the same instance database.
+            // The default DocumentDbClientProvider points to the global frontend database. This is opposite
+            // to what happens at the backend where the default DocumentDbClientProvider points to the regional
+            // backend resources database.
             services
                 .AddDocumentDbClientProvider(options =>
                 {

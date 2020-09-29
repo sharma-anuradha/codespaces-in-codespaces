@@ -3,10 +3,11 @@
 // </copyright>
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Backend.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -205,6 +206,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
             services.AddSingleton<ICrossRegionStorageQueueClientProvider, CrossRegionStorageQueueClientProvider>();
             services.AddSingleton<ICrossRegionControlPlaneInfo, CrossRegionControlPlaneInfo>();
+        }
+
+        /// <summary>
+        /// Adds the default <see cref="ResourcesGlobalDocumentDbClientProvider"/> to the service collection.
+        /// </summary>
+        /// <param name="services">The servcie collection.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
+        public static IServiceCollection AddResourcesRegionalDocumentDbClientProvider(
+            [ValidatedNotNull] this IServiceCollection services)
+        {
+            services.TryAddSingleton<IResourcesRegionalDocumentDbClientProvider, ResourcesRegionalDocumentDbClientProvider>();
+            return services;
+        }
+
+        /// <summary>
+        /// Adds the default <see cref="ResourcesGlobalDocumentDbClientProvider"/> to the service collection.
+        /// </summary>
+        /// <param name="services">The servcie collection.</param>
+        /// <param name="configureOptions">The configure options callback.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
+        public static IServiceCollection AddResourcesGlobalDocumentDbClientProvider(
+            [ValidatedNotNull] this IServiceCollection services,
+            [ValidatedNotNull] Action<ResourcesGlobalDocumentDbClientOptions> configureOptions)
+        {
+            Requires.NotNull(services, nameof(services));
+            Requires.NotNull(configureOptions, nameof(configureOptions));
+
+            services.Configure(configureOptions);
+            services.TryAddSingleton<IResourcesGlobalDocumentDbClientProvider, ResourcesGlobalDocumentDbClientProvider>();
+
+            return services;
         }
     }
 }

@@ -68,6 +68,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         Task<(string, string)> GetStampCosmosDbAccountAsync();
 
         /// <summary>
+        /// Gets the global resources cosmos db account.
+        /// </summary>
+        /// <returns>A tuple of the account url and the account key.</returns>
+        Task<(string, string)> GetResourcesGlobalCosmosDbAccountAsync();
+
+        /// <summary>
         /// Gets the stamp-level storage account.
         /// </summary>
         /// <returns>A tuple of the account name and the account key.</returns>

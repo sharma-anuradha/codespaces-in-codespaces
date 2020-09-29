@@ -1,4 +1,4 @@
-﻿// <copyright file="ShowDbAccountInfoCommand.cs" company="Microsoft">
+// <copyright file="ShowDbAccountInfoCommand.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -79,6 +79,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             var (stampHostUrl, stampAuthKey) = controlPlaneAzureResourceAccessor.GetStampCosmosDbAccountAsync().Result;
             stdout.WriteLine("Stamp CosmosDB");
             json.Serialize(stdout, await GetDbAccountInfo(stampHostUrl, stampAuthKey));
+            stdout.WriteLine();
+            stdout.WriteLine();
+            var (resourcesHostUrl, resourcesAuthKey) = controlPlaneAzureResourceAccessor.GetResourcesGlobalCosmosDbAccountAsync().Result;
+            stdout.WriteLine("Resources Global CosmosDB");
+            json.Serialize(stdout, await GetDbAccountInfo(resourcesHostUrl, resourcesAuthKey));
         }
 
         private class CosmosDbAccountInfo

@@ -1,11 +1,9 @@
-﻿// <copyright file="ICachedSystemConfigurationRepository.cs" company="Microsoft">
+// <copyright file="ICachedSystemConfigurationRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository
 {

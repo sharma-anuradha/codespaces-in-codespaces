@@ -66,6 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private (string, string) StampCosmosDbAccount { get; set; }
 
+        private (string, string) ResourcesGlobalCosmosDbAccount { get; set; }
+
         private (string, string) StampStorageAccount { get; set; }
 
         private AzureCredentials AzureCredentials { get; set; }
@@ -197,6 +199,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
 
             return StampCosmosDbAccount;
+        }
+
+        /// <inheritdoc/>
+        public async Task<(string, string)> GetResourcesGlobalCosmosDbAccountAsync()
+        {
+            if (string.IsNullOrEmpty(ResourcesGlobalCosmosDbAccount.Item1) ||
+                string.IsNullOrEmpty(ResourcesGlobalCosmosDbAccount.Item2))
+            {
+                ResourcesGlobalCosmosDbAccount = await GetCosmosDbAccountAsync(
+                    ControlPlaneInfo.InstanceResourceGroupName,
+                    ControlPlaneInfo.ResourcesGlobalCosmosDbAccountName);
+            }
+
+            return ResourcesGlobalCosmosDbAccount;
         }
 
         /// <inheritdoc/>

@@ -17,6 +17,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -76,6 +77,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             // Job Queue consumer telemetry
             services.AddJobQueueTelemetrySummary();
 
+            var documentId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(appSettings.AzureCosmosDbDatabaseId);
+
             // Add stamp database access
             services.AddDocumentDbClientProvider(options =>
             {
@@ -85,10 +88,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 options.ConnectionProtocol = Microsoft.Azure.Documents.Client.Protocol.Tcp;
                 options.HostUrl = hostUrl;
                 options.AuthKey = authKey;
-                options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(appSettings.AzureCosmosDbDatabaseId);
+                options.DatabaseId = documentId;
                 options.PreferredLocation = CurrentAzureLocation.ToString();
                 options.UseMultipleWriteLocations = false;
             });
+
+            // Add resources database access
+            services.AddResourcesGlobalDocumentDbClientProvider(options =>
+             {
+                 var controlPlaneAzureResourceAccessor = Services.GetRequiredService<IControlPlaneAzureResourceAccessor>();
+                 var (hostUrl, authKey) = controlPlaneAzureResourceAccessor.GetResourcesGlobalCosmosDbAccountAsync().Result;
+                 options.HostUrl = hostUrl;
+                 options.AuthKey = authKey;
+                 options.DatabaseId = documentId;
+                 options.UseMultipleWriteLocations = true;
+                 options.PreferredLocation = CurrentAzureLocation.ToString();
+             });
 
             services.AddVsoDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
                 CosmosDbResourcePoolSettingsRepository.ConfigureOptions);

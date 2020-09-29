@@ -1,4 +1,4 @@
-﻿// <copyright file="TaskHelper.cs" company="Microsoft">
+// <copyright file="TaskHelper.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
