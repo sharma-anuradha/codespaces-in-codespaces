@@ -604,8 +604,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 if (string.IsNullOrEmpty(plan.Tenant))
                 {
                     // Some older plans might not have their tenant ID property set, but the EnvironmentManager
-                    // update requires it. The caller's tenant ID should be the same anyway.
-                    plan.Tenant = CurrentUserProvider.Identity?.GetTenantId();
+                    // update requires it. The target plan access token tenant ID should be the same anyway.
+                    plan.Tenant = planAccessIdentity?.GetTenantId();
+                    logger.AddVsoPlan(plan);
+                    logger.LogInfo(LoggingBaseName + "_target_plan_tenant_from_token");
                 }
             }
 

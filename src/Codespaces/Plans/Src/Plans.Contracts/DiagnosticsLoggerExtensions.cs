@@ -1,4 +1,4 @@
-﻿// <copyright file="DiagnosticsLoggerExtensions.cs" company="Microsoft">
+// <copyright file="DiagnosticsLoggerExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,6 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         private const string LogValueResourceId = "ResourceId";
         private const string LogValuePartner = "Partner";
         private const string LogValuePlanName = "Plan";
+        private const string LogValuePlanTenantName = "PlanTenant";
 
         /// <summary>
         /// Add logging fields for a <see cref="VsoPlan"/> instance.
@@ -32,6 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             if (plan != null)
             {
                 logger.AddPartner(plan.Partner)
+                    .AddPlanTenant(plan.Tenant)
                     .AddVsoPlanInfo(plan.Plan);
             }
 
@@ -122,5 +124,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddPlanName(this IDiagnosticsLogger logger, string planName)
             => logger.FluentAddBaseValue(LogValuePlanName, planName);
+
+        /// <summary>
+        /// Add the plan tenant ID value to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="planTenant">The plan tenant ID.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddPlanTenant(this IDiagnosticsLogger logger, string planTenant)
+            => logger.FluentAddBaseValue(LogValuePlanTenantName, planTenant);
     }
 }

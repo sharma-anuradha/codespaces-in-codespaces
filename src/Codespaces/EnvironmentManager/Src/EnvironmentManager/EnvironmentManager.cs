@@ -687,7 +687,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
             }
 
-            // Todo: This method should be removed when we remove the computeCheck feature flag. 
+            // Todo: This method should be removed when we remove the computeCheck feature flag.
             if (computeCheckEnabled == false)
             {
                 var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(
@@ -827,7 +827,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // be the plan ID (for a plan-scoped tenant) or the tenant property of the plan.
                         if (cloudEnvironment.OwnerId.StartsWith(currentPlan.Id, StringComparison.OrdinalIgnoreCase))
                         {
-                            logger.AddValue("Tenant", $"{currentPlan.Id}->{update.Plan.Tenant}");
+                            logger.AddPlanTenant($"{currentPlan.Id}->{update.Plan.Tenant}");
                             logger.LogInfo($"{LogBaseName}_update_environment_ownerid");
                             cloudEnvironment.OwnerId =
                                 update.Plan.Tenant + cloudEnvironment.OwnerId.Substring(currentPlan.Id.Length);
@@ -835,12 +835,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         else if (!string.IsNullOrEmpty(currentPlan.Tenant) &&
                             cloudEnvironment.OwnerId.StartsWith(currentPlan.Tenant, StringComparison.OrdinalIgnoreCase))
                         {
-                            logger.AddValue("Tenant", $"{currentPlan.Tenant}->{update.Plan.Tenant}");
+                            logger.AddVsoPlanInfo(update.Plan.Plan);
+                            logger.AddPlanTenant($"{currentPlan.Tenant}->{update.Plan.Tenant}");
                             logger.LogInfo($"{LogBaseName}_update_environment_ownerid");
                             cloudEnvironment.OwnerId =
                                 update.Plan.Tenant + cloudEnvironment.OwnerId.Substring(currentPlan.Tenant.Length);
                         }
                     }
+
+                    logger.AddVsoPlanInfo(update.Plan.Plan);
+                    logger.LogInfo($"{LogBaseName}_update_environment_plan");
 
                     cloudEnvironment.PlanId = update.Plan.Plan.ResourceId;
                     cloudEnvironment.FriendlyName = destinationName;
