@@ -1,5 +1,18 @@
 #function("Gets provisioning to deleted state transition events.")
-(T:(msg: string, ["time"]: datetime, CorrelationId: string, SkuName: string, HttpResponseStatus: string, HttpRequestUri: string, HttpRequestMethod: string, WorkspaceId: string, CloudEnvironmentId: string, CloudEnvironmentOldState: string, CloudEnvironmentNewState: string, CloudEnvironmentFailedStateReason: string, CloudEnvironmentNewUpdatedTrigger: string))
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    SkuName: string, 
+    HttpResponseStatus: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string, 
+    CloudEnvironmentId: string, 
+    CloudEnvironmentOldState: string, 
+    CloudEnvironmentNewState: string, 
+    CloudEnvironmentFailedStateReason: string, 
+    CloudEnvironmentNewUpdatedTrigger: string,
+    ComputeResourceId: string))
 {
     getStateTransitionEvents(T, fromState="Provisioning", toState="Deleted")
         | extend EventAtProvisioningToDeleted = 1

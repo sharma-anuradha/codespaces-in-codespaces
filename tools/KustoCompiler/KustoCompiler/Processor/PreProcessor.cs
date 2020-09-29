@@ -1,5 +1,7 @@
 using Microsoft.VsCloudKernel.Services.KustoCompiler.Analyzers;
 using Microsoft.VsCloudKernel.Services.KustoCompiler.Models;
+using Microsoft.VsCloudKernel.Services.KustoCompiler.Runner;
+using Microsoft.VsCloudKernel.Services.KustoCompiler.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -42,11 +44,54 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
     {
         private readonly LexicalAnalyzer lexicalAnalyzer = new LexicalAnalyzer();
 
+        private static string GetFunctionNameFromFile(string fileName)
+        {
+            // TODO: janraj, refactor?
+            return Path.GetFileNameWithoutExtension(fileName);
+        }
+
+        public KustoQueryBlob ProcessForInline(string sourceFile, string basePath)
+        {
+            var queryMap = new Dictionary<string, KustoQueryBlob>();
+
+            var name = GetFunctionNameFromFile(sourceFile);
+            var processQueue = new Queue<string>();
+            processQueue.Enqueue(name);
+
+            while (processQueue.Count > 0)
+            {
+                var itemToProcess = processQueue.Dequeue();
+
+                var targetFile = Directory.GetFiles(basePath, $"{itemToProcess}.ksf", SearchOption.AllDirectories).Single();
+                var preprocessed = Process(targetFile, basePath, true, true);
+                var kustoQuery = KustoQueryBlob.Create(itemToProcess, preprocessed.Content);
+
+                queryMap[itemToProcess] = kustoQuery;
+
+                foreach (var dep in kustoQuery.DependentFunction)
+                {
+                    processQueue.Enqueue(dep);
+                }
+            }
+
+            var sortedItems = Sort.TopologicalSort(queryMap);
+            StringBuilder finalQuery = new StringBuilder();
+            foreach (var item in sortedItems)
+            {
+                finalQuery.Append(item.Content);
+            }
+
+            return KustoQueryBlob.Create(name, finalQuery.ToString());
+        }
+
         private readonly Dictionary<string, KustoSourceFileLexicalInfo> lexMap = new Dictionary<string, KustoSourceFileLexicalInfo>();
 
-        public PreprocessedFileInfo Process(string inputFile, string basePath)
+        public PreprocessedFileInfo Process(string inputFile, string basePath, bool forInlining = false, bool quiet = false)
         {
-            Console.WriteLine($"  Processing: {inputFile}");
+            if (!quiet)
+            {
+                Console.WriteLine($"  Processing: {inputFile}");
+            }
 
             var processQueue = new Queue<string>();
             processQueue.Enqueue(inputFile);
@@ -60,7 +105,10 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
                     continue;
                 }
 
-                Console.WriteLine($"  Including: {fileToProcess}");
+                if (!quiet)
+                {
+                    Console.WriteLine($"  Including: {fileToProcess}");
+                }
 
                 var input = File.ReadAllText(fileToProcess);
                 var tokens = lexicalAnalyzer.Analyze(input);
@@ -89,7 +137,7 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
             }
 
             var includedSet = new List<string>();
-            var content = GenerateFor(inputFile, inputFile, includedSet, basePath);
+            var content = GenerateFor(inputFile, inputFile, includedSet, basePath, forInlining);
 
             return new PreprocessedFileInfo()
             {
@@ -127,7 +175,7 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
                 }
                 else if (token is IncludeFileToken includeFileToken)
                 {
-                    var includedFileContent = GenerateFor(absolutePath, includeFileToken.File, includedSet, basePath);
+                    var includedFileContent = GenerateFor(absolutePath, includeFileToken.File, includedSet, basePath, isFunctionOverride);
                     if (includedFileContent != default)
                     {
                         final.AppendLine(includedFileContent.TrimEnd());
@@ -164,7 +212,7 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
 
             if (isFunctionOverride)
             {
-                final.AppendLine(";");
+                return final.ToString().TrimEnd() + ";" + Environment.NewLine;
             }
 
             return final.ToString();

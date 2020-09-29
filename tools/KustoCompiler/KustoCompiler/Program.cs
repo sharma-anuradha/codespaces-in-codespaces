@@ -30,6 +30,10 @@ namespace KustoCompiler
                 ExecuteFunctionUpdateCommand(command);
             });
 
+            app.Command("printInline", (command) =>
+            {
+                ExecuteFunctionInlineCommand(command);
+            });
 
             try
             {
@@ -75,6 +79,26 @@ namespace KustoCompiler
 
                 var run = new RunKustoQuery();
                 run.ExecuteAsync(input).Wait();
+                return 0;
+            });
+        }
+
+        private static void ExecuteFunctionInlineCommand(CommandLineApplication command)
+        {
+            command.Description = "This command outputs a query where all the custom functions are inlined.";
+            command.HelpOption("-?|-h|--help");
+
+            var inputOption = command.Option("-i|--input", "Input file", CommandOptionType.SingleValue);
+            var basePathOption = command.Option("-b|--basePath", "Base folder path", CommandOptionType.SingleValue);
+
+            command.OnExecute(() =>
+            {
+                var input = inputOption.Value();
+                var basePath = basePathOption.Value();
+
+                var run = new InlineKustoQuery();
+                run.ExecuteAsync(input, basePath).Wait();
+
                 return 0;
             });
         }

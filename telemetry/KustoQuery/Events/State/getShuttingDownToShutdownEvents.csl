@@ -11,7 +11,8 @@ getShuttingDownToShutdownEvents
     CloudEnvironmentNewState: string,
     CloudEnvironmentId: string,
     CloudEnvironmentFailedStateReason: string,
-    CloudEnvironmentNewUpdatedTrigger: string))
+    CloudEnvironmentNewUpdatedTrigger: string,
+    ComputeResourceId: string))
 {
     getStateTransitionEvents(T, fromState="ShuttingDown", toState="Shutdown")
         | extend EventAtShuttingDownToShutdown = 1

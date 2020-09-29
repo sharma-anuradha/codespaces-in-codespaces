@@ -11,7 +11,8 @@ getUnavailableToShutdownEvents
     CloudEnvironmentNewState: string,
     CloudEnvironmentId: string,
     CloudEnvironmentFailedStateReason: string,
-    CloudEnvironmentNewUpdatedTrigger: string))
+    CloudEnvironmentNewUpdatedTrigger: string,
+    ComputeResourceId: string))
 {
     getStateTransitionEvents(T, fromState="Unavailable", toState="Shutdown")
         | extend EventAtUnavailableToShutdown = 1

@@ -1,24 +1,14 @@
 using Kusto.Language;
 using Kusto.Language.Syntax;
 using System;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 
 namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Runner
 {
-    [DebuggerDisplay("{FunctionName,nq}")]
-    public class CslFile : KustoQueryBase
+    public class KustoQueryBlob : KustoQueryBase
     {
-        public string FileName
+        public static KustoQueryBlob Create(string name, string content)
         {
-            get;
-            set;
-        }
-
-        public static CslFile Create(string file)
-        {
-            var content = File.ReadAllText(file);
             var parsed = KustoCode.Parse(content);
             var analyzed = KustoCode.ParseAndAnalyze(content);
 
@@ -27,10 +17,9 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Runner
 
             var functions = parsed.Syntax.GetDescendants<FunctionCallExpression>().Where(x => !(globalFunctions.Contains(x.Name.SimpleName) || globalAggregates.Contains(x.Name.SimpleName)));
 
-            return new CslFile()
+            return new KustoQueryBlob()
             {
-                FileName = file,
-                FunctionName = Path.GetFileNameWithoutExtension(file), // Should get this from syntax tree?
+                FunctionName = name,
                 Content = content,
                 DependentFunction = functions.Select(x => x.Name.SimpleName).ToHashSet(),
                 ParsedCode = parsed,
