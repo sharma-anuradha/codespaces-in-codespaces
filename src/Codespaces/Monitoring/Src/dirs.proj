@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="Monitoring\Monitoring.csproj" />
+  </ItemGroup>
+
+</Project>

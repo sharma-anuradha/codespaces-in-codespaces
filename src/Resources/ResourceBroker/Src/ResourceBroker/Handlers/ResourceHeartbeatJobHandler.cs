@@ -102,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     }
                     else
                     {
-                        await ResourceRepository.UpdateAsync(resourceRecord, logger.NewChildLogger());
+                        await ResourceRepository.UpdateAsync(resourceRecord, childLogger.NewChildLogger());
                     }
                 });
         }
