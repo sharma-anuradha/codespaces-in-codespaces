@@ -468,6 +468,7 @@ resource "kubernetes_secret" "portal_secrets" {
     "PORTAL_AppSettings__GitHubNativeAppClientSecret"                    = data.azurerm_key_vault_secret.GitHubNativeAppClientSecret.value
     "PORTAL_AppSettings__GitHubPortForwardingDomainTemplate"             = "{0}.apps.dev.codespaces.githubusercontent.com"
     "PORTAL_AppSettings__GitHubPortForwardingEnableEnvironmentEndpoints" = "true"
+    "PORTAL_AppSettings__GitHubPortForwardingServiceEnabled"             = "true"
     "PORTAL_AppSettings__GitHubPortForwardingManagementEndpoint"         = "https://management.apps.dev.codespaces.githubusercontent.com/api/v1/PortForwardingConnections"
     "PORTAL_AppSettings__KeyVaultName"                                   = "vsclk-online-dev-kv"
     "PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientId"         = data.azurerm_key_vault_secret.app_sp_id.value
