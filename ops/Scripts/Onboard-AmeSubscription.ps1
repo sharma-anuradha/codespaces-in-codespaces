@@ -70,7 +70,7 @@ if ($Plane -ne 'ops') {
 
 # Get or create the first-party app service principal, needed for runtime access in compute subs.
 $firstPartyAppSpId = ''
-if ($Plane -eq 'data' -and $DataType -eq 'compute') {
+if ($Plane -eq 'data' -and ($DataType -eq 'compute' -or $DataType -eq 'network')) {
     Write-Host
     Write-Host 'Getting first-party app service principal...'
     if ($Env -eq 'ppe' -or $Env -eq 'prod') {

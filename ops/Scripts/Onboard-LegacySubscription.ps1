@@ -181,7 +181,7 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName, [int]$perce
             New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $contributorsGroup | Out-Null
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
 
-            if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
+            if ($subscriptionInfo.Plane -eq 'data' -and ($subscriptionInfo.Type -eq 'compute' -or $subscriptionInfo.Type -eq 'network')) {
                 Update-Progress "Assigning first-party app access for dev"
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppDev | Out-Null
             }
@@ -195,7 +195,7 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName, [int]$perce
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
 
-            if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
+            if ($subscriptionInfo.Plane -eq 'data' -and ($subscriptionInfo.Type -eq 'compute' -or $subscriptionInfo.Type -eq 'network')) {
                 Update-Progress "Assigning first-party app access for ppe"
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppPpe | Out-Null
             }
@@ -206,7 +206,7 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName, [int]$perce
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
             }
 
-            if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
+            if ($subscriptionInfo.Plane -eq 'data' -and ($subscriptionInfo.Type -eq 'compute' -or $subscriptionInfo.Type -eq 'network')) {
                 Update-Progress "Assigning first-party app access for prod"
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppProd | Out-Null
             }
