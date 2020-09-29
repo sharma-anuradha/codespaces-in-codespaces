@@ -14,7 +14,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceB
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -25,6 +24,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Moq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
@@ -46,7 +46,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
-        private readonly List<IEnvironmentRepairWorkflow> environmentRepairWorkflows;
         private readonly IResourceAllocationManager resourceAllocationManager;
         private readonly IWorkspaceManager workspaceManager;
         public readonly IEnvironmentMonitor environmentMonitor;
@@ -156,8 +155,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             this.environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, environmentStateChangeManager, metricsLogger);
 
-            var serviceProvider = new Mock<IServiceProvider>().Object;
-            this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, this.environmentRepository, serviceProvider) };
+            var serviceProvider = new Mock<IServiceProvider>();
+
+            serviceProvider.Setup(x => x.GetService(typeof(IEnvironmentMonitor))).Returns(environmentMonitor);
+
             this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);
             this.resourceStartManager = new Mock<IResourceStartManager>().Object;
             this.environmentAccessManager = new Mock<IEnvironmentAccessManager>().Object;
@@ -255,7 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
               environmentAccessManager,
               MockUtil.MockSkuCatalog(),
               MockUtil.MockSkuUtils(true),
-              environmentContinuationOperations.Object,
+              serviceProvider.Object,
               resourceBroker
               );
 
@@ -269,7 +270,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true),
                 resourceBroker,
-                environmentMonitor,
+                serviceProvider.Object,
                 environmentForceSuspendAction,
                 environmentSettings,
                 environmentArchivalTimeCalculator

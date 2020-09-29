@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseEnvironmentMonitorContinuationHandler.cs" company="Microsoft">
+// <copyright file="BaseEnvironmentMonitorContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -12,7 +12,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers
@@ -28,19 +27,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// Initializes a new instance of the <see cref="BaseEnvironmentMonitorContinuationHandler{TI}"/> class.
         /// </summary>
         /// <param name="environmentRepository">Target environment repository.</param>
-        /// <param name="environmentRepairWorkflows">Target environment repair workflows.</param>
         /// <param name="latestHeartbeatMonitor">Target latest heartbeat monitor.</param>
         /// <param name="serviceProvider">Target environment service provider.</param>
         /// <param name="environmentMonitorSettings">Environment monitor settings.</param>
         public BaseEnvironmentMonitorContinuationHandler(
             ICloudEnvironmentRepository environmentRepository,
-            IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             ILatestHeartbeatMonitor latestHeartbeatMonitor,
             IServiceProvider serviceProvider,
             EnvironmentMonitorSettings environmentMonitorSettings)
         {
             EnvironmentRepository = Requires.NotNull(environmentRepository, nameof(environmentRepository));
-            EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
             LatestHeartbeatMonitor = Requires.NotNull(latestHeartbeatMonitor, nameof(latestHeartbeatMonitor));
             ServiceProvider = Requires.NotNull(serviceProvider, nameof(serviceProvider));
             EnvironmentMonitorSettings = Requires.NotNull(environmentMonitorSettings, nameof(environmentMonitorSettings));
@@ -60,11 +56,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// Gets service Provider.
         /// </summary>
         protected IServiceProvider ServiceProvider { get; }
-
-        /// <summary>
-        /// Gets environment Repair Workflows.
-        /// </summary>
-        protected Dictionary<EnvironmentRepairActions, IEnvironmentRepairWorkflow> EnvironmentRepairWorkflows { get; }
 
         /// <summary>
         /// Gets latest Heartbeat Monitor.

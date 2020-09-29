@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
@@ -41,18 +42,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IEnvironmentAccessManager environmentAccessManager,
             ISkuCatalog skuCatalog,
             ISkuUtils skuUtils,
-            IEnvironmentContinuationOperations environmentContinuation,
+            IServiceProvider serviceProvider,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerClient)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
-            EnvironmentContinuation = environmentContinuation;
+            ServiceProvider = serviceProvider;
             ResourceBrokerClient = resourceBrokerClient;
         }
 
         /// <inheritdoc/>
         protected override string LogBaseName => "environment_force_suspend_action";
 
-        private IEnvironmentContinuationOperations EnvironmentContinuation { get; }
+        private IServiceProvider ServiceProvider { get; }
 
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
@@ -79,7 +80,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // If environment has OSDisk (a.k.a windows environment, force suspend via continuation operations).
             if (record.Value?.OSDisk != default)
             {
-                await EnvironmentContinuation.ShutdownAsync(
+                var environmentContinuation = ServiceProvider.GetRequiredService<IEnvironmentContinuationOperations>();
+                
+                await environmentContinuation.ShutdownAsync(
                     input.Id,
                     true,
                     LogBaseName,

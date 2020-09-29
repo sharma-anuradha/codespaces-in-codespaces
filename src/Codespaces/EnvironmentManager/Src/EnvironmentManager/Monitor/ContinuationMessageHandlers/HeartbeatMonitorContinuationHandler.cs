@@ -14,7 +14,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers
@@ -57,16 +56,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         public HeartbeatMonitorContinuationHandler(
             ICloudEnvironmentRepository environmentRepository,
             ICloudEnvironmentHeartbeatRepository heartbeatRepository,
-            IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             ILatestHeartbeatMonitor latestHeartbeatMonitor,
             IServiceProvider serviceProvider,
+            IEnvironmentSuspendAction environmentSuspendAction,
+            IEnvironmentForceSuspendAction environmentForceSuspendAction,
+            IEnvironmentUnavailableAction environmentUnavailableAction,
             EnvironmentMonitorSettings environmentMonitorSettings)
-            : base(environmentRepository, environmentRepairWorkflows, latestHeartbeatMonitor, serviceProvider, environmentMonitorSettings)
+            : base(environmentRepository, latestHeartbeatMonitor, serviceProvider, environmentMonitorSettings)
         {
-            HeartbeatRepository = heartbeatRepository;
+            HeartbeatRepository = Requires.NotNull(heartbeatRepository, nameof(heartbeatRepository));
+            EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
+            EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(EnvironmentForceSuspendAction));
+            EnvironmentUnavailableAction = Requires.NotNull(environmentUnavailableAction, nameof(EnvironmentUnavailableAction));
         }
 
         private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
+
+        private IEnvironmentSuspendAction EnvironmentSuspendAction { get; }
+
+        private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
+
+        private IEnvironmentUnavailableAction EnvironmentUnavailableAction { get; }
 
         /// <inheritdoc/>
         protected override string LogBaseName => DefaultQueueTarget;
@@ -99,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             if (StateToStopTracking.Contains(environment.State) || (environment.Compute?.ResourceId == null && environment.Type != EnvironmentType.StaticEnvironment))
             {
                 // return result with null next input
-                return CreateFinalResult(OperationState.Cancelled, "StopHeartbeatMonitoringState");
+                return CreateFinalResult(OperationState.Cancelled, EnvironmentMonitorConstants.StopHeartbeatMonitoringStateReason);
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -132,30 +142,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                         // environment has been stuck in unavailable (for more than an hour by default)
                         if (await EnvironmentMonitorSettings.EnableUnavailableEnvironmentHeartbeatMonitoring(logger))
                         {
-                            await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
-                            return CreateFinalResult(OperationState.Failed, "UnhealthyUnavailableHeartbeat");
+                            await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
+
+                            return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.UnhealthyUnavailableHeartbeatReason);
                         }
                     }
                 }
 
                 if (StateToProcess.Contains(environment.State) && hasHeartbeatTimeExpired)
                 {
-                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
-                    return CreateFinalResult(OperationState.Failed, "NoHeartbeat");
+                    await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
+                    return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatReason);
                 }
             }
             else
             {
                 if (environment.State == CloudEnvironmentState.Available && hasHeartbeatTimeExpired)
                 {
-                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.Unavailable].ExecuteAsync(environment, logger.NewChildLogger());
+                    await EnvironmentUnavailableAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentUnavailableReason, logger.NewChildLogger());
+
                     await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
-                    return CreateFinalResult(OperationState.Failed, "NoHeartbeatMarkingUnavailable");
+                    return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatMarkingUnavailableReason);
                 }
                 else if (environment.State == CloudEnvironmentState.Unavailable && hasHeartbeatTimeExpired)
                 {
                     await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
-                    return CreateFinalResult(OperationState.Failed, "NoHeartbeatForUnavailableEnvironment");
+                    return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatForUnavailableEnvironmentReason);
                 }
             }
 
@@ -163,7 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
 
             // compute has healthy heartbeat, return next input
-            return CreateFinalResult(OperationState.Succeeded, "HealthyHeartbeat");
+            return CreateFinalResult(OperationState.Succeeded, EnvironmentMonitorConstants.HealthyHeartbeatReason);
         }
     }
 }

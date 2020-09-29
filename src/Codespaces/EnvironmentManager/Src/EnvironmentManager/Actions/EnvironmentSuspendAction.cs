@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -49,14 +50,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ISkuCatalog skuCatalog,
             ISkuUtils skuUtils,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerClient,
-            IEnvironmentMonitor environmentMonitor,
+            IServiceProvider serviceProvider,
             IEnvironmentForceSuspendAction environmentForceSuspendAction,
             EnvironmentManagerSettings environmentManagerSettings,
             IEnvironmentArchivalTimeCalculator environmentArchivalTimeCalculator)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
             ResourceBrokerClient = Requires.NotNull(resourceBrokerClient, nameof(resourceBrokerClient));
-            EnvironmentMonitor = Requires.NotNull(environmentMonitor, nameof(environmentMonitor));
+            ServiceProvider = Requires.NotNull(serviceProvider, nameof(serviceProvider));
             EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(environmentForceSuspendAction));
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
             EnvironmentArchivalTimeCalculator = Requires.NotNull(environmentArchivalTimeCalculator, nameof(environmentArchivalTimeCalculator));
@@ -67,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
-        private IEnvironmentMonitor EnvironmentMonitor { get; }
+        private IServiceProvider ServiceProvider { get; }
 
         private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
 
@@ -190,7 +191,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 logger.FluentAddValue("ResourceCleaningStatus", resourceCleaningStatus);
 
                 // Kick off state transition monitoring.
-                await EnvironmentMonitor.MonitorShutdownStateTransitionAsync(
+                var environmentMonitor = ServiceProvider.GetRequiredService<IEnvironmentMonitor>();
+
+                await environmentMonitor.MonitorShutdownStateTransitionAsync(
                     record.Value.Id,
                     record.Value.Compute.ResourceId,
                     logger.NewChildLogger());
