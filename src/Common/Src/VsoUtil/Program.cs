@@ -44,6 +44,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     typeof(CleanDevStamp),
                     typeof(ListDevStamps),
                     typeof(GetSkuImageVersionCommand),
+                    typeof(GetSkuVsChannelUrlCommand),
+                    typeof(GetSkuVsVersionCommand),
                     typeof(CleanResourceGroups),
                     typeof(ManagePreviewUsersCommand),
                     typeof(ManageBillingPlansCommand),
@@ -73,6 +75,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 .WithParsed<CleanDevStamp>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<ListDevStamps>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<GetSkuImageVersionCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<GetSkuVsChannelUrlCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<GetSkuVsVersionCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CleanResourceGroups>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<ManagePreviewUsersCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<ManageBillingPlansCommand>(command => command.Execute(Console.Out, Console.Error))

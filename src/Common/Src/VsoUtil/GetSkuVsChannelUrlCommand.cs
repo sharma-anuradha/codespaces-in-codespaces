@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
     /// <summary>
     /// Gets the specified SKU's VS channel Url.
     /// </summary>
-    [Verb("getskuvschannelurlversion", HelpText = "Gets the specified SKU's VS channel Url.")]
+    [Verb("getskuvschannelurl", HelpText = "Gets the specified SKU's VS channel Url.")]
     public class GetSkuVsChannelUrlCommand : GetSkuPropertyCommandBase
     {
         protected override void WriteProperty(ICloudEnvironmentSku sku, TextWriter stdout)
