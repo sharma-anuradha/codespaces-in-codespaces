@@ -202,7 +202,7 @@
   {
     "ame": true,
     "component": "codesp",
-    "dbEnabled": null,
+    "dbEnabled": true,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -262,7 +262,7 @@
   {
     "ame": true,
     "component": "codesp",
-    "dbEnabled": null,
+    "dbEnabled": true,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -282,7 +282,7 @@
   {
     "ame": true,
     "component": "codesp",
-    "dbEnabled": null,
+    "dbEnabled": true,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -342,7 +342,7 @@
   {
     "ame": true,
     "component": "codesp",
-    "dbEnabled": null,
+    "dbEnabled": true,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -362,7 +362,7 @@
   {
     "ame": true,
     "component": "codesp",
-    "dbEnabled": null,
+    "dbEnabled": true,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -422,7 +422,7 @@
   {
     "ame": true,
     "component": "codesp",
-    "dbEnabled": null,
+    "dbEnabled": true,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
