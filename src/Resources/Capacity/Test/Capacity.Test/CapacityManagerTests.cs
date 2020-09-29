@@ -6,6 +6,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
@@ -155,8 +156,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var azureClient = new Mock<IAzureClientFactory>().Object;
             var configurationReader = new Mock<IConfigurationReader>();
             configurationReader
-                .Setup(x => x.ReadSettingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
-                .Returns((string componentName, string settingName, IDiagnosticsLogger logger, bool defaultValue) => Task.FromResult(defaultValue));
+                .Setup(x => x.ReadSettingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>(), It.IsAny<ConfigurationContext>()))
+                .Returns((string componentName, string settingName, IDiagnosticsLogger logger, bool defaultValue, ConfigurationContext context) => Task.FromResult(defaultValue));
             var capacityManager = new CapacityManager(azureClient, catalog, capacityProvider, controlPlaneInfo, resourceNameBuilder, configurationReader.Object, capacitySettings);
             return capacityManager;
         }

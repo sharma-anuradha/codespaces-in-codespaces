@@ -6,27 +6,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
 {
     /// <summary>
     /// Enum to indicate the scope of a configuration key.
+    /// They are defined in the increasing order of priority i.e. Service scope has the
+    /// least priority whereas the user scope has the highest priority. So keep this enum
+    /// in sorted order of priority.
     /// </summary>
     public enum ConfigurationScope
     {
         /// <summary>
         /// Configuration scope of Service.
         /// </summary>
-        Service = 1,
+        Service,
 
         /// <summary>
         /// Configuration scope of Region.
         /// </summary>
-        Region = 2,
+        Region,
 
         /// <summary>
         /// Configuration scope of Subscription.
         /// </summary>
-        Subscription = 3,
+        Subscription,
 
         /// <summary>
         /// Configuration scope of Plan.
         /// </summary>
-        Plan = 4,
+        Plan,
+
+        /// <summary>
+        /// Configuration scope of User.
+        /// </summary>
+        User,
     }
 }

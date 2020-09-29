@@ -18,5 +18,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Name of enabled feature.
         /// </summary>
         public const string EnabledFeatureName = "enabled";
+
+        /// <summary>
+        /// String representing plan manager as the component. Mostly aplicable for quota keys/configurations.
+        /// </summary>
+        public const string PlanManagerComponent = "planmanager";
+
+        /// <summary>
+        /// String representing environment manager as the component. Mostly aplicable for quota keys/configurations.
+        /// </summary>
+        public const string EnvironmentManagerComponent = "environmentmanager";
     }
 }

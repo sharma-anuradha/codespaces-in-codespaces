@@ -317,7 +317,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 CachedCosmosDbSystemConfigurationRepositoryV2.ConfigureOptions);
             services.AddSingleton<ISystemConfiguration, PersistedSystemConfigurationV2>();
             services.AddSingleton<ICachedSystemConfiguration, PersistedSystemConfigurationV2>();
-            services.AddSingleton<IConfigurationKeyGenerator, ConfigurationKeyGenerator>();
+            services.AddSingleton<IConfigurationScopeGenerator, ConfigurationScopeGenerator>();
             services.AddSingleton<IConfigurationReader, ConfigurationReader>();
             services.AddSingleton<CertificateKeyVaultSecretCache>();
             services.AddSingleton<ICertificateKeyVaultSecretCache>(x => x.GetRequiredService<CertificateKeyVaultSecretCache>());
