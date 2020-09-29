@@ -50,6 +50,8 @@ getResumeOutcomeClassifiedEvents
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToDeleted == 1 and EventAtStartingToDeleted_UserInitated == 1 , "User: Delete", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToDeleted == 1 and EventAtStartingToDeleted_UserInitated != 1 , "Infrastructure: Delete", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToShutdown == 1 and EventAtStartingToShutdown_UserInitiated  == 1 , "User: Shutdown", ResumeOutcome)
+        | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToShutdown == 1 and EventAtAgentCollectedError_JobError == "CODE:1151" , "User: Credentials unavailable client closed.", ResumeOutcome)
+        | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToShutdown == 1 and EventAtAgentCollectedError_JobError == "CODE:1152" , "User: Credentials unavailable client closed.", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToShutdown == 1 and EventAtStartingToShutdown_HeartBeatInitiated == 1 , strcat("Infrastructure: ", EventAtAgentCollectedError_JobError, " - Heartbeat Initiated Shutdown") , ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToArchived == 1 and EventAtStartingToArchived_UserInitiated == 1 , "User: Shutdown/Archive", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToArchived == 1 and EventAtStartingToArchived_UserInitiated != 1 , "Infrastructure: Shutdown/Archive", ResumeOutcome)

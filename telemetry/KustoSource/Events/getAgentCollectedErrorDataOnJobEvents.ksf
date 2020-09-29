@@ -10,8 +10,14 @@
         | extend ParsedJobCollectedData = parse_json(JobCollectedData)
         | extend JobErrors = ParsedJobCollectedData.errors
         | where JobErrors != "[]"
-        | extend EventAtAgentCollectedError_JobError = JobErrors[0]
+        | extend EventAtAgentCollectedError_JobError = tostring(JobErrors[0])
+        | extend EventAtAgentCollectedError_CodespaceId = tostring(ParsedJobCollectedData.environmentId)
+        | extend EventAtAgentCollectedError_ErrorType = tostring(ParsedJobCollectedData.jobErrorType)
         | extend EventAtAgentCollectedError = 1
         | extend EventAtAgentCollectedError_CorrelationId = CorrelationId
-        | project EventAtAgentCollectedError_CorrelationId, EventAtAgentCollectedError_JobError, EventAtAgentCollectedError
+        | project EventAtAgentCollectedError_CorrelationId, 
+            EventAtAgentCollectedError_JobError, 
+            EventAtAgentCollectedError, 
+            EventAtAgentCollectedError_CodespaceId,
+            EventAtAgentCollectedError_ErrorType
 }
