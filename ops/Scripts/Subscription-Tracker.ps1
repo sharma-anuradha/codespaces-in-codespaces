@@ -706,19 +706,21 @@ function Test-VnetInjection {
                 if ($sub.serviceType -eq [ServiceType]::Compute -or $sub.serviceType -eq [ServiceType]::Network) {
                     if ($sub.environment -eq "dev") {
                         # The Visual Studio Services API Dev first party appid.
-                        $appId = "48ef7923-268f-473d-bcf1-07f0997961f4";
+                        # $appId = "48ef7923-268f-473d-bcf1-07f0997961f4";
+                        $firstpartyapp = "a0b50ae5-6a18-4e3d-b553-f5c7d4e5b87e"
                     } else {
                         # The Visual Studio Services API first party appid.
-                        $appId = "9bd5ab7f-4031-4045-ace9-6bebbad202f6";
+                        # $appId = "9bd5ab7f-4031-4045-ace9-6bebbad202f6";
+                        $firstpartyapp = "944cc140-b92f-4bce-a09a-426e827a040c"
                     }
 
-                    $firstpartyapp = az ad sp list --filter "appId eq '$appId'" --query [0].objectId -o tsv
+                    # $firstpartyapp = az ad sp list --filter "appId eq '$appId'" --query [0].objectId -o tsv
                     if ($null -eq $firstpartyapp) {
                         Write-Error "Unable to find AppId: '$appId'"
                     } else {
                         $role = az role assignment list --role "Contributor" --assignee $firstpartyapp -o json | ConvertFrom-Json
                         if ($null -eq  $role) {
-                            Write-Error "Subscription:`'$($sub.subscriptionId)`' has incorrect vNet injection."
+                            Write-Error "Subscription:`'$($sub.subscriptionId)`' is missing contributor role for first party app."
                         }
                     }
                 }
