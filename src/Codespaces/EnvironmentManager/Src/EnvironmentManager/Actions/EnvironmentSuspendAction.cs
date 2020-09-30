@@ -145,6 +145,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 case CloudEnvironmentState.Unavailable:
                     break;
 
+                case CloudEnvironmentState.Queued:
+                    // Suspend is not a valid action for when new codespace creation is underway.
+                    if (input.IsClientSuspend && record.Value.LastStateUpdateTrigger.Equals(CloudEnvironmentStateUpdateTriggers.CreateEnvironment, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new CodedValidationException((int)MessageCodes.ActionNotAllowedInThisState);
+                    }
+
+                    break;
+
                 default:
                     throw new CodedValidationException((int)MessageCodes.ActionNotAllowedInThisState);
             }
@@ -153,6 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 record.Value.State == CloudEnvironmentState.Failed ||
                 record.Value.State == CloudEnvironmentState.Provisioning ||
                 record.Value.State == CloudEnvironmentState.Deleted ||
+                record.Value.State == CloudEnvironmentState.Queued ||
                 (record.Value.Compute.ResourceId == default && input.AllocatedComputeResourceId == default))
             {
                 // If the allocated compute is missing for the environment or the environment is otherwise unrecoverable,

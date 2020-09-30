@@ -397,6 +397,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IDiagnosticsLogger logger)
         {
             // Environments must be initialized in Queued state.
+            // trigger CloudEnvironmentStateUpdateTriggers.CreateEnvironment is used to differentiate, if its a new codespace create request, when user tries to suspend / delete the codespace.
             await EnvironmentStateManager.SetEnvironmentStateAsync(
                 record.Value, CloudEnvironmentState.Queued, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, null, logger.NewChildLogger());
 
