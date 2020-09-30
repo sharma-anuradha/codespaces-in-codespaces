@@ -1,4 +1,4 @@
-﻿// <copyright file="JobPayloadInfo.cs" company="Microsoft">
+// <copyright file="JobPayloadInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -16,15 +16,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <summary>
         /// Initializes a new instance of the <see cref="JobPayloadInfo"/> class.
         /// </summary>
+        /// <param name="tagType">Tag type.</param>
         /// <param name="payload">Json payload content.</param>
         /// <param name="created">When this payload was created.</param>
         /// <param name="retries">Number of retries.</param>
-        public JobPayloadInfo(string payload, DateTime created, int retries = 0)
+        public JobPayloadInfo(string tagType, string payload, DateTime created, int retries = 0)
         {
+            TagType = tagType;
             Payload = payload;
             Created = created;
             Retries = retries;
         }
+
+        /// <summary>
+        /// Gets the tag type.
+        /// </summary>
+        public string TagType { get; }
 
         /// <summary>
         /// Gets the payload json content.

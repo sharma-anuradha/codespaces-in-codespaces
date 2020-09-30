@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -29,6 +30,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                     jobPayload.LoggerProperties.Add(item.Key, item.Value);
                 }
             }
+        }
+
+        /// <summary>
+        /// Create a compatible logger properties from an existing dictionary.
+        /// </summary>
+        /// <typeparam name="T">Type of the value type.</typeparam>
+        /// <param name="loggerProperties">Existing logger properties.</param>
+        /// <returns>A logger properties dictionary to add into a payload.</returns>
+        public static Dictionary<string, object> CreateLoggerProperties<T>(this IDictionary<string, T> loggerProperties)
+        {
+            Requires.NotNull(loggerProperties, nameof(loggerProperties));
+
+            return loggerProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
         }
     }
 }

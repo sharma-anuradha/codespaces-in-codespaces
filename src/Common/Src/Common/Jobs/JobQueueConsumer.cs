@@ -66,6 +66,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             // register the job handler info
             lock (this.lockRegisteredJobHandlers)
             {
+                if (this.registeredJobHandlers.ContainsKey(typeof(T)))
+                {
+                    throw new InvalidOperationException($"type:'{typeof(T).Name}' already registered");
+                }
+
                 var jobHandlerInfo = new JobHandlerInfo(jobHandler, CreateJobHandlerActionBlock<T>(jobHandler));
                 this.registeredJobHandlers.Add(typeof(T), jobHandlerInfo);
             }
@@ -199,7 +204,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         // pass deserialized logger properties from the producer.
                         foreach (var kvp in jobTyped.Payload.LoggerProperties)
                         {
-                            childLogger.FluentAddBaseValue(kvp.Key, kvp.Value.ToString());
+                            childLogger.FluentAddBaseValue(kvp.Key, kvp.Value?.ToString());
                         }
 
                         // expire timeout first on patyload options and then on the job hanlder instance.
@@ -487,7 +492,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             {
                 var json = Encoding.UTF8.GetString(queueMessage.Content);
                 var jobPayloadInfo = JobPayloadInfo.FromJson(json);
-                var jobPayload = JobPayloadHelpers.FromJson(jobPayloadInfo.Payload);
+                var jobPayload = JobPayloadHelpers.FromJson(jobPayloadInfo.TagType, jobPayloadInfo.Payload);
                 lock (this.lockRegisteredJobHandlers)
                 {
                     if (!this.registeredJobHandlers.ContainsKey(jobPayload.GetType()))
@@ -501,7 +506,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             catch (Exception error)
             {
                 this.logger.LogException($"Failed to create payload for job id:{queueMessage.Id}", error);
-                return (new JobPayloadInfo(null, DateTime.UtcNow), new JobPayloadError(error));
+                return (new JobPayloadInfo(null, null, DateTime.UtcNow), new JobPayloadError(error));
             }
         }
 

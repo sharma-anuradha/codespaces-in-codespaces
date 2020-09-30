@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
         /// <summary>
         /// Define default job handler options.
         /// </summary>
-        private static readonly JobHandlerOptions DefaultJobHandlerOptions = new JobHandlerOptions() { ExpireTimeout = MaxTimeJobPayloadRunAfterCreated };
+        private static readonly JobHandlerOptions DefaultJobHandlerOptions = new JobHandlerOptions() { MaxHandlerRetries = 1, ExpireTimeout = MaxTimeJobPayloadRunAfterCreated };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EntityContinuationJobHandlerBase{T, TState, TResult}"/> class.
@@ -163,7 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
                 var failTrigger = threwException ? "Exception" : result.Result?.ErrorReason;
 
                 logger.FluentAddValue("HandlerFailedGetResultFromOperationException", threwException)
-                    .FluentAddValue("HandlerFailedReason", result.Result?.ErrorReason);
+                    .FluentAddValue("HandlerFailedReason", result?.Result?.ErrorReason);
 
                 await UpdateRecordStatusAsync(payload, record, OperationState.Failed, $"PostRunOperation{failTrigger}", logger);
             }
@@ -202,11 +202,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
         /// <returns>The continuation info.</returns>
         protected ContinuationJobResult<TState, TResult> ToContinuationInfo(ContinuationResult continuationResult, TPayload payload)
         {
+            JobPayloadOptions nextPayloadOptions = null;
+
             if (continuationResult.RetryAfter != default)
             {
-                return new ContinuationJobResult<TState, TResult>(
-                    ContinuationJobPayloadResultState.Retry,
-                    nextPayloadOptions: new JobPayloadOptions() { InitialVisibilityDelay = continuationResult.RetryAfter });
+                nextPayloadOptions = new JobPayloadOptions() { InitialVisibilityDelay = continuationResult.RetryAfter };
+                if (continuationResult.Status != OperationState.InProgress)
+                {
+                    return new ContinuationJobResult<TState, TResult>(
+                        ContinuationJobPayloadResultState.Retry,
+                        nextPayloadOptions: nextPayloadOptions);
+                }
             }
 
             ContinuationJobPayloadResultState continuationJobPayloadResultState;
@@ -231,7 +237,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
             return new ContinuationJobResult<TState, TResult>(
                 continuationJobPayloadResultState,
                 result: ResultFromReason(continuationResult.ErrorReason),
-                nextState: GetStateFromPayload(payload));
+                nextState: GetStateFromPayload(payload),
+                nextPayloadOptions: nextPayloadOptions);
         }
 
         /// <summary>

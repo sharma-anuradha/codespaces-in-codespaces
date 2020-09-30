@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             var eventObject = (JObject)serializer.Deserialize(reader);
-            if (eventObject.TryGetValue(TypeProperty, out JToken value))
+            if (eventObject != null && eventObject.TryGetValue(TypeProperty, out JToken value))
             {
                 var type = GetType(value.Value<string>());
                 if (type != null)
@@ -40,11 +40,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var jObject = JObject.FromObject(value);
-            var type = value.GetType();
-            var entry = SupportedTypes.FirstOrDefault(kvp => kvp.Value == type);
-            if (entry.Value != null)
+            if (value != null)
             {
-                jObject.Add(TypeProperty, JToken.FromObject(entry.Key));
+                var type = value.GetType();
+                var entry = SupportedTypes.FirstOrDefault(kvp => kvp.Value == type);
+                if (entry.Value != null)
+                {
+                    jObject.Add(TypeProperty, JToken.FromObject(entry.Key));
+                }
             }
 
             serializer.Serialize(writer, jObject);

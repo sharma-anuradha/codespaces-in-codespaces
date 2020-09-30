@@ -4,15 +4,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -28,17 +32,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="activator">Target activator.</param>
         /// <param name="environmentMonitorSettings">Target settings.</param>
+        /// <param name="jobQueueProducerFactory">Job Queue producer factory instance.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public EnvironmentMonitor(
              IContinuationTaskActivator activator,
-             EnvironmentMonitorSettings environmentMonitorSettings)
+             EnvironmentMonitorSettings environmentMonitorSettings,
+             IJobQueueProducerFactory jobQueueProducerFactory,
+             IConfigurationReader configurationReader)
         {
             Activator = activator;
             EnvironmentMonitorSettings = environmentMonitorSettings;
+            JobQueueProducerFactory = jobQueueProducerFactory;
+            ConfigurationReader = configurationReader;
         }
 
         private IContinuationTaskActivator Activator { get; }
 
         private EnvironmentMonitorSettings EnvironmentMonitorSettings { get; }
+
+        private IJobQueueProducerFactory JobQueueProducerFactory { get; }
+
+        private IConfigurationReader ConfigurationReader { get; }
 
         /// <inheritdoc/>
         public async Task MonitorHeartbeatAsync(string environmentId, Guid? computeId, IDiagnosticsLogger logger)
@@ -52,19 +66,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var loggingProperties = new Dictionary<string, string>();
 
-            var input = new HeartbeatMonitorInput()
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                EnvironmentId = environmentId,
-                ComputeResourceId = computeId ?? default(Guid),
-                ContinuationToken = string.Empty,
-            };
-
-            var target = HeartbeatMonitorContinuationHandler.DefaultQueueTarget;
-
-            var result = await Activator.Execute(target, input, logger, null, loggingProperties);
-            if (result.Status != OperationState.InProgress)
+                await JobQueueProducerFactory.GetOrCreate(HeartbeatMonitorJobHandler.DefaultQueueId).AddJobAsync(
+                    new HeartbeatMonitorJobHandler.Payload()
+                    {
+                        EnvironmentId = environmentId,
+                        ComputeResourceId = computeId ?? default(Guid),
+                    },
+                    new JobPayloadOptions() { InitialVisibilityDelay = TimeSpan.FromMinutes(EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes + EnvironmentMonitorConstants.BufferInMinutes) },
+                    logger,
+                    CancellationToken.None);
+            }
+            else
             {
-                throw new EnvironmentMonitorInitializationException(environmentId);
+                var input = new HeartbeatMonitorInput()
+                {
+                    EnvironmentId = environmentId,
+                    ComputeResourceId = computeId ?? default(Guid),
+                    ContinuationToken = string.Empty,
+                };
+
+                var target = HeartbeatMonitorContinuationHandler.DefaultQueueTarget;
+
+                var result = await Activator.Execute(target, input, logger, null, loggingProperties);
+                if (result.Status != OperationState.InProgress)
+                {
+                    throw new EnvironmentMonitorInitializationException(environmentId);
+                }
             }
         }
 
@@ -201,14 +230,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     var loggingProperties = new Dictionary<string, string>();
 
-                    var target = EnvironmentStateTransitionMonitorContinuationHandler.DefaultQueueTarget;
-
-                    var result = await Activator.Execute(target, input, childLogger, null, loggingProperties);
-                    if (result.Status != OperationState.InProgress)
+                    if (await IsJobContinuationHandlerEnabledAsync(logger))
                     {
-                        throw new EnvironmentMonitorInitializationException(input.EnvironmentId);
+                        await JobQueueProducerFactory.GetOrCreate(EnvironmentStateTransitionMonitorJobHandler.DefaultQueueId).AddJobAsync(
+                            new EnvironmentStateTransitionMonitorJobHandler.Payload()
+                            {
+                                CurrentState = input.CurrentState,
+                                TargetState = input.TargetState,
+                                EnvironmentId = input.EnvironmentId,
+                                ComputeResourceId = input.ComputeResourceId,
+                            },
+                            new JobPayloadOptions() { InitialVisibilityDelay = input.TransitionTimeout },
+                            logger,
+                            CancellationToken.None);
+                    }
+                    else
+                    {
+                        var target = EnvironmentStateTransitionMonitorContinuationHandler.DefaultQueueTarget;
+
+                        var result = await Activator.Execute(target, input, childLogger, null, loggingProperties);
+                        if (result.Status != OperationState.InProgress)
+                        {
+                            throw new EnvironmentMonitorInitializationException(input.EnvironmentId);
+                        }
                     }
                 });
+        }
+
+        private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger)
+        {
+            return ConfigurationReader.ReadFeatureFlagAsync("job-continuation-handler", logger, false);
         }
     }
 }

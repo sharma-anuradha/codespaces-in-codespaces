@@ -236,7 +236,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             public CloudEnvironmentParameters CloudEnvironmentParameters { get; set; }
 
             /// <inheritdoc/>
-            public new StartEnvironmentContinuationInputState CurrentState { get; set; }
+            StartEnvironmentContinuationInputState IStartEnvironmentContinuationPayloadV2.CurrentState
+            {
+                get
+                {
+                    return CurrentState;
+                }
+                set
+                {
+                    CurrentState = value;
+                }
+            }
 
             /// <inheritdoc/>
             public EnvironmentContinuationInputResource ComputeResource { get; set; }

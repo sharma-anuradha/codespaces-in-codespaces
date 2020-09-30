@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Moq;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
@@ -581,6 +583,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             Assert.Equal("MyCustomPayload3", JobPayloadHelpers.GetTypeTag(typeof(MyClass.MyPayload3)));
         }
 
+        [Fact]
+        public Task CustomSerializeAsync()
+        {
+            return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
+            {
+                var payloadsProcessed1 = new BufferBlock<CustomPayload>();
+
+                jobQueueConsumer.RegisterJobPayloadHandler<CustomPayload>(
+                    async (payload, logger, ct) =>
+                    {
+                        await payloadsProcessed1.SendAsync(payload);
+                    }, JobHandlerBase.NoParallelismDataflowBlockOptions);
+
+                await jobQueueProducer.AddJobAsync(new CustomPayload() { CustomData = new Data1() { Property1 = 100} } , null, NullLogger);
+                await jobQueueProducer.AddJobAsync(new CustomPayload() { CustomData = new Data2() { Property2 = "hi" } }, null, NullLogger);
+                var payloadReceived = await payloadsProcessed1.ReceiveAsync(ReceiveTimeout);
+                Assert.IsType<Data1>(payloadReceived.CustomData);
+                payloadReceived = await payloadsProcessed1.ReceiveAsync(ReceiveTimeout);
+                Assert.IsType<Data2>(payloadReceived.CustomData);
+            });
+        }
+
         protected Task RunJobQueueTest(Func<JobQueueProducer, JobQueueConsumer, IQueue, Task> testCallback,
             QueueMessageProducerSettings queueMessageProducerSettings = null)
         {
@@ -733,6 +757,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             internal class MyPayload3 : JobPayload
             {
             }
+        }
+
+        private class CustomPayload : JobPayload
+        {
+            [JsonConverter(typeof(CustomConverter))]
+            public Data CustomData { get; set; }
+        }
+
+        public class Data
+        {
+        }
+
+        public class Data1 : Data
+        {
+            public int Property1 { get; set; }
+        }
+
+        public class Data2 : Data
+        {
+            public string Property2 { get; set; }
+        }
+
+        public class CustomConverter : JsonTypeConverter
+        {
+            private static readonly Dictionary<string, Type> MapTypes
+                    = new Dictionary<string, Type>
+                {
+                    { "data1", typeof(Data1) },
+                    { "data2", typeof(Data2) },
+                };
+
+            protected override Type BaseType => typeof(Data);
+
+            protected override IDictionary<string, Type> SupportedTypes => MapTypes;
         }
     }
 }

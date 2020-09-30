@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 async (childLogger) =>
                 {
                     UpdateMetrics(tagType, m => ++m.Processed);
-                    var json = new JobPayloadInfo(payloadJson, DateTime.UtcNow) { PayloadOptions = jobPayloadOptions }.ToJson();
+                    var json = new JobPayloadInfo(tagType, payloadJson, DateTime.UtcNow) { PayloadOptions = jobPayloadOptions }.ToJson();
                     var cloudMessage = await this.queueMessage.AddMessageAsync(Encoding.UTF8.GetBytes(json), jobPayloadOptions?.InitialVisibilityDelay, cancellationToken);
                     childLogger
                         .FluentAddValue(JobQueueLoggerConst.JobId, cloudMessage.Id)

@@ -210,11 +210,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 {
                     childLogger.FluentAddValue("JobContinuationState", job.Payload.CurrentState.ToString());
                     var result = await ContinueAsync(job, childLogger, cancellationToken);
-                    childLogger.FluentAddValue("JobContinuationResultState", result.ResultState)
-                        .FluentAddValue("JobContinuationHasResult", result.Result != null)
-                        .FluentAddValue("JobContinuationNextState", result.NextState);
+                    if (result != null)
+                    {
+                        childLogger.FluentAddValue("JobContinuationResultState", result.ResultState)
+                            .FluentAddValue("JobContinuationHasResult", result.Result != null)
+                            .FluentAddValue("JobContinuationNextState", result.NextState);
+                    }
+                    else
+                    {
+                        childLogger.FluentAddValue("JobContinuationResultIsNull", true);
+                    }
+
                     return result;
-                });
+                }) ?? ReturnFailed();
 
             if (continueJobResult.ResultState == ContinuationJobPayloadResultState.Retry)
             {

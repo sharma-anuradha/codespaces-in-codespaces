@@ -3,12 +3,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers;
@@ -24,6 +26,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
@@ -103,23 +106,94 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var result = (ContinuationResult)null;
             logger.FluentAddValue("HandlerResourceHasAzureResourceInfo", record.Value.AzureResourceInfo != null);
 
-            if (record.Value.Type == ResourceType.ComputeVM)
+            if (payload.DeleteInput == null)
             {
-                var didParseLocation = Enum.TryParse(record.Value.Location, true, out AzureLocation azureLocation);
-                if (!didParseLocation)
+                if (record.Value.Type == ResourceType.ComputeVM)
                 {
-                    throw new NotSupportedException($"Provided location of '{record.Value.Location}' is not supported.");
+                    var didParseLocation = Enum.TryParse(record.Value.Location, true, out AzureLocation azureLocation);
+                    if (!didParseLocation)
+                    {
+                        throw new NotSupportedException($"Provided location of '{record.Value.Location}' is not supported.");
+                    }
+
+                    payload.DeleteInput = new VirtualMachineProviderDeleteInput
+                    {
+                        AzureResourceInfo = record.Value.AzureResourceInfo,
+                        CustomComponents = record.Value.Components?.Items?.Values.ToList(),
+                        AzureVmLocation = azureLocation,
+                        ComputeOS = record.Value.PoolReference.GetComputeOS(),
+                    };
                 }
-
-                var operationInput = new VirtualMachineProviderDeleteInput
+                else if (record.Value.Type == ResourceType.StorageFileShare)
                 {
-                    AzureResourceInfo = record.Value.AzureResourceInfo,
-                    CustomComponents = record.Value.Components?.Items?.Values.ToList(),
-                    AzureVmLocation = azureLocation,
-                    ComputeOS = record.Value.PoolReference.GetComputeOS(),
-                };
+                    payload.DeleteInput = new FileShareProviderDeleteInput
+                    {
+                        AzureResourceInfo = record.Value.AzureResourceInfo,
+                    };
+                }
+                else if (record.Value.Type == ResourceType.StorageArchive)
+                {
+                    var blobStorageDetails = record.Value.GetStorageDetails();
 
-                result = await ComputeProvider.DeleteAsync(operationInput, logger.NewChildLogger());
+                    payload.DeleteInput = new FileShareProviderDeleteBlobInput
+                    {
+                        AzureResourceInfo = record.Value.AzureResourceInfo,
+                        BlobName = blobStorageDetails.ArchiveStorageBlobName,
+                        BlobContainerName = blobStorageDetails.ArchiveStorageBlobContainerName,
+                    };
+                }
+                else if (record.Value.Type == ResourceType.OSDisk)
+                {
+                    var queueComponent = record.Value.Components?.Items?.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
+                    payload.DeleteInput = new DiskProviderDeleteInput
+                    {
+                        AzureResourceInfo = record.Value.AzureResourceInfo,
+                        QueueResourceInfo = queueComponent?.AzureResourceInfo,
+                    };
+                }
+                else if (record.Value.Type == ResourceType.KeyVault)
+                {
+                    var didParseLocation = Enum.TryParse(record.Value.Location, true, out AzureLocation azureLocation);
+                    if (!didParseLocation)
+                    {
+                        throw new NotSupportedException($"Provided location of '{record.Value.Location}' is not supported.");
+                    }
+
+                    payload.DeleteInput = new KeyVaultProviderDeleteInput
+                    {
+                        AzureLocation = azureLocation,
+                        AzureResourceInfo = record.Value.AzureResourceInfo,
+                    };
+                }
+                else if (record.Value.Type == ResourceType.PoolQueue)
+                {
+                    var didParseLocation = Enum.TryParse(record.Value.Location, true, out AzureLocation azureLocation);
+                    if (!didParseLocation)
+                    {
+                        throw new NotSupportedException($"Provided location of '{record.Value.Location}' is not supported.");
+                    }
+
+                    payload.DeleteInput = new QueueProviderDeleteInput
+                    {
+                        Location = azureLocation,
+                        AzureResourceInfo = record.Value.AzureResourceInfo,
+                        QueueName = record.Value.AzureResourceInfo.Name,
+                    };
+                }
+                else
+                {
+                    throw new NotSupportedException($"Resource type is not supported - {record.Value.Type}");
+                }
+            }
+
+            // Return success if AzureResourceInfo is null as it means there is nothing to do
+            if (record.Value.AzureResourceInfo == null)
+            {
+                result = new ContinuationResult() { Status = OperationState.Succeeded };
+            }
+            else if (record.Value.Type == ResourceType.ComputeVM)
+            {
+                result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)payload.DeleteInput, logger.NewChildLogger());
             }
             else if (record.Value.Type == ResourceType.StorageFileShare)
             {
@@ -127,64 +201,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 {
                     AzureResourceInfo = record.Value.AzureResourceInfo,
                 };
-                result = await StorageProvider.DeleteAsync(operationInput, logger.NewChildLogger());
+                result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)payload.DeleteInput, logger.NewChildLogger());
             }
             else if (record.Value.Type == ResourceType.StorageArchive)
             {
-                var blobStorageDetails = record.Value.GetStorageDetails();
-
-                var operationInput = new FileShareProviderDeleteBlobInput
-                {
-                    AzureResourceInfo = record.Value.AzureResourceInfo,
-                    BlobName = blobStorageDetails.ArchiveStorageBlobName,
-                    BlobContainerName = blobStorageDetails.ArchiveStorageBlobContainerName,
-                };
-                result = await StorageProvider.DeleteAsync(operationInput, logger.NewChildLogger());
+                result = await StorageProvider.DeleteAsync((FileShareProviderDeleteBlobInput)payload.DeleteInput, logger.NewChildLogger());
             }
             else if (record.Value.Type == ResourceType.OSDisk)
             {
-                var queueComponent = record.Value.Components?.Items?.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
-                var operationInput = new DiskProviderDeleteInput
-                {
-                    AzureResourceInfo = record.Value.AzureResourceInfo,
-                    QueueResourceInfo = queueComponent?.AzureResourceInfo,
-                };
-                result = await DiskProvider.DeleteDiskAsync(operationInput, logger.NewChildLogger());
+                result = await DiskProvider.DeleteDiskAsync((DiskProviderDeleteInput)payload.DeleteInput, logger.NewChildLogger());
             }
             else if (record.Value.Type == ResourceType.KeyVault)
             {
-                var didParseLocation = Enum.TryParse(record.Value.Location, true, out AzureLocation azureLocation);
-                if (!didParseLocation)
-                {
-                    throw new NotSupportedException($"Provided location of '{record.Value.Location}' is not supported.");
-                }
-
-                var operationInput = new KeyVaultProviderDeleteInput
-                {
-                    AzureLocation = azureLocation,
-                    AzureResourceInfo = record.Value.AzureResourceInfo,
-                };
-                result = await KeyVaultProvider.DeleteAsync(operationInput, logger.NewChildLogger());
+                result = await KeyVaultProvider.DeleteAsync((KeyVaultProviderDeleteInput)payload.DeleteInput, logger.NewChildLogger());
             }
             else if (record.Value.Type == ResourceType.PoolQueue)
             {
-                var didParseLocation = Enum.TryParse(record.Value.Location, true, out AzureLocation azureLocation);
-                if (!didParseLocation)
-                {
-                    throw new NotSupportedException($"Provided location of '{record.Value.Location}' is not supported.");
-                }
-
-                var operationInput = new QueueProviderDeleteInput
-                {
-                    Location = azureLocation,
-                    AzureResourceInfo = record.Value.AzureResourceInfo,
-                    QueueName = record.Value.AzureResourceInfo.Name,
-                };
-                result = await RequestQueueProvider.DeletePoolQueueAsync(operationInput, logger.NewChildLogger());
+                result = await RequestQueueProvider.DeletePoolQueueAsync((QueueProviderDeleteInput)payload.DeleteInput, logger.NewChildLogger());
             }
             else
             {
                 throw new NotSupportedException($"Resource type is not supported - {record.Value.Type}");
+            }
+
+            // Note: refresh the delete input in case some of the providers change the continuation token
+            if (result.NextInput != null)
+            {
+                payload.DeleteInput = result.NextInput;
             }
 
             if (result.Status == OperationState.Succeeded)
@@ -218,6 +261,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             /// Gets or sets the Environment Id.
             /// </summary>
             public Guid? EnvironmentId { get; set; }
+
+            [JsonConverter(typeof(DeleteInputConverter))]
+            public ContinuationInput DeleteInput { get; set; }
+        }
+
+        /// <summary>
+        /// Json converter for CloudEnvironmentParameters type
+        /// </summary>
+        public class DeleteInputConverter : JsonTypeConverter
+        {
+            private static readonly Dictionary<string, Type> MapTypes
+                    = new Dictionary<string, Type>
+                {
+                    { "computeVM", typeof(VirtualMachineProviderDeleteInput) },
+                    { "storageFileShare", typeof(FileShareProviderDeleteInput) },
+                    { "storageArchive", typeof(FileShareProviderDeleteBlobInput) },
+                    { "osDisk", typeof(DiskProviderDeleteInput) },
+                    { "keyVault", typeof(KeyVaultProviderDeleteInput) },
+                    { "poolQueue", typeof(QueueProviderDeleteInput) },
+                };
+
+            protected override Type BaseType => typeof(ContinuationInput);
+
+            protected override IDictionary<string, Type> SupportedTypes => MapTypes;
         }
     }
 }

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
@@ -16,8 +17,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     public static class JobPayloadHelpers
     {
         private const string TypeFieldName = "Type";
-
-        private const string TypePropertyName = "type";
 
         private static readonly ConcurrentDictionary<Type, string> CachedTypes = new ConcurrentDictionary<Type, string>();
         private static readonly ConcurrentDictionary<string, Type> NameTypes = new ConcurrentDictionary<string, Type>();
@@ -31,34 +30,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         {
             Requires.NotNull(jobPayload, nameof(jobPayload));
 
-            var jObject = JObject.FromObject(jobPayload);
-            jObject[TypePropertyName] = GetTypeTag(jobPayload.GetType());
-            return jObject.ToString();
+            return JsonConvert.SerializeObject(jobPayload);
         }
 
         /// <summary>
         /// Deserialize a json content into a job payload.
         /// </summary>
+        /// <param name="tagType">The payload tag type.</param>
         /// <param name="json">The json content.</param>
         /// <returns>An instance of a job payload.</returns>
-        public static JobPayload FromJson(string json)
+        public static JobPayload FromJson(string tagType, string json)
         {
+            Requires.NotNullOrEmpty(tagType, nameof(tagType));
             Requires.NotNullOrEmpty(json, nameof(json));
 
-            var jObject = JObject.Parse(json);
-            JToken typeToken;
-            if (!jObject.TryGetValue(TypePropertyName, out typeToken))
-            {
-                throw new Exception($"tag:'{TypePropertyName}' missing from json payload");
-            }
-
             Type payloadType;
-            if (!NameTypes.TryGetValue(typeToken.ToString(), out payloadType))
+            if (!NameTypes.TryGetValue(tagType, out payloadType))
             {
-                throw new Exception($"tag:{typeToken} not registered");
+                throw new Exception($"tag:{tagType} not registered");
             }
 
-            return (JobPayload)jObject.ToObject(payloadType);
+            return (JobPayload)JsonConvert.DeserializeObject(json, payloadType);
         }
 
         /// <summary>
