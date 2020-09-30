@@ -44,6 +44,60 @@ class Subscription {
     [string]$subscriptionName
     [string]$subscriptionOldName
     [string]$vnetInjection
+    [SubscriptionValidation]$validation = [SubscriptionValidation]::new()
+
+    [PSCustomObject]SelectValidationResults() {
+        $selected = [PSCustomObject]@{
+            name = $this.subscriptionName
+            id = $this.subscriptionId
+            isValid = $this.validation.IsValid()
+        }
+
+        foreach ($property in $this.validation.PSObject.Properties) {
+            $result = $property.Value
+            $resultStr = "$($result.result)"
+            if ($result.message) {
+                $resultStr += " - $($result.message)"
+            }
+            $selected | Add-Member -MemberType NoteProperty -Name $property.Name -Value $resultStr
+        }
+
+        return $selected
+    }
+}
+
+enum ValidationResultType {
+    Untested
+    Warning
+    Error
+    Success
+}
+
+class ValidationResult {
+    [ValidationResultType]$result
+    [string]$message
+}
+
+class SubscriptionValidation {
+    [ValidationResult]$airs = [ValidationResult]::new()
+    [ValidationResult]$coreQuotas = [ValidationResult]::new()
+    [ValidationResult]$partitionedDns = [ValidationResult]::new()
+    [ValidationResult]$premiumFilesInternalSettings = [ValidationResult]::new()
+    [ValidationResult]$rbac = [ValidationResult]::new()
+    [ValidationResult]$resourceGroup = [ValidationResult]::new()
+    [ValidationResult]$resourceProviders = [ValidationResult]::new()
+    [ValidationResult]$subscriptionName = [ValidationResult]::new()
+    [ValidationResult]$tags = [ValidationResult]::new()
+    [ValidationResult]$vnetInjection = [ValidationResult]::new()
+
+    [bool]IsValid() {
+        foreach ($property in $this.PSObject.Properties) {
+            if ($property.Value.result -eq [ValidationResultType]::Error) {
+                return $false
+            }
+        }
+        return $true
+    }
 }
 
 function ConvertTo-AzureLocation {
@@ -277,7 +331,7 @@ function Format-ExcelToJson {
             $subscriptions.Add($subscription) | Out-Null
         }
 
-        $subscriptions = $subscriptions | Sort-Object -Property subscriptionName
+        $subscriptions = $subscriptions | Sort-Object -Property subscriptionName | Select-Object -ExcludeProperty validation
 
         if (-not $JsonFile) {
             Write-Host ($subscriptions | ConvertTo-Json -EnumsAsStrings)
@@ -409,21 +463,6 @@ function Test-All {
     }
 }
 
-function Get-SubscriptionMessage {
-    param(
-        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Object[]]$Subscriptions,
-        [Parameter(Mandatory=$true)]
-        [string]$Message
-    )
-
-    Process {
-        ForEach ($sub in $Subscriptions) {
-            Write-Output "Subscription $($sub.subscriptionOldName) ($($sub.subscriptionId)) $Message"
-        }
-    }
-}
-
 function Test-Airs {
     [CmdletBinding()]
     param(
@@ -442,8 +481,14 @@ function Test-Airs {
             }
 
             if (!$found) {
-                $sub | Get-SubscriptionMessage -Message "was not found" | Write-Error
+                $sub.validation.airs.result = [ValidationResultType]::Error
+                $sub.validation.airs.message = "not found"
             } else {
+                $sub.validation.airs.result = [ValidationResultType]::Success
+                # NOTE: Generally we always pass the sub through the pipeline,
+                #       but in the case where the account has no access to the
+                #       sub there is no point. This is a gatekeeper for other
+                #       validations.
                 Write-Output $sub
             }
         }
@@ -467,14 +512,19 @@ function Test-SubscriptionName {
                 $_.id -eq $sub.subscriptionId
             }
 
+            $sub.validation.subscriptionName.result = [ValidationResultType]::Success
+
             if (!$azSub) {
-                $sub | Get-SubscriptionMessage -Message "was not found" | Write-Error
+                $sub.validation.subscriptionName.result = [ValidationResultType]::Error
+                $sub.validation.subscriptionName.message = "not found"
             } else {
                 if ($sub.subscriptionOldName -eq $azSub.name) {
-                    $sub | Get-SubscriptionMessage -Message "contains legacy name and needs to be renamed." | Write-Warning
+                    $sub.validation.subscriptionName.result = [ValidationResultType]::Warning
+                    $sub.validation.subscriptionName.message = "contains legacy name and needs to be renamed"
                 } else {
                     if ($sub.subscriptionName  -ne $azSub.name) {
-                        Write-Error "Subscription:`'$($sub.subscriptionId)`' has incorrect name. Expected:`'$($sub.subscriptionName)`', Actual:`'$($azSub.name)`'"
+                        $sub.validation.subscriptionName.result = [ValidationResultType]::Error
+                        $sub.validation.subscriptionName.message = "has incorrect name. Expected:`'$($sub.subscriptionName)`', Actual:`'$($azSub.name)`'"
                     }
                 }
 
@@ -493,6 +543,8 @@ function Test-Tags {
 
     Process {
         ForEach ($sub in $Subscriptions) {
+            $sub.validation.tags.result = [ValidationResultType]::Success
+
             $tags = az tag list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
 
             $warningTagNames = "component", "env", "ordinal", "plane", "prefix", "region", "type", "serviceTreeId", "serviceTreeUrl"
@@ -506,10 +558,12 @@ function Test-Tags {
                 }
 
                 if (!$tag) {
-                    $sub | Get-SubscriptionMessage -Message "doesn't have Tag:`'$($tagName)`'" | Write-Warning
+                    $sub.validation.tags.result = [ValidationResultType]::Warning
+                    $sub.validation.tags.message = "doesn't have Tag:`'$($tagName)`'"
                 } else {
                     if ($null -ne $expectedTagValues[$i] -and $tag.values.tagValue -ne $expectedTagValues[$i]) {
-                        $sub | Get-SubscriptionMessage -Message "contains Tag:`'$($tagName)`' with invalid value. Expected:`'$( $expectedTagValues[$i])`', Actual:`'$($tag.values.tagValue)`'" | Write-Warning
+                        $sub.validation.tags.result = [ValidationResultType]::Warning
+                        $sub.validation.tags.message = "contains Tag:`'$($tagName)`' with invalid value. Expected:`'$( $expectedTagValues[$i])`', Actual:`'$($tag.values.tagValue)`'"
                     }
                 }
             }
@@ -528,18 +582,21 @@ function Test-ResourceGroup {
 
     Process {
         ForEach ($sub in $Subscriptions) {
+            $sub.validation.resourceGroup.result = [ValidationResultType]::Success
+
             $result = az account set --subscription $sub.subscriptionId
             if ($null -ne $result) {
-                $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
+                $sub.validation.resourceGroup.result = [ValidationResultType]::Error
+                $sub.validation.resourceGroup.message = "Invalid subscription"
             } else {
-
                 # Check if subscription has a limit of maximum resource groups
                 if ($null -ne $sub.maxResourceGroupCount) {
 
                     # Some environments may have more than 1 instance, in this case we should take that in factor to calculate the maximum
                     $instances = $instanceEnvironments["$($sub.environment)"]
                     if ($null -eq $instances) {
-                        Write-Error "Invalid environemnt $($sub.environment), unable to find number of instance environments."
+                        $sub.validation.resourceGroup.result = [ValidationResultType]::Error
+                        $sub.validation.resourceGroup.message = "Invalid environment $($sub.environment), unable to find number of instance environments."
                         Write-Output $sub
                         continue
                     }
@@ -549,7 +606,8 @@ function Test-ResourceGroup {
                     # If we are over capacity we should error out requesting immediate attention and move resources out of the subscription if possible.
                     $resourceGroups = az group list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
                     if ($resourceGroups.Count -gt $maximum) {
-                        Write-Error "Subscription:`'$($sub.subscriptionId)`' has more resource groups than allowed. Expected:`'$($maximum)`', Actual:`'$($resourceGroups.Count)`'"
+                        $sub.validation.resourceGroup.result = [ValidationResultType]::Error
+                        $sub.validation.resourceGroup.message = "has more resource groups than allowed. Expected:`'$($maximum)`', Actual:`'$($resourceGroups.Count)`'"
                     }
                 }
 
@@ -570,7 +628,8 @@ function Test-CoreQuotas {
         ForEach ($sub in $Subscriptions) {
             $result = az account set --subscription $sub.subscriptionId
             if ($null -ne $result) {
-                $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
+                $sub.validation.coreQuotas.result = [ValidationResultType]::Error
+                $sub.validation.coreQuotas.message = "Invalid subscription"
             } else {
                 # Todo validate CoreQuotas
             }
@@ -594,6 +653,8 @@ function Test-ResourceProviders {
 
     Process {
         ForEach ($sub in $Subscriptions) {
+            $sub.validation.resourceProviders.result = [ValidationResultType]::Success
+
             if ($sub.generation -eq "v1-legacy") {
                 Write-Output $sub
                 continue
@@ -601,13 +662,15 @@ function Test-ResourceProviders {
 
             $result = az account set --subscription $sub.subscriptionId
             if ($null -ne $result) {
-                $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
+                $sub.validation.resourceProviders.result = [ValidationResultType]::Error
+                $sub.validation.resourceProviders.message = "Invalid subscription"
             } else {
                 $registeredRPs = az provider list --query "[].{Provider:namespace, Status:registrationState}" --out json | ConvertFrom-Json | Where-Object {$_.Status -eq "Registered"}
 
                 ForEach ($provider in $defaultRPs) {
                     if (!($registeredRPs | Test-Any {$_.Provider -like $provider})) {
-                        $sub | Get-SubscriptionMessage -Message "missing provider $provider" | Write-Error
+                        $sub.validation.resourceProviders.result = [ValidationResultType]::Error
+                        $sub.validation.resourceProviders.message =  "missing provider $provider"
                     }
                 }
             }
@@ -646,14 +709,16 @@ function Test-32GbFlags {
 
     Process {
         ForEach ($sub in $Subscriptions) {
+            $sub.validation.premiumFilesInternalSettings.result = [ValidationResultType]::Success
             if (-not $sub.premiumFilesInternalSettings -like "done") {
                 Write-Output $sub
                 continue
             }
 
             $response = az feature show --namespace Microsoft.Storage -n $featureFlag --subscription $sub.subscriptionId | ConvertFrom-Json
-            if (-not $response.properties.state -like "registered") {
-                $sub | Get-SubscriptionMessage -Message "missing feature flag $featureFlag" | Write-Error
+            if (-not $response -or -not $response.properties.state -like "registered") {
+                $sub.validation.premiumFilesInternalSettings.result = [ValidationResultType]::Error
+                $sub.validation.premiumFilesInternalSettings.message =  "missing feature flag $featureFlag"
             }
 
             Write-Output $sub
@@ -674,14 +739,16 @@ function Test-PartionedDns {
 
     Process {
         ForEach ($sub in $Subscriptions) {
+            $sub.validation.partitionedDns.result = [ValidationResultType]::Success
             if (-not $sub.storagePartitionedDnsFlag -like "done") {
                 Write-Output $sub
                 continue
             }
 
             $response = az feature show --namespace Microsoft.Storage -n $featureFlag --subscription $sub.subscriptionId | ConvertFrom-Json
-            if (-not $response.properties.state -like "registered") {
-                $sub | Get-SubscriptionMessage -Message "missing feature flag $featureFlag" | Write-Error
+            if (-not $response -or -not $response.properties.state -like "registered") {
+                $sub.validation.partitionedDns.result = [ValidationResultType]::Error
+                $sub.validation.resourceProviders.message =  "missing feature flag $featureFlag"
             }
 
             Write-Output $sub
@@ -698,9 +765,11 @@ function Test-VnetInjection {
 
     Process {
         ForEach ($sub in $Subscriptions) {
+            $sub.validation.vnetInjection.result = [ValidationResultType]::Success
             $result = az account set --subscription $sub.subscriptionId
             if ($null -ne $result) {
-                $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
+                $sub.validation.vnetInjection.result = [ValidationResultType]::Error
+                $sub.validation.vnetInjection.message = "Invalid subscription"
             } else {
 
                 if ($sub.serviceType -eq [ServiceType]::Compute -or $sub.serviceType -eq [ServiceType]::Network) {
@@ -716,11 +785,13 @@ function Test-VnetInjection {
 
                     # $firstpartyapp = az ad sp list --filter "appId eq '$appId'" --query [0].objectId -o tsv
                     if ($null -eq $firstpartyapp) {
-                        Write-Error "Unable to find AppId: '$appId'"
+                        $sub.validation.vnetInjection.result = [ValidationResultType]::Error
+                        $sub.validation.vnetInjection.message = "Unable to find AppId: '$appId'"
                     } else {
                         $role = az role assignment list --role "Contributor" --assignee $firstpartyapp -o json | ConvertFrom-Json
                         if ($null -eq  $role) {
-                            Write-Error "Subscription:`'$($sub.subscriptionId)`' is missing contributor role for first party app."
+                            $sub.validation.vnetInjection.result = [ValidationResultType]::Error
+                            $sub.validation.vnetInjection.message = "missing contributor role for first party app."
                         }
                     }
                 }
@@ -838,11 +909,12 @@ function Enable-Subscription {
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
         [Object[]]$Subscriptions,
-        [string]$vsoUtilDirectory = "$PSScriptRoot\..\..\bin\debug\VsoUtil\"
+        [string]$VsoUtilDirectory = $(Join-Path $PSScriptRoot .. .. bin debug VsoUtil)
     )
 
     Process {
         ForEach ($sub in $Subscriptions) {
+            Write-Host "Processing $($sub.subscriptionName) ($($sub.subscriptionId)), with dbEnabled=$($sub.dbEnabled ? $sub.dbEnabled : "null"), location=$($sub.location)"
 
             $options = ""
             if ($null -eq $sub.dbEnabled) {
@@ -855,7 +927,7 @@ function Enable-Subscription {
 
             $env = ConvertTo-VsoUtilEnvironment -env $sub.environment
 
-            Push-Location $vsoUtilDirectory
+            Push-Location $VsoUtilDirectory
             dotnet VsoUtil.dll enable-subscription --verbose --location $sub.location --env $env --subscription $sub.subscriptionId $options
             Pop-Location
         }
