@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -13,16 +14,20 @@ using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Kusto.Cloud.Platform.Utils;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
@@ -43,7 +48,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// </summary>
         public const string GitHubAuthenticationHandlerHeader = "__githubToken";
 
-        private readonly HttpClient httpClient;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly JsonSerializer jsonSerializer;
 
@@ -65,19 +69,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            ISystemClock clock,
-            IGithubApiHttpClientProvider httpClientProvider,
+            ISystemClock clock,            
             IDiagnosticsLoggerFactory loggerFactory,
             ITokenProvider tokenProvider,
             IAuthenticationSchemeProvider authSchemeProvider,
             IPlanManager planManager,
             GitHubFixedPlansMapper gitHubFixedPlansMapper,
-            ICurrentUserProvider currentUserProvider)
+            ICurrentUserProvider currentUserProvider,
+            ICurrentLocationProvider currentLocationProvider)
             : base(options, logger, encoder, clock)
         {
             this.loggerFactory = Requires.NotNull(loggerFactory, nameof(loggerFactory));
-            Requires.NotNull(httpClientProvider, nameof(httpClientProvider));
-            this.httpClient = httpClientProvider.HttpClient;
             this.jsonSerializer = JsonSerializer.Create(new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.None,
@@ -88,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             AuthenticationSchemeProvider = Requires.NotNull(authSchemeProvider, nameof(authSchemeProvider));
             GitHubFixedPlansMapper = Requires.NotNull(gitHubFixedPlansMapper, nameof(gitHubFixedPlansMapper));
             CurrentUserProvider = Requires.NotNull(currentUserProvider, nameof(currentUserProvider));
+            CurrentLocationProvider = Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
         }
 
         private IAuthenticationSchemeProvider AuthenticationSchemeProvider { get; }
@@ -100,6 +103,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         private ICurrentUserProvider CurrentUserProvider { get; }
 
+        private ICurrentLocationProvider CurrentLocationProvider { get; }
+
         /// <inheritdoc/>
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
@@ -108,6 +113,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             // and getting information from GitHub about the user, then minting our own
             // Cascade token which we then use to genuinely authenticate towards the other calls
             // that we are making.
+            var logger = loggerFactory.New();
+
             var authHeader = Request.Headers[HeaderNames.Authorization].ToString();
             if (!AuthenticationHeaderValue.TryParse(authHeader, out var authHeaderValue))
             {
@@ -120,23 +127,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             }
 
             var token = authHeaderValue.Parameter;
+
+            // we do this, because we provide the token in a different way
+            var gateway = new GitHubApiGateway(CurrentLocationProvider, token);
+
             JObject user;
             try
             {
-                var logger = this.loggerFactory.New();
-                user = await logger.OperationScopeAsync("github_token_validate", async (innerLogger) =>
+                user = await gateway.GetUserAsync(logger);
+                if (user == null)
                 {
-                    var request = new HttpRequestMessage(HttpMethod.Get, "/user");
-                    request.Headers.Authorization = new AuthenticationHeaderValue("token", token);
-                    var response = await this.httpClient.SendAsync(request);
-                    innerLogger.AddValue("HttpResponseStatusCode", response.StatusCode.ToString());
-
-                    response.EnsureSuccessStatusCode();
-
-                    var responseStream = await response.Content.ReadAsStreamAsync();
-                    return this.jsonSerializer.Deserialize<JObject>(
-                        new JsonTextReader(new StreamReader(responseStream))) !;
-                });
+                    return AuthenticateResult.Fail("User returned from endpoint is null.");
+                }
             }
             catch (Exception ex)
             {
@@ -158,20 +160,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 return AuthenticateResult.Fail("Missing id claim.");
             }
 
-            bool isMicrosoftInternalUser = false;
-            try
-            {
-                var orgRequest = new HttpRequestMessage(HttpMethod.Get, $"/orgs/microsoft/members/{username}");
-                orgRequest.Headers.Authorization = new AuthenticationHeaderValue("token", token);
-                var response = await this.httpClient.SendAsync(orgRequest);
-
-                isMicrosoftInternalUser = response.StatusCode == HttpStatusCode.NoContent;
-            }
-            catch
-            {
-                // NOOP
-            }
-
+            bool isMicrosoftInternalUser = await gateway.IsMemberOfMicrosoftOrganisationAsync(username, logger);
+           
             var delegatedIdentity = new DelegateIdentity()
             {
                 DisplayName = displayName,
@@ -241,6 +231,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             }
 #nullable restore
             return false;
+        }
+
+        public static bool IsInGitHubAuthenticatedSession(HttpRequest request, out string token)
+        {
+            token = null;
+            request.Headers.TryGetValue(
+                GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader,
+                out StringValues headerValue);
+
+            if (headerValue.All(x => string.IsNullOrEmpty(x)))
+            {
+                // it appears we aren't in a GitHub auth session
+                return false;
+            }
+
+            token = headerValue.FirstOrDefault();
+            return true;
         }
     }
 }

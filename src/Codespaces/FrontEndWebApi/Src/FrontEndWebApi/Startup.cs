@@ -311,7 +311,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddSingleton<IClaimedDistributedLease, ClaimedDistributedLease>();
 
             // Add GitHub Client & Related Attributes
-            services.AddSingleton<IGithubApiHttpClientProvider, GithubApiHttpClientProvider>();
+            services.AddSingleton<GitHubApiGatewayProvider>();
             services.AddSingleton<GitHubFixedPlansMapper>();
 
             // VS SaaS services with first party app JWT authentication.

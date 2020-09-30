@@ -2,15 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 using System;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
@@ -39,12 +31,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
         /// <param name="githubApiHttpClientProvider">The GitHub API client.</param>
         public GitHubFixedPlansMapper(
             ICurrentLocationProvider currentLocationProvider,
-            FrontEndAppSettings frontEndAppSettings,
-            IGithubApiHttpClientProvider githubApiHttpClientProvider)
+            FrontEndAppSettings frontEndAppSettings)
         {
             CurrentLocationProvider = Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
-            FrontEndAppSettings = Requires.NotNull(frontEndAppSettings, nameof(frontEndAppSettings));
-            GithubApiHttpClientProvider = Requires.NotNull(githubApiHttpClientProvider, nameof(githubApiHttpClientProvider));
+            FrontEndAppSettings = Requires.NotNull(frontEndAppSettings, nameof(frontEndAppSettings));            
 
             this.jsonSerializer = JsonSerializer.Create(new JsonSerializerSettings
             {
@@ -56,8 +46,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
 
         private FrontEndAppSettings FrontEndAppSettings { get; }
 
-        private IGithubApiHttpClientProvider GithubApiHttpClientProvider { get; }
-
         /// <summary>
         /// Returns the <see cref="VsoPlan"/> we should be using. It uses the <see cref="CurrentLocationProvider"/>
         /// to determine the nearest stamp and retrieves the mapped plan to the stamp.
@@ -65,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
         /// </summary>
         /// <returns>Returns a very stripped down instance of the <see cref="VsoPlan"/> object.</returns>
         public VsoPlan GetPlanToUse()
-        {
+            {
             AzureLocation currentLocation = CurrentLocationProvider.CurrentLocation;
             if (!FrontEndAppSettings.GitHubProxySettingsByLocation.TryGetValue(currentLocation.ToString(), out GitHubProxySettings settings))
             {
@@ -96,70 +84,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
                 Id = string.Empty,
                 Plan = planInfo,
             };
-        }
-
-        /// <summary>
-        /// When the authentication happens through GitHub, the callback is used, to change the value of
-        /// planId.
-        /// </summary>
-        /// <param name="planIdModifier">The callback to use with the new plan id.</param>
-        /// <param name="request">The HTTP Request triggering this call, used to check if the GitHub auth handler was ran.</param>
-        public void ApplyValuesWhenGitHubTokenIsUsed(Action<string> planIdModifier, HttpRequest request)
-        {
-            Requires.NotNull(planIdModifier, nameof(planIdModifier));
-            request.Headers.TryGetValue(GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader, out StringValues headerValue);
-            if (headerValue.All(x => string.IsNullOrEmpty(x)))
-            {
-                // it appears we aren't in a GitHub auth session
-                return;
-            }
-
-            // TODO: feature flag (anvod)
-            var plan = this.GetPlanToUse();
-
-            if (plan == null)
-            {
-                return;
-            }
-
-            planIdModifier(plan.Plan.ResourceId);
-        }
-
-        /// <summary>
-        /// Determines if the current user is a Microsoft internal user.
-        /// </summary>
-        /// <param name="request">The HTTP Request.</param>
-        /// <param name="user">The User making the request.</param>
-        /// <returns>Return true if the user belongs to the Microsoft org. If the current request
-        /// is not authorized through a GitHub token, this will immediately return false.</returns>
-        public async Task<bool> IsMicrosoftInternalUserAsync(HttpRequest request, ClaimsPrincipal user)
-        {
-            request.Headers.TryGetValue(GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader, out StringValues headerValue);
-            var token = headerValue.FirstOrDefault();
-            if (string.IsNullOrEmpty(token))
-            {
-                return false;
-            }
-
-            var username = user.FindFirst(CustomClaims.Username)?.Value;
-            if (string.IsNullOrEmpty(username))
-            {
-                return false;
-            }
-
-            try
-            {
-                var httpClient = GithubApiHttpClientProvider.HttpClient;
-                var orgRequest = new HttpRequestMessage(HttpMethod.Get, $"/orgs/microsoft/members/{username}");
-                orgRequest.Headers.Authorization = new AuthenticationHeaderValue("token", token);
-                var response = await httpClient.SendAsync(orgRequest);
-
-                return response.StatusCode == HttpStatusCode.NoContent;
-            }
-            catch
-            {
-                return false;
-            }
         }
     }
 }

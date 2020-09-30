@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
@@ -143,6 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private LocationsController CreateTestLocationsController(ISkuCatalog skuCatalog, ISkuUtils skuUtils, ICurrentUserProvider currentUserProvider = null)
         {
             var currentLocationProviderMock = MockCurrentLocationProvider();
+
             var controller = new LocationsController(
                 currentLocationProviderMock,
                 MockControlPlaneInfo(),
@@ -154,7 +157,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 DefaultAutoSuspendDelayMinutesOptions = DefaultAutoSuspendDelayMinutes,
             },
                 skuUtils,
-                new Middleware.GitHubFixedPlansMapper(currentLocationProviderMock, new FrontEndAppSettings(), new Mock<IGithubApiHttpClientProvider>().Object));
+                new Middleware.GitHubFixedPlansMapper(currentLocationProviderMock, new FrontEndAppSettings()));
 
             var httpContext = MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;

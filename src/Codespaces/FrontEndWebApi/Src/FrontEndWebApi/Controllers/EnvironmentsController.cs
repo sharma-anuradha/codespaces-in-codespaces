@@ -8,14 +8,17 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AutoMapper;
+using Kusto.Cloud.Platform.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Audit;
@@ -32,8 +35,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
@@ -94,7 +99,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ICascadeTokenReader accessTokenReader,
             IEnvironmentAccessManager environmentAccessManager,
             IEnvironmentStateManager environmentStateManager,
-            GitHubFixedPlansMapper gitHubFixedPlansMapper)
+            GitHubFixedPlansMapper gitHubFixedPlansMapper,
+            GitHubApiGatewayProvider gitHubApiGatewayProvider)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -113,6 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             EnvironmentAccessManager = Requires.NotNull(environmentAccessManager, nameof(environmentAccessManager));
             EnvironmentStateManager = environmentStateManager;
             GitHubFixedPlansMapper = Requires.NotNull(gitHubFixedPlansMapper, nameof(gitHubFixedPlansMapper));
+            GitHubApiGatewayProvider = Requires.NotNull(gitHubApiGatewayProvider, nameof(gitHubApiGatewayProvider));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -148,6 +155,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private IEnvironmentStateManager EnvironmentStateManager { get; }
 
         private GitHubFixedPlansMapper GitHubFixedPlansMapper { get; }
+
+        private GitHubApiGatewayProvider GitHubApiGatewayProvider { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -199,11 +208,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger,
             [FromQuery] bool deleted = false)
         {
+            var gitHubListTask = Task.FromResult<IEnumerable<CloudEnvironmentResult>>(new List<CloudEnvironmentResult>());
+
+            try
+            {
+                if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _)
+                    && User?.Identity != null)
+                {
+                    // get the username claim
+                    var username = User.FindFirst(CustomClaims.Username)?.Value;
+                    if (string.IsNullOrEmpty(username))
+                    {
+                        return new ForbidResult();
+                    }
+
+                    var client = GitHubApiGatewayProvider.New();
+                    gitHubListTask = client.GetCodespacesAsync(username, logger);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.AddExceptionInfo(e);
+                logger.LogError("could_not_get_environments_from_github");
+            }
+
             AuditAttribute.SetTargetResourceId(HttpContext, CurrentUserProvider?.CurrentUserIdSet?.PreferredUserId);
             var deletedFilter = deleted ? EnvironmentListType.DeletedEnvironments : EnvironmentListType.ActiveEnvironments;
-            var environmentsList = await EnvironmentManager.ListAsync(planId, null, name, null, deletedFilter, logger.NewChildLogger());
 
-            return Ok(Mapper.Map<CloudEnvironmentResult[]>(environmentsList));
+            var localListTask = EnvironmentManager.ListAsync(planId, null, name, null, deletedFilter, logger.NewChildLogger());
+
+            // wait for both of them to finish
+            await Task.WhenAll(localListTask, gitHubListTask);
+
+            var localList = Mapper.Map<CloudEnvironmentResult[]>(localListTask.Result) ?? new CloudEnvironmentResult[0];
+            return Ok(localList.Concat(gitHubListTask.Result ?? new List<CloudEnvironmentResult>()).ToArray());
         }
 
         /// <summary>
@@ -255,7 +293,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
-            await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
+            var environment = await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
+
+            try
+            {
+                if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _)
+                    && User?.Identity != null
+                    && environment.Partner == Partner.GitHub)
+                {
+                    var client = GitHubApiGatewayProvider.New();
+                    return await client.ResumeCodespaceAsync(environment.FriendlyName, logger);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.AddExceptionInfo(e);
+                logger.LogError("resume_from_github_failed");
+                return BadRequest();
+            }
 
             // Manually read the request body
             ResumeCloudEnvironmentBody requestBody;
@@ -366,8 +421,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromBody] CreateCloudEnvironmentBody createEnvironmentInput,
             [FromServices] IDiagnosticsLogger logger)
         {
-            // Apply values if we're authenticating using a GitHub token.
-            GitHubFixedPlansMapper.ApplyValuesWhenGitHubTokenIsUsed(planId => { createEnvironmentInput.PlanId = planId; }, this.Request);
+            // check if this is a GitHub repo, and if so, forward the request there
+            if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _))
+            {
+                if (GitHubApiGateway.IsGitHubRepository(createEnvironmentInput?.Seed?.SeedMoniker, out string repository))
+                {
+                    return await DoGitHubCreateAsync(
+                                repository,
+                                createEnvironmentInput.SkuName,
+                                logger.NewChildLogger());        
+                }
+                else
+                {
+                    // get the plan, fix it, and let the rest of the code do its thing
+                    var plan = GitHubFixedPlansMapper.GetPlanToUse();
+                    if (plan == null)
+                    {
+                        return Forbid();
+                    }
+
+                    createEnvironmentInput.PlanId = plan.Plan.ResourceId;
+                }
+            }
 
             var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);
             logger.AddSkuName(environmentCreateDetails.SkuName);
@@ -390,11 +465,71 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             // Update audit id
             AuditAttribute.SetTargetResourceId(HttpContext, cloudEnvironment.Id);
 
-            // Workout 201 location
+            // Workout 201 location      
             var location = new UriBuilder(Request.GetDisplayUrl());
             location.Path = $"{location.Path.TrimEnd('/')}/{cloudEnvironment.Id}";
 
             return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(cloudEnvironment));
+        }
+
+        private async Task<IActionResult> DoGitHubCreateAsync(
+            string repository,
+            string skuName,
+            IDiagnosticsLogger logger)
+        {
+            // get the username claim
+            var username = User.FindFirst(CustomClaims.Username)?.Value;
+            if (string.IsNullOrEmpty(username))
+            {
+                // this means the user somehow passed a github token,
+                // but has no username, which means a lot of our API code
+                // will fail. Better to just forbid it early.
+                return new ForbidResult();
+            }
+
+            var client = GitHubApiGatewayProvider.New();
+            var result = await client.CreateCodespace(
+                username,
+                repository,
+                skuName,
+                null,
+                logger);
+
+            if (result != null)
+            {
+                CloudEnvironmentResult codespace = null;
+                await Retry.DoWithCountWithDelayIntervalAsync(
+                    5,
+                    TimeSpan.FromSeconds(2),
+                    async (retryCount) =>
+                    {
+                        try
+                        {
+                            logger.LogInfo($"Attempting to get codespace from GitHub, attempt {retryCount}.");
+                            codespace = await client.GetCodespaceAsync(username, result.FriendlyName, logger.NewChildLogger());
+                            if (codespace == null)
+                            {
+                                return (false, null);
+                            }
+
+                            return (true, null);
+                        }
+                        catch (Exception e)
+                        {
+                            return (false, e);
+                        }
+                    });
+
+                if (codespace != null)
+                {
+                    var newLocation = new UriBuilder(Request.GetDisplayUrl());
+                    newLocation.Path = $"{newLocation.Path.TrimEnd('/')}/{codespace.Id}";
+                    return Created(newLocation.Uri, codespace);
+                }
+            }
+
+            // something must have gone wrong, let's abort
+            return StatusCode(StatusCodes.Status400BadRequest);
         }
 
         /// <summary>
@@ -417,7 +552,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
-            await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
+            var cloudEnvironment = await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
+            if (cloudEnvironment?.Partner == Partner.GitHub
+                && GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _))
+            {
+                var username = User.FindFirst(CustomClaims.Username)?.Value;
+                if (string.IsNullOrEmpty(username))
+                {
+                    return new ForbidResult();
+                }
+
+                // split out and call the GitHub API
+                var gateway = GitHubApiGatewayProvider.New();
+                return await gateway.DeleteCodespaceAsync(
+                    username,
+                    cloudEnvironment.FriendlyName,
+                    logger.NewChildLogger());
+            }
 
             await EnvironmentManager.SoftDeleteAsync(environmentId, logger.NewChildLogger());
 
@@ -957,9 +1108,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(cloudEnvironment));
         }
 
-        private async Task ValidateEnvironmentIsNotSoftDeleted(Guid environmentId, IDiagnosticsLogger logger)
+        private async Task<CloudEnvironment> ValidateEnvironmentIsNotSoftDeleted(Guid environmentId, IDiagnosticsLogger logger)
         {
-            await GetEnvironmentAsync(
+            return await GetEnvironmentAsync(
                 environmentId.ToString(),
                 validateSoftDeletedEnvironment: true,
                 normalizeEnvironmentState: false,

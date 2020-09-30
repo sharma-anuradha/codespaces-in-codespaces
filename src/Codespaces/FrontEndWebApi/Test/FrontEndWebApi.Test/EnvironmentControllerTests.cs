@@ -858,8 +858,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
             var tokenProvider = new Mock<ITokenProvider>();
             accessTokenReader ??= new Mock<ICascadeTokenReader>().Object;
-            var gitHubApiClientProvider = new Mock<IGithubApiHttpClientProvider>().Object;
-            var gitHubFixedPlansMapper = new GitHubFixedPlansMapper(currentLocationProvider, settings, gitHubApiClientProvider);
+            var gitHubFixedPlansMapper = new GitHubFixedPlansMapper(currentLocationProvider, settings);
+            var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
 
             var environmentController = new EnvironmentsController(
                 environmentManager,
@@ -878,16 +878,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 accessTokenReader,
                 environmentAccessManager,
                 environmentStateManager,
-                gitHubFixedPlansMapper);
+                gitHubFixedPlansMapper,
+                new Providers.GitHubApiGatewayProvider(httpContextAccessorMock.Object, currentLocationProvider));
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();
             httpContext.SetLogger(logger);
-
             environmentController.ControllerContext = new ControllerContext
             {
                 HttpContext = httpContext,
             };
+
+            httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
 
             return environmentController;
         }
