@@ -193,7 +193,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private async Task ValidateEnvironmentAsync(CloudEnvironment environment, VsoPlan plan, IDiagnosticsLogger logger)
         {
             // Cannot start an environment that is not suspended
-            if (!environment.IsShutdown())
+            if (!environment.IsShutdownOrArchived())
             {
                 throw new CodedValidationException((int)MessageCodes.EnvironmentNotShutdown);
             }

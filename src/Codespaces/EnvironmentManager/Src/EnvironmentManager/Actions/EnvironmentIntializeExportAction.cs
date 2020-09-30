@@ -5,6 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -19,6 +20,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// </summary>
     public class EnvironmentIntializeExportAction : EnvironmentBaseIntializeStartAction<EnvironmentExportActionInput>, IEnvironmentIntializeExportAction
     {
+        private const string ExportRunningEnvironmentErrorMessage = "Trying to export a running environment.";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentIntializeExportAction"/> class.
         /// </summary>
@@ -99,8 +102,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             var record = await FetchAsync(input, logger);
 
             var canProceed = await ConfigureRunCoreAsync(record, logger);
+
             if (!canProceed)
             {
+                // Not expected to export, if the environment is already running
+                if (record.Value.State == CloudEnvironmentState.Available)
+                {
+                    logger.LogWarning(ExportRunningEnvironmentErrorMessage);
+                    throw new BadRequestException((int)MessageCodes.ExportRunningEnvironmentError, ExportRunningEnvironmentErrorMessage);
+                }
+
                 return record.Value;
             }
 

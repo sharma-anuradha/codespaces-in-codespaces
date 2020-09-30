@@ -406,7 +406,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Indicates whether the environment is in a shutdown state.
         /// </summary>
         /// <returns>Whether it is shutdown.</returns>
-        public bool IsShutdown()
+        public bool IsShutdownOrArchived()
         {
             return State == CloudEnvironmentState.Shutdown
                 || State == CloudEnvironmentState.Archived;

@@ -171,5 +171,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// This action is not allowed in the environment's current state.
         /// <summary>
         ActionNotAllowedInThisState = 31,
+
+        /// <summary>
+        /// Environment exporting cannot be done since environment is currently running.
+        /// </summary>
+        ExportRunningEnvironmentError = 32,
     }
 }

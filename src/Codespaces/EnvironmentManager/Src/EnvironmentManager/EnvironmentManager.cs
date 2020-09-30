@@ -13,7 +13,6 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
@@ -426,7 +425,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var validationErrors = new List<MessageCodes>();
                     var transformActions = new List<Action<CloudEnvironment>>();
 
-                    if (!cloudEnvironment.IsShutdown())
+                    if (!cloudEnvironment.IsShutdownOrArchived())
                     {
                         validationErrors.Add(MessageCodes.EnvironmentNotShutdown);
                     }
@@ -475,7 +474,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                     originalPlanId = cloudEnvironment.PlanId;
                                 }
 
-                                if (!cloudEnvironment.IsShutdown())
+                                if (!cloudEnvironment.IsShutdownOrArchived())
                                 {
                                     validationErrors.Add(MessageCodes.EnvironmentNotShutdown);
                                     return;
