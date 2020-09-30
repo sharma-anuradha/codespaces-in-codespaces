@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
@@ -34,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets all environments owned by the given user id.
         /// </summary>
         /// <param name="planId">Optional plan ResourceId to query for.</param>
+        /// <param name="location">Optional plan location, if known.</param>
         /// <param name="name">Optional environment FriendlyName to query for (case-insensitive).</param>
         /// <param name="userIdSet">The owner's user id set. Required unless plan ID is specified.</param>
         /// <param name="environmentListType">Indicates whether list is active/deleted/all environments.</param>
@@ -41,6 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>A task whose result is the list of <see cref="CloudEnvironment"/>.</returns>
         Task<IEnumerable<CloudEnvironment>> ListAsync(
             string planId,
+            AzureLocation? location,
             string name,
             UserIdSet userIdSet,
             EnvironmentListType environmentListType,

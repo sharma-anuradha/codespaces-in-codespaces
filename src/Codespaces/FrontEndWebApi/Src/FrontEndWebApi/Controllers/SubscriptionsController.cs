@@ -399,7 +399,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     using (CurrentUserProvider.SetScopedIdentity(SuperuserIdentity))
                     {
-                        var environments = await EnvironmentManager.ListAsync(planInfo.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, logger);
+                        var environments = await EnvironmentManager.ListAsync(plan.Plan.ResourceId, plan.Plan.Location, null, null, EnvironmentListType.ActiveEnvironments, logger);
                         var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                         if (nonDeletedEnvironments.Any())
                         {

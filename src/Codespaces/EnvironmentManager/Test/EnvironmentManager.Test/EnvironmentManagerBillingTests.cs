@@ -29,9 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         [Fact]
         public async Task CreateEnvironmentInitializesBillingState()
         {
-            await planRepository.CreateAsync(testVsoPlan, logger);
-
-            var testEnvironment = (await CreateTestEnvironmentAsync());
+            var testEnvironment = await CreateTestEnvironmentAsync();
 
             Assert.Collection(
                 billingEventRepository.Values.OrderBy(item => item.Time),
@@ -44,7 +42,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         [Fact]
         public async Task UpdateEnvironmentUpdatesBillingState()
         {
-            await planRepository.CreateAsync(testVsoPlan, logger);
             var testEnvironment = (await CreateTestEnvironmentAsync());
             billingEventRepository.Clear();
 
@@ -84,7 +81,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         [Fact]
         public async Task HardDeleteEnvironmentUpdatesBillingState()
         {
-            await planRepository.CreateAsync(testVsoPlan, logger);
             var testEnvironment = await CreateTestEnvironmentAsync();
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             billingEventRepository.Clear();
@@ -100,8 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         [Fact]
         public async Task SoftDeleteEnvironmentUpdatesBillingState()
         {
-            await planRepository.CreateAsync(testVsoPlan, logger);
-            var testEnvironment = (await CreateTestEnvironmentAsync());
+            var testEnvironment = await CreateTestEnvironmentAsync();
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             billingEventRepository.Clear();
 

@@ -67,6 +67,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 services.AddSingleton<ICrossRegionStorageQueueClientProvider, CrossRegionStorageQueueClientProvider>();
             }
 
+            services.AddSingleton<IRegionalCloudEnvironmentRepositoryFactory, RegionalCloudEnvironmentRepositoryFactory>();
+            services.AddSingleton<IRegionalDocumentDbClientProviderFactory, RegionalDocumentDbClientProviderFactory>();
             services.AddSingleton<ICloudEnvironmentRepository, CloudEnvironmentRepository>();
             services.AddSingleton<ICloudEnvironmentHeartbeatRepository, DocumentDbCloudEnvironmentHeartbeatRepository>();
             services.AddSingleton<IEnvironmentStateManager, EnvironmentStateManager>();

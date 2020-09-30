@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
@@ -20,6 +21,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets plan id.
         /// </summary>
         public string PlanId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the location of the environments if known.
+        /// </summary>
+        public AzureLocation? Location { get; set; }
 
         /// <summary>
         /// Gets or sets the user id set.

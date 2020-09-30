@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
@@ -49,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> RunAsync(
             string planId,
+            AzureLocation? location,
             string name,
             VsoClaimsIdentity identity,
             UserIdSet userIdSet,
@@ -63,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Determine plan id
             // In the case of a authentication using a plan access token, infer the plan from the token if not set
             input.PlanId = planId ?? identity.AuthorizedPlan;
+            input.Location = location;
 
             if (input.PlanId != null)
             {
@@ -143,11 +146,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 // Query by planId
                 if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
-                    environments = await Repository.ListAsync(input.PlanId, environmentNameInLowerCase, logger);
+                    environments = await Repository.ListAsync(input.PlanId, input.Location, environmentNameInLowerCase, logger);
                 }
                 else
                 {
-                    environments = await Repository.ListAsync(input.PlanId, logger);
+                    environments = await Repository.ListAsync(input.PlanId, input.Location, logger);
                 }
             }
             else if (input.PlanId == null)
@@ -167,11 +170,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 // Query by planId and userIdSet
                 if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
-                    environments = await Repository.ListAsync(input.PlanId, input.UserIdSet, environmentNameInLowerCase, logger);
+                    environments = await Repository.ListAsync(input.PlanId, input.Location, input.UserIdSet, environmentNameInLowerCase, logger);
                 }
                 else
                 {
-                    environments = await Repository.ListAsync(input.PlanId, input.UserIdSet, logger);
+                    environments = await Repository.ListAsync(input.PlanId, input.Location, input.UserIdSet, logger);
                 }
             }
 
