@@ -23,6 +23,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     {
         public const string FeatureFlagName = "resource-image-producer";
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BaseResourceImageJobHandler{T}"/> class.
+        /// </summary>
         protected BaseResourceImageProducer(IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
         {
             JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
@@ -36,16 +39,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
+        // Run once a day
+        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.BaseResourceImageJobSchedule;
+
         /// <inheritdoc/>
         public void RegisterScheduleJob()
         {
-            // Note: run every hour with a 1 day obtained lease.
-            // We may change this after we fully deprecate the ported task.
             JobSchedulerFeatureFlags.AddRecurringJobPayload(
-                "0 * * * *",
-                jobName: JobName,
+                ScheduleTimeInterval.CronExpression,
+                jobName: $"{JobName}_run",
                 ResourceJobQueueConstants.GenericQueueName,
-                claimSpan: TimeSpan.FromDays(1),
+                claimSpan: ScheduleTimeInterval.Interval,
                 this,
                 FeatureFlagName);
         }

@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private string jobName = "watch_orphaned_pool_job";
 
         // Run once a day
-        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => ("0 0 * * *", TimeSpan.FromDays(1));
+        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.WatchOrphanedPoolJobSchedule;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WatchOrphanedPoolJobProducer"/> class.
@@ -97,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             JobSchedulerFeatureFlags.AddRecurringJobPayload(
                 ScheduleTimeInterval.CronExpression,
-                jobName: jobName,
+                jobName: $"{jobName}_run",
                 ResourceJobQueueConstants.GenericQueueName,
                 claimSpan: ScheduleTimeInterval.Interval,
                 this,

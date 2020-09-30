@@ -21,14 +21,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// </summary>
     public class LogSystemResourceStateJobProducer : IJobSchedulePayloadFactory, IJobSchedulerRegister
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogSystemResourceStateJobProducer"/> class.
+        /// <param name="jobSchedulerFeatureFlags">Job scheduler feature flags</param>
+        /// </summary>
         public LogSystemResourceStateJobProducer(IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
         {
             JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
         }
 
-        protected string JobName { get; }
+        private string JobName => "log_system_resource_state_task";
 
-        protected Type JobHandlerType { get; }
+        // Run once every 10 minutes
+        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.LogSystemResourceStateJobSchedule;
 
         private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
@@ -46,10 +51,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public void RegisterScheduleJob()
         {
             JobSchedulerFeatureFlags.AddRecurringJobPayload(
-                "*/10 * * * *",
-                jobName: JobName,
+                ScheduleTimeInterval.CronExpression,
+                jobName: $"{JobName}_run",
                 ResourceJobQueueConstants.GenericQueueName,
-                claimSpan: TimeSpan.FromMinutes(10),
+                claimSpan: ScheduleTimeInterval.Interval,
                 this,
                 null);
         }

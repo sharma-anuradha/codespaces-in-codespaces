@@ -92,6 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobHandler, LogSystemResourceStateJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedPoolJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedSystemResourceJobHandler>();
+            services.AddSingleton<IJobHandler, WatchOrphanedComputeImagesJobHandler>();
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
@@ -151,6 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobSchedulerRegister, LogSystemResourceStateJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedPoolJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, GuidShardJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, WatchOrphanedComputeImagesJobProducer>();
 
             services.AddSingleton<IGuidShardJobScheduleDetails, WatchOrphanedSystemResourceJobHandler>();
 

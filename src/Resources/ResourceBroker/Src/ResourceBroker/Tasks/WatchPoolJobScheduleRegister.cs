@@ -36,14 +36,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
+        // run every minute
+        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.WatchPoolJobSchedule;
+
         /// <inheritdoc/>
         public void RegisterScheduleJob()
         {
             JobSchedulerFeatureFlags.AddRecurringJobPayload(
-                "* * * * *",
+                ScheduleTimeInterval.CronExpression,
                 $"{ResourceLoggingConstants.WatchPoolProducerTask}_run",
                 ResourceJobQueueConstants.GenericQueueName,
-                claimSpan: TimeSpan.FromMinutes(1),
+                claimSpan: ScheduleTimeInterval.Interval,
                 WatchPoolPayloadFactory,
                 WatchPoolJobsEnabledFeatureFlagName);
         }

@@ -14,6 +14,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
+    /// <summary>
+    /// Handler that tries to kick off a continuation which will try and manage tracking
+    /// orphaned pools and conduct orchestrate drains as requried.
+    /// </summary>
     public class WatchOrphanedPoolJobHandler : JobHandlerPayloadBase<WatchOrphanedPoolJobProducer.WatchOrphanedPoolPayload>
     {
         /// <summary>

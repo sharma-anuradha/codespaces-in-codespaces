@@ -1,4 +1,4 @@
-// <copyright file="DataPlaneResourceGroupJobProducer.cs" company="Microsoft">
+// <copyright file="BaseDataPlaneResourceGroupJobProducer.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// Payload factory
     /// Job scheduler registration entry point.
     /// </summary>
-    public abstract class DataPlaneResourceGroupJobProducer : IJobSchedulerRegister, IJobSchedulePayloadFactory
+    public abstract class BaseDataPlaneResourceGroupJobProducer : IJobSchedulerRegister, IJobSchedulePayloadFactory
     {
         /// <summary>
         /// Feature flag to control whether the data plane resource group job is enabled.
@@ -30,10 +30,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public const string DataPlaneResourceGroupJobsEnabledFeatureFlagName = "DataPlaneResourceGroupJobs";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DataPlaneResourceGroupJobProducer"/> class.
+        /// Initializes a new instance of the <see cref="BaseDataPlaneResourceGroupJobProducer"/> class.
         /// </summary>
         /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
-        protected DataPlaneResourceGroupJobProducer(
+        protected BaseDataPlaneResourceGroupJobProducer(
             IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
         {
             JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;

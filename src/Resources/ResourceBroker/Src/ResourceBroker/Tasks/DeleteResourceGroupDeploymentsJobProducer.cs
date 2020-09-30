@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Delete resource group deployments job producer
     /// </summary>
-    public class DeleteResourceGroupDeploymentsJobProducer : DataPlaneResourceGroupJobProducer
+    public class DeleteResourceGroupDeploymentsJobProducer : BaseDataPlaneResourceGroupJobProducer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DeleteResourceGroupDeploymentsJobProducer"/> class.
@@ -34,7 +34,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         protected override Type JobHandlerType => typeof(DeleteResourceGroupDeploymentsJobHandler);
 
-        protected override (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => ("0 * * * *", TimeSpan.FromHours(1));
+        // run every hour
+        protected override (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.DeleteResourceGroupDeploymentsJobSchedule;
 
         private ICapacityManager CapacityManager { get; }
 

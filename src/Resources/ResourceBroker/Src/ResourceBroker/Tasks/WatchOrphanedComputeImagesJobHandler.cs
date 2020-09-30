@@ -1,10 +1,11 @@
-// <copyright file="WatchOrphanedComputeImagesTask.cs" company="Microsoft">
+// <copyright file="WatchOrphanedComputeImagesJobHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Compute.Fluent.Models;
@@ -12,54 +13,29 @@ using Microsoft.Rest.Azure;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
-    /// <summary>
-    /// WatchOrphanedComputeImagesTask to delete artifacts(Nexus windows images).
-    /// </summary>
-    public class WatchOrphanedComputeImagesTask : BaseBackgroundTask
+    public class WatchOrphanedComputeImagesJobHandler : JobHandlerPayloadBase<WatchOrphanedComputeImagesJobProducer.WatchOrphanedComputeImagesPayload>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="WatchOrphanedComputeImagesTask"/> class.
-        /// </summary>
-        /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
-        /// <param name="taskHelper">Task helper.</param>
-        /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
-        /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// Initializes a new instance of the <see cref="WatchOrphanedComputeImagesJobHandler"/> class.
+        /// </summary>    
         /// <param name="controlPlaneInfo">Gets control plan info.</param>
         /// <param name="skuCatalog">Gets skuCatalog that has active image info.</param>
         /// <param name="controlPlaneAzureClientFactory">Azure Client Factory for control plane related works.</param>
-        /// <param name="configurationReader">Configuration reader.</param>
-        public WatchOrphanedComputeImagesTask(
-            ResourceBrokerSettings resourceBrokerSettings,
-            ITaskHelper taskHelper,
-            IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder,
+        public WatchOrphanedComputeImagesJobHandler(
             IControlPlaneInfo controlPlaneInfo,
             ISkuCatalog skuCatalog,
-            IControlPlaneAzureClientFactory controlPlaneAzureClientFactory,
-            IConfigurationReader configurationReader)
-            : base(configurationReader)
+            IControlPlaneAzureClientFactory controlPlaneAzureClientFactory)
         {
-            ResourceBrokerSettings = Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
-            TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
-            ClaimedDistributedLease = Requires.NotNull(claimedDistributedLease, nameof(claimedDistributedLease));
-            ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
             SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             ControlPlaneAzureClientFactory = Requires.NotNull(controlPlaneAzureClientFactory, nameof(controlPlaneAzureClientFactory));
         }
-
-        /// <summary>
-        /// Gets the loop delay between each resource being processed.
-        /// </summary>
-        private static TimeSpan LoopDelay { get; } = TimeSpan.FromMilliseconds(500);
 
         /// <summary>
         /// Gets the minimum image count to be retained.
@@ -70,14 +46,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <returns>Returns the count of minimum images to be retained.</returns>
         private int MinimumImageCountToBeRetained => 40;
 
-        private string TaskName { get; } = nameof(WatchOrphanedComputeImagesTask);
-
-        /// <inheritdoc/>
-        protected override string ConfigurationBaseName => "WatchOrphanedComputeImagesTask";
+        private DateTime CutOffTime => DateTime.Now.AddMonths(-1).ToUniversalTime();
 
         private string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedComputeImagesTask;
-
-        private DateTime CutOffTime => DateTime.Now.AddMonths(-1).ToUniversalTime();
 
         private ISkuCatalog SkuCatalog { get; }
 
@@ -85,55 +56,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private IControlPlaneAzureClientFactory ControlPlaneAzureClientFactory { get; }
 
-        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{TaskName}Lease");
-
-        private ResourceBrokerSettings ResourceBrokerSettings { get; }
-
-        private ITaskHelper TaskHelper { get; }
-
-        private IClaimedDistributedLease ClaimedDistributedLease { get; }
-
-        private IResourceNameBuilder ResourceNameBuilder { get; }
-
-        private bool Disposed { get; set; }
-
-        /// <inheritdoc/>
-        public override void Dispose()
-        {
-            Disposed = true;
-        }
-
-        /// <inheritdoc/>
-        protected override Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
+        protected override Task HandleJobAsync(WatchOrphanedComputeImagesJobProducer.WatchOrphanedComputeImagesPayload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_run",
-                async (childLogger) =>
-                {
-                    // Fetch target images/blobs
-                    var artifacts = GetArtifactTypesToCleanup();
+              $"{LogBaseName}_run",
+              async (childLogger) =>
+              {
+                  childLogger.FluentAddBaseValue("ImageFamilyType", payload.ArtifactFamilyType);
 
-                    // Run through found resources types (eg, VM/storage) in the background
-                    await TaskHelper.RunEnumerableAsync(
-                        $"{LogBaseName}_run_artifact_images",
-                        artifacts,
-                        (artifactFamilyType, itemLogger) => CoreRunArtifactAsync(artifactFamilyType, itemLogger),
-                        childLogger,
-                        (artifactFamilyType, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{artifactFamilyType}", taskInterval, itemLogger));
-
-                    return !Disposed;
-                },
-                (e, childLogger) => Task.FromResult(!Disposed),
-                swallowException: true);
-        }
-
-        private async Task CoreRunArtifactAsync(ImageFamilyType artifactFamilyType, IDiagnosticsLogger logger)
-        {
-            logger.FluentAddBaseValue("ImageFamilyType", artifactFamilyType);
-
-            // Tracking the task duration
-            await logger.TrackDurationAsync(
-                "RunArtifactAction", () => ProcessArtifactAsync(logger));
+                  // Tracking the task duration
+                  await childLogger.TrackDurationAsync(
+                      "RunArtifactAction", () => ProcessArtifactAsync(childLogger));
+              });
         }
 
         private async Task ProcessArtifactAsync(IDiagnosticsLogger logger)
@@ -174,9 +108,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     {
                         imageDefinitionSubList = await computeManagementClient.GalleryImages.ListByGalleryAsync(resourceGroupName, galleryName);
                         nextPagelink = imageDefinitionSubList.NextPageLink;
-
-                        // Slow down for rate limit & Database RUs
-                        await Task.Delay(LoopDelay);
 
                         foreach (var obj in imageDefinitionSubList)
                         {
@@ -269,9 +200,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                         // Deleting the images that correponds to the image versions that are deleted.
                         await computeManagementClient.Images.DeleteAsync(resourceGroupName, imageName);
-
-                        // Slow down for rate limit & Database RUs
-                        await Task.Delay(LoopDelay);
                     }
                 });
         }
@@ -312,9 +240,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                            .FluentAddValue("ImageHasVersion", false);
 
                        await computeManagementClient.Images.DeleteAsync(resourceGroupName, imageName);
-
-                       // Slow down for rate limit
-                       await Task.Delay(LoopDelay);
                    }
                });
         }
@@ -332,9 +257,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             {
                 imageVersionSubList = await computeManagementClient.GalleryImageVersions.ListByGalleryImageNextAsync(nextPageLink);
                 nextPageLink = imageVersionSubList.NextPageLink;
-
-                // Slow down for rate limit & Database RUs
-                await Task.Delay(LoopDelay);
 
                 ProcessImageVersionSubList(lookupImageInfo, imageVersionSubList);
             }
@@ -360,17 +282,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             }
 
             return activeImages;
-        }
-
-        private IEnumerable<ImageFamilyType> GetArtifactTypesToCleanup()
-        {
-            return new List<ImageFamilyType> { ImageFamilyType.Compute, };
-        }
-
-        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
-        {
-            return ClaimedDistributedLease.Obtain(
-                ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }
 }

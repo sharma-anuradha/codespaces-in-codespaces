@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// Base class for all data plane resource group job handlers
     /// </summary>
     /// <typeparam name="TJobHandlerType">Type of the job handler type.</typeparam>
-    public abstract class BaseDataPlaneResourceGroupJobHandler<TJobHandlerType> : JobHandlerPayloadBase<DataPlaneResourceGroupJobProducer.ResourceGroupPayload<TJobHandlerType>>
+    public abstract class BaseDataPlaneResourceGroupJobHandler<TJobHandlerType> : JobHandlerPayloadBase<BaseDataPlaneResourceGroupJobProducer.ResourceGroupPayload<TJobHandlerType>>
        where TJobHandlerType : class
     {
         /// <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        protected override async Task HandleJobAsync(DataPlaneResourceGroupJobProducer.ResourceGroupPayload<TJobHandlerType> payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        protected override async Task HandleJobAsync(BaseDataPlaneResourceGroupJobProducer.ResourceGroupPayload<TJobHandlerType> payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(payload.SubscriptionId) || string.IsNullOrEmpty(payload.ResourceGroupName))
             {

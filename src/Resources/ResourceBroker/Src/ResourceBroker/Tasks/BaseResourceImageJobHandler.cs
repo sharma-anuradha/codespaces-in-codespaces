@@ -20,12 +20,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
     /// <summary>
     /// Base class for all resource image job handlers.
-    /// Note: we will allow the handler to try once per run to mimic the xisting task behavior
+    /// Note: we will allow the handler to try once per run to mimic the existing task behavior
     /// </summary>
     /// <typeparam name="TJobHandlerType">Type of the job handler type.</typeparam>
     public abstract class BaseResourceImageJobHandler<TJobHandlerType> : JobHandlerPayloadBase<BaseResourceImageProducer.StorageAccountPayload<TJobHandlerType>>
         where TJobHandlerType : class
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BaseResourceImageJobHandler{T}"/> class.
+        /// </summary>
         protected BaseResourceImageJobHandler()
             : base(options: new JobHandlerOptions() { MaxHandlerRetries = 1 })
         {

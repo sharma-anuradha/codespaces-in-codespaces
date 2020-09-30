@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     public class WatchOrphanedVmAgentImagesJobHandler : BaseResourceImageJobHandler<WatchOrphanedVmAgentImagesJobHandler>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="WatchOrphanedVmAgentImagesTask"/> class.
+        /// Initializes a new instance of the <see cref="WatchOrphanedVmAgentImagesJobHandler"/> class.
         /// </summary>
         /// <param name="controlPlaneInfo">Gets control plan info.</param>
         /// <param name="skuCatalog">Gets skuCatalog that has active image info.</param>

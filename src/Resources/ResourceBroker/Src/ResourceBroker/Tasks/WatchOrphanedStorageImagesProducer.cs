@@ -15,6 +15,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// </summary>
     public class WatchOrphanedStorageImagesProducer : BaseResourceImageProducer
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WatchOrphanedStorageImagesProducer"/> class.
+        /// </summary>
+        /// <param name="controlPlaneAzureResourceAccessor">Gets control plan Azure resource accessor.</param>
+        /// <param name="controlPlaneInfo">Gets control plan info.</param>
+        /// <param name="jobSchedulerFeatureFlags">Gets job Scheduler Feature Flags</param>
         public WatchOrphanedStorageImagesProducer(
            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
            IControlPlaneInfo controlPlaneInfo,

@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Watch orphaned Azure resource job producer
     /// </summary>
-    public class WatchOrphanedAzureResourceJobProducer : DataPlaneResourceGroupJobProducer
+    public class WatchOrphanedAzureResourceJobProducer : BaseDataPlaneResourceGroupJobProducer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WatchOrphanedAzureResourceJobProducer"/> class.
@@ -34,7 +34,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         protected override Type JobHandlerType => typeof(WatchOrphanedAzureResourceJobHandler);
 
-        protected override (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => ("*/30 * * * *", TimeSpan.FromMinutes(30));
+        // Run once every 30 minutes
+        protected override (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.WatchOrphanedAzureResourceJobSchedule;
 
         private ICapacityManager CapacityManager { get; }
 

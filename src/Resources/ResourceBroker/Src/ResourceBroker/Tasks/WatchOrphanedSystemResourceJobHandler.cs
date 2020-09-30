@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public string QueueId => ResourceJobQueueConstants.GenericQueueName;
 
         // Runs every 2 hours for up to 20 min
-        public (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => ("0 0/2 * * *", TimeSpan.FromMinutes(20));
+        public (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.WatchOrphanedSystemResourceJobSchedule;
 
         public Type PayloadTagType => typeof(WatchOrphanedSystemResourceJobHandler);
 
@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private static readonly TimeSpan QueryDelay = TimeSpan.FromMilliseconds(250);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="WatchOrphanedSystemResourceJobProducer"/> class.
+        /// Initializes a new instance of the <see cref="WatchOrphanedSystemResourceJobHandler"/> class.
         /// </summary>
         /// <param name="resourceRepository">Resource repository.</param>
         /// <param name="resourcePoolDefinitionStore">Resource pool definition store.</param>
