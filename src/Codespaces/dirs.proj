@@ -13,6 +13,7 @@
     <ProjectReference Include="Subscriptions\dirs.proj" />
     <ProjectReference Include="UserProfile\dirs.proj" />
     <ProjectReference Include="ResourceAllocation\dirs.proj" />
+    <ProjectReference Include="Monitoring\dirs.proj" />
   </ItemGroup>
 
 </Project>
