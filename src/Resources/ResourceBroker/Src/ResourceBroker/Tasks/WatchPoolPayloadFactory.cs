@@ -69,35 +69,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             OnPayloadCreatedDelegate onPayloadCreated,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("TaskRunId", Guid.NewGuid())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolLocation, resourcePool.Details.Location.ToString())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, resourcePool.Details.SkuName)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolResourceType, resourcePool.Type.ToString())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolDefinition, resourcePool.Details.GetPoolDefinition())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolVersionDefinition, resourcePool.Details.GetPoolVersionDefinition())
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolTargetCount, resourcePool.TargetCount)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolOverrideTargetCount, resourcePool.OverrideTargetCount)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolIsEnabled, resourcePool.IsEnabled)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolOverrideIsEnabled, resourcePool.OverrideIsEnabled)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageFamilyName, resourcePool.Details.ImageFamilyName)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolImageName, resourcePool.Details.ImageName)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.MaxCreateBatchCount, resourcePool.MaxCreateBatchCount)
-                .FluentAddBaseValue(ResourceLoggingPropertyConstants.MaxDeleteBatchCount, resourcePool.MaxDeleteBatchCount);
+            var loggerProperties = new Dictionary<string, string>()
+            {
+                { "TaskRunId", Guid.NewGuid().ToString() },
+                { ResourceLoggingPropertyConstants.PoolLocation, resourcePool.Details.Location.ToString() },
+                { ResourceLoggingPropertyConstants.PoolSkuName, resourcePool.Details.SkuName },
+                { ResourceLoggingPropertyConstants.PoolResourceType, resourcePool.Type.ToString() },
+                { ResourceLoggingPropertyConstants.PoolDefinition, resourcePool.Details.GetPoolDefinition() },
+                { ResourceLoggingPropertyConstants.PoolVersionDefinition, resourcePool.Details.GetPoolVersionDefinition() },
+                { ResourceLoggingPropertyConstants.PoolTargetCount, resourcePool.TargetCount.ToString() },
+                { ResourceLoggingPropertyConstants.PoolOverrideTargetCount, resourcePool.OverrideTargetCount?.ToString() },
+                { ResourceLoggingPropertyConstants.PoolIsEnabled, resourcePool.IsEnabled.ToString() },
+                { ResourceLoggingPropertyConstants.PoolOverrideIsEnabled, resourcePool.OverrideIsEnabled?.ToString() },
+                { ResourceLoggingPropertyConstants.PoolImageFamilyName, resourcePool.Details.ImageFamilyName },
+                { ResourceLoggingPropertyConstants.PoolImageName, resourcePool.Details.ImageName },
+                { ResourceLoggingPropertyConstants.MaxCreateBatchCount, resourcePool.MaxCreateBatchCount.ToString() },
+                { ResourceLoggingPropertyConstants.MaxDeleteBatchCount, resourcePool.MaxDeleteBatchCount.ToString() },
+            };
+
+            logger.FluentAddBaseValues(loggerProperties);
 
             return Task.WhenAll(
-                CreateResourcePoolJobAsync<WatchPoolSizeJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated),
-                CreateResourcePoolJobAsync<WatchPoolStateJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated),
-                CreateResourcePoolJobAsync<WatchPoolVersionJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated),
-                CreateResourcePoolJobAsync<WatchFailedResourcesJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated));
+                CreateResourcePoolJobAsync<WatchPoolSizeJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated, loggerProperties),
+                CreateResourcePoolJobAsync<WatchPoolStateJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated, loggerProperties),
+                CreateResourcePoolJobAsync<WatchPoolVersionJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated, loggerProperties),
+                CreateResourcePoolJobAsync<WatchFailedResourcesJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated, loggerProperties));
         }
 
         private Task CreateResourcePoolJobAsync<TJobHandlerType>(
             ResourcePool resourcePool,
             Func<TimeSpan> payloadVisibilitCallback,
-            OnPayloadCreatedDelegate onPayloadCreated)
+            OnPayloadCreatedDelegate onPayloadCreated,
+            IDictionary<string, string> loggerProperties)
             where TJobHandlerType : class
         {
-            var jobPayload = new ResourcePoolPayload<TJobHandlerType>() { PoolId = resourcePool.Id };
+            var jobPayload = new ResourcePoolPayload<TJobHandlerType>() { PoolId = resourcePool.Id, LoggerProperties = loggerProperties.CreateLoggerProperties() };
             var jobPayloadOptions = new JobPayloadOptions()
             {
                 InitialVisibilityDelay = payloadVisibilitCallback(),

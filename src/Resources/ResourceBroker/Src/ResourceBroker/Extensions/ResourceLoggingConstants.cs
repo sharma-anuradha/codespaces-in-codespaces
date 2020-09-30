@@ -50,26 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string WatchPoolProducerTask = "watch_pool_producer_task";
 
         /// <summary>
-        /// Watch Pool Size Job handler.
-        /// </summary>
-        public const string WatchPoolSizeJobHandler = "watch_pool_size_job_handler";
-
-        /// <summary>
-        /// Watch pool size Job handler.
-        /// </summary>
-        public const string WatchPoolVersionJobHandler = "watch_pool_version_job_handler";
-
-        /// <summary>
-        /// Watch pool state Job handler.
-        /// </summary>
-        public const string WatchPoolStateJobHandler = "watch_pool_state_job_handler";
-
-        /// <summary>
-        /// Watch Failed Resources Job handler.
-        /// </summary>
-        public const string WatchFailedResourcesJobHandler = "watch_failed_resources_job_handler";
-
-        /// <summary>
         /// Watch Orphaned Build Artifact Image Task.
         /// </summary>
         public const string WatchOrphanedVmAgentImagesTask = "watch_orphaned_vm_agent_image_task";

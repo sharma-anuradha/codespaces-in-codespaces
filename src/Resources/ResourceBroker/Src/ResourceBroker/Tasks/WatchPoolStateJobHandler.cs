@@ -42,13 +42,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             RequestQueueProvider = requestQueueProvider;
         }
 
+        protected override string LogBaseName => ResourceLoggingConstants.WatchPoolStateTask;
+
         private IResourceRepository ResourceRepository { get; }
 
         private IResourcePoolStateSnapshotRepository ResourcePoolStateSnapshotRepository { get; }
 
         private IResourceRequestQueueProvider RequestQueueProvider { get; }
-
-        private string LogBaseName => ResourceLoggingConstants.WatchPoolStateJobHandler;
 
         /// <inheritdoc/>
         protected override async Task HandleJobAsync(ResourcePool resourcePool, IDiagnosticsLogger logger, CancellationToken cancellationToken)

@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
-        private string LogBaseName => ResourceLoggingConstants.WatchPoolSizeJobHandler;
+        protected override string LogBaseName => ResourceLoggingConstants.WatchPoolSizeTask;
 
         /// <inheritdoc/>
         protected override async Task HandleJobAsync(ResourcePool resourcePool, IDiagnosticsLogger logger, CancellationToken cancellationToken)

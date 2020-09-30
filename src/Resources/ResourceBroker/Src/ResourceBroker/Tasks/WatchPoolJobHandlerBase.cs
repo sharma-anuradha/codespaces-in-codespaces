@@ -40,6 +40,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// </summary>
         protected ITaskHelper TaskHelper { get; }
 
+        /// <summary>
+        /// Gets the base logging name.
+        /// </summary>
+        protected abstract string LogBaseName { get; }
+
         private IResourcePoolDefinitionStore ResourcePoolDefinitionStore { get; }
 
         /// <inheritdoc/>
@@ -58,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             }
 
             await logger.OperationScopeAsync(
-                "watch_pool_job_handler",
+                $"{LogBaseName}_run_unit_check",
                 (childLogger) => HandleJobAsync(resourcePool, childLogger, cancellationToken));
         }
 
