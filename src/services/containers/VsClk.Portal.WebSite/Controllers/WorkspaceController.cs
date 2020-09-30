@@ -1,12 +1,10 @@
-using System;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -21,6 +19,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             HostEnvironment = hostEnvironment;
         }
 
+        [RestrictIFrame]
         [HttpGet("~/codespace")]
         [HttpGet("~/workspace/{id}")]
         [Routing.HttpGet(

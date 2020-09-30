@@ -150,14 +150,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 IdentityModelEventSource.ShowPII = true;
             }
 
-            // restrict iframes embedding for all responses
-            app.Use(async (httpContext, next) =>
-            {
-                httpContext.Response.Headers.Add("X-Frame-Options", "Deny");
-
-                await next();
-            });
-
             app.Use(async (httpContext, next) =>
             {
                 if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))

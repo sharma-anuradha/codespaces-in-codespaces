@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -146,6 +147,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             public List<object> Credentials { get; set; }
         }
 
+        [RestrictIFrame]
         [HttpPost("~/")]
         [HttpPost("~/connect")]
         [HttpPost("~/platform-authentication")]
