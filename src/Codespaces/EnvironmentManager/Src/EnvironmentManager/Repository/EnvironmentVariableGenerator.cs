@@ -84,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 {
                     new FeatureCustomContainers(cloudEnvironmentOptions),
                     new FeatureNewTerminal(cloudEnvironmentOptions),
+                    new FeatureShallowClone(cloudEnvironmentOptions),
                 };
 
                 foreach (var flag in optionsList)
@@ -673,6 +674,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             return new Tuple<string, string>(
                     EnvironmentVariableConstants.FeatureFlagNewTerminal,
                     CloudEnvironmentOptions.NewTerminal.ToString());
+        }
+    }
+
+    public class FeatureShallowClone : EnvironmentFeatureFlagsStrategy
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FeatureShallowClone"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironmentOptions">The cloud environment options.</param>
+        public FeatureShallowClone(CloudEnvironmentOptions cloudEnvironmentOptions)
+            : base(cloudEnvironmentOptions)
+        {
+        }
+
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            return new Tuple<string, string>(
+                    EnvironmentVariableConstants.FeatureFlagShallowClone,
+                    CloudEnvironmentOptions.ShallowClone.ToString());
         }
     }
 }

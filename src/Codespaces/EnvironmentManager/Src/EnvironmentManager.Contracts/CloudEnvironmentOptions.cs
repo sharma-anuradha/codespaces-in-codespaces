@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentOptions.cs" company="Microsoft">
+// <copyright file="CloudEnvironmentOptions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets a value indicating whether to queue the resource allocation.
         /// </summary>
         public bool QueueResourceAllocation { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to shallow clone first, then fetch and build devcontainer concurrently.
+        /// </summary>
+        public bool ShallowClone { get; set; }
     }
 }

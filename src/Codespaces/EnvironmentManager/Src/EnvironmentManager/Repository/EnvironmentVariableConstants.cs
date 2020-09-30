@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentVariableConstants.cs" company="Microsoft">
+// <copyright file="EnvironmentVariableConstants.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
 
         public const string FeatureFlagCustomContainers = "FF_CUSTOM_CONTAINERS";
         public const string FeatureFlagNewTerminal = "FF_NEW_TERMINAL";
+        public const string FeatureFlagShallowClone = "FF_SHALLOW_CLONE";
 #pragma warning restore SA1600 // Elements should be documented
     }
 }
