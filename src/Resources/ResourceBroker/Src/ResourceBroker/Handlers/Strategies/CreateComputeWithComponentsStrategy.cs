@@ -377,6 +377,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private async Task<ResourceRecord> CreateOSDiskRecord(ResourcePoolComputeDetails details, IDiagnosticsLogger logger)
         {
             var resource = details.CreateOSDiskRecord();
+            resource.IsAssigned = true;
+            resource.Assigned = DateTime.UtcNow;
 
             // Create the actual record
             resource = await ResourceRepository.CreateAsync(resource, logger.NewChildLogger());

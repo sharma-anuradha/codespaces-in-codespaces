@@ -166,11 +166,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                             {
                                 osDiskResource = await ResourceRepository.GetAsync(computeResource.GetComputeDetails().OSDiskRecordId, logger.NewChildLogger());
 
-                                // Update core properties to indicate that its assigned
-                                osDiskResource.IsAssigned = true;
-                                osDiskResource.Assigned = DateTime.UtcNow;
+                                if (!osDiskResource.IsAssigned)
+                                {
+                                    // Update core properties to indicate that its assigned
+                                    osDiskResource.IsAssigned = true;
+                                    osDiskResource.Assigned = DateTime.UtcNow;
 
-                                osDiskResource = await ResourceRepository.UpdateAsync(osDiskResource, logger.NewChildLogger());
+                                    osDiskResource = await ResourceRepository.UpdateAsync(osDiskResource, logger.NewChildLogger());
+                                }
                             });
 
             return (computeResource, osDiskResource);
