@@ -233,12 +233,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddBaseValue("ResourceDeleteAttempted", canDeleteResource);
 
                     if (canDeleteResource)
-                    { 
+                    {
+                        // Create a job payload and append a set of properties from our child logger
                         var jobPayload = new DeleteAzureResourcePayload()
                         {
                             SubscriptionId = azure.SubscriptionId,
                             AzureResource = azureResource,
-                        };
+                        }.WithLoggerProperties(
+                            childLogger,
+                            "SubscriptionId",
+                            "ResourceGroup",
+                            "AzureResourceType",
+                            "ResourceLocation",
+                            "AzureResourceId",
+                            "AzureResourceTags",
+                            "ResourceId");
                         var jobPayloadOptions = new JobPayloadOptions()
                         {
                             ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,

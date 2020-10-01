@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             AzureClientFactory = azureClientFactory;
         }
 
-        private IAzureClientFactory AzureClientFactory { get; }    
+        private IAzureClientFactory AzureClientFactory { get; }
 
         private string LogBaseName { get; } = ResourceLoggingConstants.DeleteAzureResourceJobHandler;
 

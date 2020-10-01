@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
     /// <summary>
     /// Dev logger.
     /// </summary>
-    public class DeveloperStampDiagnosticsLogger : IDiagnosticsLogger
+    public class DeveloperStampDiagnosticsLogger : IDiagnosticsLogger, IDiagnosticsLoggerContext
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DeveloperStampDiagnosticsLogger"/> class.
@@ -54,7 +54,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
             this.DiagnosticsLoggers = diagnosticsLoggers.ToList();
         }
 
+        /// <inheritdoc/>
+        public IEnumerable<string> Keys => DiagnosticsLoggerContext?.Keys ?? Array.Empty<string>();
+
+        private IDiagnosticsLoggerContext DiagnosticsLoggerContext
+        {
+            get
+            {
+                return DiagnosticsLoggers.OfType<IDiagnosticsLoggerContext>().FirstOrDefault();
+            }
+        }
+
         private List<IDiagnosticsLogger> DiagnosticsLoggers { get; set; } = new List<IDiagnosticsLogger>();
+
+        /// <inheritdoc/>
+        public bool TryGetValue(string key, out string value)
+        {
+            value = null;
+            if (DiagnosticsLoggerContext?.TryGetValue(key, out value) == true)
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         /// <inheritdoc/>
         public void AddBaseValue(string key, string value)

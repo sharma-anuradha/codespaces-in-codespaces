@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -43,6 +44,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             Requires.NotNull(loggerProperties, nameof(loggerProperties));
 
             return loggerProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
+        }
+
+        /// <summary>
+        /// Add properties to a payload.
+        /// </summary>
+        /// <typeparam name="T">Type of job payload.</typeparam>
+        /// <param name="jobPayload">The job payload instance.</param>
+        /// <param name="logger">The logger instance.</param>
+        /// <param name="keys">Set of keys to include.</param>
+        public static T WithLoggerProperties<T>(this T jobPayload, IDiagnosticsLogger logger, params string[] keys)
+            where T : JobPayload
+        {
+            Requires.NotNull(jobPayload, nameof(jobPayload));
+            Requires.NotNull(logger, nameof(logger));
+            Requires.NotNull(keys, nameof(keys));
+
+            if (logger is IDiagnosticsLoggerContext loggerContext)
+            {
+                var logValues = keys.Select(key =>
+                {
+                    if (loggerContext.TryGetValue(key, out var value))
+                    {
+                        return new KeyValuePair<string, object>(key, value);
+                    }
+
+                    return default;
+                }).Where(i => i.Key != null);
+                MergeLoggerProperties(jobPayload, logValues);
+            }
+
+            return jobPayload;
         }
     }
 }
