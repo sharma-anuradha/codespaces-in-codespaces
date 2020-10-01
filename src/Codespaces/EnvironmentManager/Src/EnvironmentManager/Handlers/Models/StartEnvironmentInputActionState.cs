@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// Set up enviornment for exporting.
         /// </summary>
         Export = 2,
+
+        /// <summary>
+        /// Set up environment for updating.
+        /// </summary>
+        Update = 3,
     }
 }

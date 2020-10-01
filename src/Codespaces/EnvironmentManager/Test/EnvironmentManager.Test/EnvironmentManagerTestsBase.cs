@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using AutoMapper;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -24,7 +25,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Moq;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
@@ -382,6 +385,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 resourceBroker
                 );
 
+            var environmentUpdateAction = new EnvironmentUpdateAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
+                workspaceManager,
+                environmentMonitor,
+                environmentContinuationOperations.Object,
+                resourceAllocationManager,
+                resourceStartManager,
+                environmentSuspendAction,
+                resourceBroker,
+                taskHelper,
+                new Mock<ICurrentIdentityProvider>().Object,
+                MockUtil.MockVsoSuperuserClaimsIdentity()
+                );
+
+            var environmentInitializeUpdateAction = new EnvironmentInitializeUpdateAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                environmentUpdateAction,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
+                MockUtil.MockSubscriptionManager(),
+                environmentSubscriptionManager,
+                environmentSettings);
+
+
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
                 this.resourceBroker,
@@ -399,6 +440,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentDeleteRestoreAction,
                 environmentIntializeResumeAction,
                 environmentIntializeExportAction,
+                environmentInitializeUpdateAction,
                 environmentFinalizeResumeAction,
                 environmentFinalizeExportAction,
                 environmentSuspendAction,

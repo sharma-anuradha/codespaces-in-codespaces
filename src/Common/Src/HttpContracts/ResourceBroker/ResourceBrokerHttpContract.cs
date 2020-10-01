@@ -50,6 +50,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         public const string ProcessHeartbeatOperation = "processheartbeat";
 
         /// <summary>
+        /// The update system operation.
+        /// </summary>
+        public const string UpdateSystemOperation = "updatesystem";
+
+        /// <summary>
         /// The get resource http method.
         /// </summary>
         public static readonly HttpMethod GetResourceMethod = HttpMethod.Get;
@@ -83,6 +88,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// The process heartbeat http method.
         /// </summary>
         public static readonly HttpMethod ProcessHeartbeatMethod = HttpMethod.Get;
+
+        /// <summary>
+        /// The update system http method.
+        /// </summary>
+        public static readonly HttpMethod UpdateSystemMethod = HttpMethod.Post;
 
         /// <summary>
         /// Get the get resource uri.

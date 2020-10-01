@@ -72,6 +72,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
+        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsToBeUpdatedAsync(
+            string idShard,
+            string skuName,
+            IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<int> GetEnvironmentUpdateJobActiveCountAsync(IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<CloudEnvironment> GetEnvironmentUsingResource(string resourceId, ResourceType resourceType, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();

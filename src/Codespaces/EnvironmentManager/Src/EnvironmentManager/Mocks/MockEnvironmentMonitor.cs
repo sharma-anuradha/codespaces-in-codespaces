@@ -61,5 +61,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         {
             return Task.CompletedTask;
         }
+
+        public Task MonitorUpdateStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
 
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         private const string RefreshVMCommand = "RefreshVM";
         private const string StartEnvironmentCommand = "StartEnvironment";
         private const string ShutdownEnvironmentCommand = "ShutdownEnvironment";
+        private const string UpdateSystemCommand = "UpdateSystem";
         private const string ExportEnvironmentCommand = "ExportEnvironment";
 
         /// <summary>
@@ -145,6 +147,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             {
                 Command = ShutdownEnvironmentCommand,
                 Id = input.EnvironmentId.ToString(),
+            };
+
+            return queueMessage;
+        }
+
+        /// <summary>
+        /// Creates queue payload for system update.
+        /// </summary>
+        /// <param name="input">Update Visual Studio input.</param>
+        /// <returns>Queue payload.</returns>
+        public static QueueMessage GenerateUpdateSystemPayload(this Guid environmentId)
+        {
+            var queueMessage = new QueueMessage
+            {
+                Command = UpdateSystemCommand,
+                Id = environmentId.ToString(),
             };
 
             return queueMessage;

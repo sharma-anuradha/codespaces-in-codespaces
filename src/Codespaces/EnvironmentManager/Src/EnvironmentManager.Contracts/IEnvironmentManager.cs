@@ -278,5 +278,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the list of <see cref="CloudEnvironment"/>.</returns>
         Task<IEnumerable<CloudEnvironment>> ListBySubscriptionAsync(Subscription subscription, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Starts a system update operation on the given environment.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="cloudEnvironmentParameters">The parameters for starting compute.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironment> UpdateSystemAsync(
+            Guid environmentId,
+            CloudEnvironmentParameters cloudEnvironmentParameters,
+            IDiagnosticsLogger logger);
     }
 }

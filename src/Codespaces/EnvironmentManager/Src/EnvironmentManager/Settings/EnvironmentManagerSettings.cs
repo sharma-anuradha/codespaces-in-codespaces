@@ -64,10 +64,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         public bool DefaultEnvironmentOSDiskArchiveEnabled { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the environment failed worker shoudl be enabled.
+        /// Gets or sets a value indicating whether the environment failed worker should be enabled.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public bool DefaultEnvironmentFailedWorkerEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Visual Studio updates should be enabled.
+        /// </summary>
+        public bool DefaultSystemUpdatesEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets the max number of concurrent update jobs.
+        /// </summary>
+        public int DefaultEnvironmentUpdateMaxActiveCount { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the blob container that the Environment Manager
@@ -295,6 +305,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("featureflag:dynamic-environment-archival-time-enabled", logger, DefaultDynamicEnvironmentArchivalTimeEnabled);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether Visual Studio updates are enabled.
+        /// </summary>
+        /// <param name="logger">Target looper.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> SystemUpdatesEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("featureflag:system-updates-enabled", logger, DefaultSystemUpdatesEnabled);
+        }
+
+        /// <summary>
+        /// Gets or sets the max number of update jobs allowed.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Number of max update jobs.</returns>
+        public Task<int> EnvironmentUpdateMaxActiveCount(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("setting:environment-update-max-active-count", logger, DefaultEnvironmentUpdateMaxActiveCount);
         }
     }
 }

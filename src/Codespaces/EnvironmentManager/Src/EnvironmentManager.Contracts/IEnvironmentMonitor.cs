@@ -110,5 +110,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
             string environmentId,
             CloudEnvironmentState targetState,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Monitor the update state transition by invoking the continution activator.
+        /// </summary>
+        /// <param name="environmentId">Target environment id.</param>
+        /// <param name="computeId">Target compute id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>returns task.</returns>
+        Task MonitorUpdateStateTransitionAsync(
+            string environmentId,
+            Guid computeId,
+            IDiagnosticsLogger logger);
     }
 }

@@ -10,6 +10,7 @@
     <GenerateAppSettingsCommitId>true</GenerateAppSettingsCommitId>
   </PropertyGroup>
   
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'FrontEndWebApi' " />
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="$(AutoMapperVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="$(AspNetCoreDllVersions)" />

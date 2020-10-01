@@ -168,6 +168,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 case StartEnvironmentInputActionState.Export:
                     return record.Value.Transitions.Exporting;
 
+                case StartEnvironmentInputActionState.Update:
+                    return record.Value.Transitions.Updating;
+
                 default:
                     logger.LogErrorWithDetail($"{LogBaseName}_fetch_operation_transition_error", "Invalid operation transition");
                     return new TransitionState { Status = OperationState.Failed };

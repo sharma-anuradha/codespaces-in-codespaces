@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -51,11 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var allocationStrategies = new[] { allocationStrategy };
             var secretManager = new Mock<ISecretManager>().Object;
 
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null, secretManager));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, allocationStrategies, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, resourceContinuationOperations, null, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(resourceRepository, null, null, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null, null, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null, secretManager, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, allocationStrategies, null, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, resourceContinuationOperations, null, null, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(resourceRepository, null, null, null, null));
         }
 
         [Fact]
@@ -66,8 +67,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var allocationStrategy = new Mock<IAllocationStrategy>().Object;
             var allocationStrategies = new[] { allocationStrategy };
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies, secretManager, queueProvider);
             Assert.NotNull(provider);
         }
 
@@ -206,7 +208,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var allocationStrategy = new Mock<IAllocationStrategy>().Object;
             var allocationStrategies = new[] { allocationStrategy };
             var secretManager = new Mock<ISecretManager>().Object;
-            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies, secretManager);
+            var queueProvider = new Mock<IQueueProvider>().Object;
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies, secretManager, queueProvider);
 
             var logger = BuildLogger().Object;
 
@@ -241,8 +244,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.OSDisk })).Verifiable();
             resourceRepository.Setup(x => x.GetAsync(ResourceId3.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.StorageFileShare })).Verifiable();
             var resourcePool = new Mock<IResourcePoolManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies, secretManager.Object);
+            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies, secretManager.Object, queueProvider);
             var result = await provider.StartAsync(EnvironmentId, StartAction.StartCompute, new List<StartInput> { input1, input2, input3 }, Reason, logger);
 
             Assert.True(result);
@@ -260,9 +264,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var allocationStrategy = new Mock<IAllocationStrategy>().Object;
             var allocationStrategies = new[] { allocationStrategy };
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
             var logger = BuildLogger().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies, secretManager, queueProvider);
 
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartCompute, new List<StartInput>() { input }, Reason, logger));
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartCompute, new List<StartInput>() { input, input, input }, Reason, logger));
@@ -287,8 +292,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.StorageFileShare })).Verifiable();
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies, secretManager, queueProvider);
             var result = await provider.StartAsync(EnvironmentId, StartAction.StartArchive, new List<StartInput> { input1, input2 }, Reason, logger);
 
             Assert.True(result);
@@ -307,8 +313,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies, secretManager, queueProvider);
 
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartArchive, new List<StartInput>() { input }, Reason, logger));
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartArchive, new List<StartInput>() { input, input, input }, Reason, logger));
@@ -330,8 +337,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies, secretManager, queueProvider);
             var result = await provider.SuspendAsync(EnvironmentId, input, Reason, logger);
 
             Assert.True(result);
@@ -354,8 +362,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies, secretManager, queueProvider);
             var result = await provider.SuspendAsync(EnvironmentId, new List<SuspendInput>() { input1, input2 }, Reason, logger);
 
             Assert.True(result);
@@ -376,8 +385,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies, secretManager, queueProvider);
             var result = await provider.DeleteAsync(EnvironmentId, input, Reason, logger);
 
             Assert.True(result);
@@ -399,8 +409,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies, secretManager, queueProvider);
             var result = await provider.DeleteAsync(EnvironmentId, new List<DeleteInput>() { input1, input2 }, Reason, logger);
 
             Assert.True(result);
@@ -438,8 +449,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             resourceRepository.Setup(x => x.GetAsync(ResourceId1.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(resource)).Verifiable();
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies, secretManager, queueProvider);
             var result = await provider.StatusAsync(EnvironmentId, input, Reason, logger);
 
             Assert.Equal(resource.Id, result.ResourceId.ToString());
@@ -503,8 +515,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(resource2)).Verifiable();
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
+            var queueProvider = new Mock<IQueueProvider>().Object;
 
-            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies, secretManager);
+            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies, secretManager, queueProvider);
             var resultList = await provider.StatusAsync(EnvironmentId, new List<StatusInput>() { input1, input2 }, Reason, logger);
 
             Assert.Equal(2, resultList.Count());

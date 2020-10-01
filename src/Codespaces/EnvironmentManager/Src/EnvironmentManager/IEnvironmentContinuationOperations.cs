@@ -79,6 +79,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Updates System.
+        /// </summary>
+        /// <param name="environmentId">Target environment id.</param>
+        /// <param name="lastStateUpdated">Target last state updated.</param>
+        /// <param name="cloudEnvironmentParams">Env parameters.</param>
+        /// <param name="reason">Reason.</param>
+        /// <param name="logger">Logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<ContinuationResult> UpdateSystemAsync(
+            Guid environmentId,
+            DateTime lastStateUpdated,
+            CloudEnvironmentParameters cloudEnvironmentParams,
+            string reason,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Export the environment.
         /// </summary>
         /// <param name="environmentId">Target environment id. </param>

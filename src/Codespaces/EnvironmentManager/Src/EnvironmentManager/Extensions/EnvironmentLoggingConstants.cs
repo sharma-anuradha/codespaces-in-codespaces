@@ -25,6 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         public const string WatchDeletedPlanEnvironmentsTask = "watch_deleted_plan_environments_task";
 
         /// <summary>
+        /// Watch Windows environments to be updated task.
+        /// </summary>
+        public const string WatchEnvironmentsToBeUpdatedTask = "watch_environments_to_be_updated_task";
+
+        /// <summary>
         /// Watch Failed Environment Task.
         /// </summary>
         public const string WatchFailedEnvironmentTask = "watch_failed_environment_task";

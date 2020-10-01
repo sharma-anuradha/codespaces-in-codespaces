@@ -9,6 +9,7 @@
     <GenerateAppSettingsCommitId>true</GenerateAppSettingsCommitId>
   </PropertyGroup>
   
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'BackEndWebApi' " />
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(AspNetCoreDllVersions)" />
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Hosting" Version="$(VsSaaSPackageVersion)" />

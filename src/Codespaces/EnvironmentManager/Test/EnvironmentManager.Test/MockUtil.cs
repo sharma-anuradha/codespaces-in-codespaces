@@ -433,5 +433,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             await Task.CompletedTask;
             return model;
         }
+
+        public static VsoSuperuserClaimsIdentity MockVsoSuperuserClaimsIdentity()
+        {
+            var claims = new Claim[] { new Claim("Name", "Superuser") };
+            var claimsIdentity = new ClaimsIdentity(claims);
+            var authorizedScopes = PlanAccessTokenScopes.ValidPlanScopes;
+
+            return new VsoSuperuserClaimsIdentity(authorizedScopes.ToArray(), claimsIdentity);
+        }
     }
 }

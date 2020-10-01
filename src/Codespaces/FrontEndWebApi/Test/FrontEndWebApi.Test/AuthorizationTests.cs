@@ -476,6 +476,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 Mock.Of<IEnvironmentDeleteRestoreAction>(),
                 Mock.Of<IEnvironmentIntializeResumeAction>(),
                 Mock.Of<IEnvironmentIntializeExportAction>(),
+                Mock.Of<IEnvironmentInitializeUpdateAction>(),
                 Mock.Of<IEnvironmentFinalizeResumeAction>(),
                 Mock.Of<IEnvironmentFinalizeExportAction>(),
                 Mock.Of<IEnvironmentSuspendAction>(),

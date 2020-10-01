@@ -174,5 +174,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         {
             throw new NotImplementedException();
         }
+
+        public Task<CloudEnvironment> UpdateSystemAsync(Guid environmentId, CloudEnvironmentParameters cloudEnvironmentParameters, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -20,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Provisioning = new TransitionState();
             Resuming = new TransitionState();
             ShuttingDown = new TransitionState();
+            Updating = new TransitionState();
             Exporting = new TransitionState();
         }
 
@@ -48,6 +49,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public TransitionState ShuttingDown { get; set; }
 
         /// <summary>
+        /// Gets or sets the updating environment transitions.
+        /// </summary>
+        [JsonProperty(PropertyName = "updating")]
+        public TransitionState Updating { get; set; }
+
         /// Gets or sets the export environment transitions.
         /// </summary>
         [JsonProperty(PropertyName = "exportEnvironment")]

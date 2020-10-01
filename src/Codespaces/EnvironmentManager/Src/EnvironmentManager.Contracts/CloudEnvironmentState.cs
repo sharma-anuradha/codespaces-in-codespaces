@@ -88,5 +88,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// The environment is exporting.
         /// </summary>
         Exporting,
+
+        /// <summary>
+        /// The environment is being updated.
+        /// </summary>
+        Updating,
     }
 }

@@ -31,6 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask"> Target watch soft deleted environments to be terminated task.</param>
+        /// <param name="watchEnvironmentsToBeUpdatedTask">Target watch for environments to be updated.</param>
         /// <param name="watchDeletedPlanSecretStoresTask">Target watch secrets stores to be deleted.</param>
         /// <param name="refreshKeyVaultSecretCacheTask">Refresh key vault secret cache task.</param>
         /// <param name="cloudEnvironmentRegionalMigrationTask">Env regional migration task.</param>
@@ -50,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
+            IWatchEnvironmentsToBeUpdatedTask watchEnvironmentsToBeUpdatedTask,
             IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask,
             ICloudEnvironmentRegionalMigrationTask cloudEnvironmentRegionalMigrationTask,
             ISyncRegionalEnvironmentsToGlobalTask syncRegionalEnvironmentsToGlobalTask,
@@ -68,6 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
+            WatchEnvironmentsToBeUpdatedTask = watchEnvironmentsToBeUpdatedTask;
             RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
             CloudEnvironmentRegionalMigrationTask = cloudEnvironmentRegionalMigrationTask;
             SyncRegionalEnvironmentsToGlobalTask = syncRegionalEnvironmentsToGlobalTask;
@@ -97,6 +100,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
         private IWatchSoftDeletedEnvironmentToBeHardDeletedTask WatchSoftDeletedEnvironmentToBeHardDeletedTask { get; }
+
+        private IWatchEnvironmentsToBeUpdatedTask WatchEnvironmentsToBeUpdatedTask { get; }
 
         private IRefreshKeyVaultSecretCacheTask RefreshKeyVaultSecretCacheTask { get; }
 
@@ -218,6 +223,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{EnvironmentLoggingConstants.WatchSoftDeletedEnvironmentToBeHardDeletedTask}_run",
                 (childLogger) => WatchSoftDeletedEnvironmentToBeHardDeletedTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(10));
+
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
+
+            // Job: Watch environments that needs an update
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.WatchEnvironmentsToBeUpdatedTask}_run",
+                (childLogger) => WatchEnvironmentsToBeUpdatedTask.RunTaskAsync(TimeSpan.FromMinutes(5), childLogger),
+                TimeSpan.FromHours(2));
 
             // new job continuation handlers
             JobQueueConsumerFactory.RegisterJobHandlers(JobHandlerTargets);

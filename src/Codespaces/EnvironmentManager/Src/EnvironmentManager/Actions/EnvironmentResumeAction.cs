@@ -122,21 +122,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <inheritdoc/>
         protected override async Task<EnvironmentTransition> AddWorkspaceConnection(EnvironmentTransition record, EnvironmentResumeActionInput input, IDiagnosticsLogger logger)
         {
-            var connectionInfo = await WorkspaceManager.CreateWorkspaceAsync(
-                           EnvironmentType.CloudEnvironment,
-                           record.Value.Id,
-                           record.Value.Compute.ResourceId,
-                           input.StartEnvironmentParams.ConnectionServiceUri,
-                           record.Value.Connection?.ConnectionSessionPath,
-                           input.StartEnvironmentParams.UserProfile.Email,
-                           input.StartEnvironmentParams.UserProfile.Id,
-                           record.Value.SkuName.Contains("windows", StringComparison.OrdinalIgnoreCase),
-                           null,
-                           logger.NewChildLogger());
-            record.PushTransition((environment) =>
+            if (input.StartEnvironmentParams.UserProfile != null)
             {
-                environment.Connection = connectionInfo;
-            });
+                var connectionInfo = await WorkspaceManager.CreateWorkspaceAsync(
+                               EnvironmentType.CloudEnvironment,
+                               record.Value.Id,
+                               record.Value.Compute.ResourceId,
+                               input.StartEnvironmentParams.ConnectionServiceUri,
+                               record.Value.Connection?.ConnectionSessionPath,
+                               input.StartEnvironmentParams.UserProfile.Email,
+                               input.StartEnvironmentParams.UserProfile.Id,
+                               record.Value.SkuName.Contains("windows", StringComparison.OrdinalIgnoreCase),
+                               null,
+                               logger.NewChildLogger());
+                record.PushTransition((environment) =>
+                {
+                    environment.Connection = connectionInfo;
+                });
+            }
+
             return record;
         }
 

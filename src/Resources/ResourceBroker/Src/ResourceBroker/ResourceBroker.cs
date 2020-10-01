@@ -4,14 +4,15 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -37,12 +38,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IResourceRepository resourceRepository,
             IResourceContinuationOperations resourceContinuationOperations,
             IEnumerable<IAllocationStrategy> allocationStrategies,
-            ISecretManager secretManager)
+            ISecretManager secretManager,
+            IQueueProvider queueProvider)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
             ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
             AllocationStrategies = Requires.NotNull(allocationStrategies, nameof(allocationStrategies));
             SecretManager = Requires.NotNull(secretManager, nameof(secretManager));
+            QueueProvider = Requires.NotNull(queueProvider, nameof(queueProvider));
         }
 
         private IResourceRepository ResourceRepository { get; }
@@ -57,6 +60,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IEnumerable<IAllocationStrategy> AllocationStrategies { get; }
 
         private ISecretManager SecretManager { get; }
+
+        private IQueueProvider QueueProvider { get; }
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
@@ -121,6 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     switch (action)
                     {
                         case StartAction.StartExport:
+                        case StartAction.StartUpdate:
 
                             if (backingResources.Count == 2 || backingResources.Count == 3)
                             {
@@ -143,22 +149,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     userSecrets = computeResource.Resource.Secrets;
                                 }
 
-                                // Trigger environment export
-                                await ResourceContinuationOperations.StartExportAsync(
-                                    environmentId,
-                                    computeResource.Resource.ResourceId,
-                                    osDiskResource.Resource?.ResourceId,
-                                    storageResource.Resource?.ResourceId,
-                                    archiveStorageResource.Resource?.ResourceId,
-                                    computeResource.Resource.Variables,
-                                    userSecrets,
-                                    trigger,
-                                    childLogger.NewChildLogger(),
-                                    loggingProperties);
+                                if (action == StartAction.StartExport)
+                                {
+                                    // Trigger environment export
+                                    await ResourceContinuationOperations.StartExportAsync(
+                                        environmentId,
+                                        computeResource.Resource.ResourceId,
+                                        osDiskResource.Resource?.ResourceId,
+                                        storageResource.Resource?.ResourceId,
+                                        archiveStorageResource.Resource?.ResourceId,
+                                        computeResource.Resource.Variables,
+                                        userSecrets,
+                                        trigger,
+                                        childLogger.NewChildLogger(),
+                                        loggingProperties);
+                                }
+                                else if (action == StartAction.StartUpdate)
+                                {
+                                    // Trigger system update
+                                    await UpdateSystemAsync(computeResource.Resource.ResourceId, trigger, childLogger.NewChildLogger(), loggingProperties);
+                                }
                             }
                             else
                             {
-                                throw new NotSupportedException($"Start export action expects 2 resource and {resources.Count()} was supplied.");
+                                throw new NotSupportedException($"Start {action.ToString().ToLower()} action expects 2 resource and {resources.Count()} was supplied.");
                             }
 
                             break;
@@ -406,6 +420,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         .FluentAddValue("ResourceIsDeleted", result != null ? (bool?)result.IsDeleted : null);
 
                     return exists;
+                });
+        }
+
+        private Task<bool> UpdateSystemAsync(Guid computeId, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_updatesystem",
+                async (childLogger) =>
+                {
+                    var record = await ResourceRepository.GetAsync(computeId.ToString(), childLogger.NewChildLogger());
+                    var queueComponent = record.Components?.Items?.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
+
+                    var result = await QueueProvider.PushMessageAsync(
+                        queueComponent.AzureResourceInfo,
+                        computeId.GenerateUpdateSystemPayload(),
+                        logger.NewChildLogger());
+
+                    return result.Status == Common.Continuation.OperationState.Succeeded;
                 });
         }
     }

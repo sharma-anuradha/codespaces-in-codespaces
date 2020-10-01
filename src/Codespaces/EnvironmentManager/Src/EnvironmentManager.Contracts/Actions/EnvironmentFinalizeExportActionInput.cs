@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {

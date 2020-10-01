@@ -336,6 +336,66 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             return items;
         }
 
+        /// <inheritdoc/>
+        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsToBeUpdatedAsync(
+            string idShard,
+            string skuName,
+            IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE c FROM c
+                WHERE STARTSWITH(c.id, @idShard)
+                    AND CONTAINS(c.skuName, @skuName)
+                    AND c.isDeleted != true
+                    AND ((c.state = @shutdownState OR c.state = @archivedState)
+                        AND (c.transitions.updating.status != @updatingInProgressStatus
+                         AND c.transitions.updating.status != @updatingInitializedStatus
+                         AND c.transitions.updating.status != @updatingTriggeredStatus))
+                    AND (((
+                        IS_DEFINED(c.controlPlaneLocation) = false
+                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                        OR c.controlPlaneLocation = @controlPlaneLocation)",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@idShard", Value = idShard },
+                    new SqlParameter { Name = "@skuName", Value = skuName },
+                    new SqlParameter { Name = "@shutdownState", Value = CloudEnvironmentState.Shutdown.ToString() },
+                    new SqlParameter { Name = "@archivedState", Value = CloudEnvironmentState.Archived.ToString() },
+                    new SqlParameter { Name = "@updatingInProgressStatus", Value = OperationState.InProgress.ToString() },
+                    new SqlParameter { Name = "@updatingInitializedStatus", Value = OperationState.Initialized.ToString() },
+                    new SqlParameter { Name = "@updatingTriggeredStatus", Value = OperationState.Triggered.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
+                });
+
+            var items = await QueryAsync(
+                (client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return items;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetEnvironmentUpdateJobActiveCountAsync(IDiagnosticsLogger logger)
+        {
+            // FIXME: Once we migrate cloud environments to a regional DB, we won't need the control-plane location filtering logic.
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1)
+                FROM c
+                WHERE c.transitions.updating.status = @activeStatus
+                    AND (((
+                        IS_DEFINED(c.controlPlaneLocation) = false
+                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                        OR c.controlPlaneLocation = @controlPlaneLocation)",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@activeStatus", Value = OperationState.InProgress.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+            var count = items.FirstOrDefault();
+            return count;
+        }
+
         /// <inheritdoc />
         public async Task<IEnumerable<CloudEnvironment>> GetAllEnvironmentsInSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
         {

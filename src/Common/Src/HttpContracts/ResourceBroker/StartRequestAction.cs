@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// Indicates that the compute should be started and exported.
         /// </summary>
         StartExport = 3,
+
+        /// <summary>
+        /// Indicates that the compute should be started for updating.
+        /// </summary>
+        StartUpdate = 4,
     }
 }

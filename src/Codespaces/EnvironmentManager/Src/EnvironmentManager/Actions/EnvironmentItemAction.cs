@@ -73,10 +73,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             ValidationUtil.IsTrue(sku != null, $"The requested SKU is not defined: {skuName?.Truncate(200)}");
 
-            var profile = await CurrentUserProvider.GetProfileAsync();
-            var isSkuVisible = plan.Partner == Plans.Contracts.Partner.GitHub || await SkuUtils.IsVisible(sku, planInfo, profile);
+            if (!CurrentUserProvider.Identity.IsSuperuser())
+            {
+                var profile = await CurrentUserProvider.GetProfileAsync();
+                var isSkuVisible = plan.Partner == Plans.Contracts.Partner.GitHub || await SkuUtils.IsVisible(sku, planInfo, profile);
 
-            ValidationUtil.IsTrue(isSkuVisible, $"The requested SKU '{skuName?.Truncate(200)}' is not visible.");
+                ValidationUtil.IsTrue(isSkuVisible, $"The requested SKU '{skuName?.Truncate(200)}' is not visible.");
+            }
+
             ValidationUtil.IsTrue(sku.Enabled, $"The requested SKU '{skuName?.Truncate(200)}' is not available.");
             ValidationUtil.IsTrue(sku.SkuLocations.Contains(planInfo.Location), $"The requested SKU '{skuName?.Truncate(200)}' is not available in location: {planInfo.Location}");
         }

@@ -1,4 +1,4 @@
-﻿// <copyright file="CollectedDataConverter.cs" company="Microsoft">
+// <copyright file="CollectedDataConverter.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -40,6 +40,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
                 else if (name.Equals(nameof(GitChangesData), StringComparison.OrdinalIgnoreCase))
                 {
                     return collectedData.ToObject<GitChangesData>();
+                }
+                else if (name.Equals(nameof(ClientVersionUpdateData), StringComparison.OrdinalIgnoreCase))
+                {
+                    return collectedData.ToObject<ClientVersionUpdateData>();
                 }
                 else
                 {

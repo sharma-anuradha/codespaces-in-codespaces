@@ -203,6 +203,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
         }
 
+        /// <inheritdoc/>
+        public Task<ContinuationResult> UpdateSystemAsync(
+            Guid environmentId,
+            DateTime lastStateUpdated,
+            CloudEnvironmentParameters cloudEnvironmentParams,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            return StartEnvironmentContinuationAsync(
+                environmentId,
+                lastStateUpdated,
+                null,
+                cloudEnvironmentParams,
+                reason,
+                StartEnvironmentInputActionState.Update,
+                logger);
+        }
+
         private IDictionary<string, string> BuildLoggingProperties(
             Guid resourceId,
             string reason)

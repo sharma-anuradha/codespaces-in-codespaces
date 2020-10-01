@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 }
             }
 
-            var list = new EnvironmentVariableStrategy[]
+            var list = new List<EnvironmentVariableStrategy>
             {
                 // Variables for vscode cloudenv extension
                 new EnvVarEnvironmentId(cloudEnvironment),
@@ -61,13 +61,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 new EnvVarSessionCallback(cloudEnvironment, callbackUri),
                 new EnvVarSessionCascadeToken(cascadeToken),
                 new EnvVarSessionId(cloudEnvironment),
-                new EnvVarLiveshareServiceEndpoint(cloudEnvironment, cloudEnvironment.Connection.ConnectionServiceUri),
 
                 // Variables for personalization
                 new EnvDotfilesRepoUrl(cloudEnvironment),
                 new EnvDotfilesTargetPath(cloudEnvironment),
                 new EnvDotfilesInstallCommand(cloudEnvironment),
             };
+
+            // Add optional variables
+            if (!string.IsNullOrEmpty(cloudEnvironment.Connection.ConnectionServiceUri))
+            {
+                // This can happen when starting the environment for admin tasks, we don't want
+                // a LS connection
+                list.Add(new EnvVarLiveshareServiceEndpoint(cloudEnvironment, cloudEnvironment.Connection.ConnectionServiceUri));
+            }
 
             foreach (var envStrategy in list)
             {

@@ -60,6 +60,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         public int DefaultUnavailableEnvironmentTimeoutInSeconds { get; set; }
 
         /// <summary>
+        /// Gets or sets the default timeout for updating systems.
+        /// </summary>
+        public int DefaultUpdateEnvironmentTimeoutInSeconds { get; set; } = 3600;
+
+        /// <summary>
         /// Gets or sets Queued Environment Timeout In Seconds.
         /// </summary>
         public int DefaultQueuedEnvironmentTimeoutInSeconds { get; set; }
@@ -98,6 +103,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             var timeout = await SystemConfiguration.GetValueAsync("setting:export-environment-timeout-in-seconds", logger, DefaultExportEnvironmentTimeoutInSeconds);
+            return TimeSpan.FromSeconds(timeout);
+        }
+
+        /// <summary>
+        /// Gets the update environment timeout.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public async Task<TimeSpan> UpdateEnvironmentTimeout(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            var timeout = await SystemConfiguration.GetValueAsync("setting:update-environment-timeout-in-seconds", logger, DefaultUpdateEnvironmentTimeoutInSeconds);
             return TimeSpan.FromSeconds(timeout);
         }
 

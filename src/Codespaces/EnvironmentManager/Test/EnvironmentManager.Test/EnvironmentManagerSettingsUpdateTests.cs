@@ -639,6 +639,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environmentSuspendAction = new Mock<IEnvironmentSuspendAction>().Object;
             var environmentForceSuspendAction = new Mock<IEnvironmentForceSuspendAction>().Object;
             var environmentSoftDeleteAction = new Mock<IEnvironmentSoftDeleteAction>().Object;
+            var environmentInitializeUpdateAction = new Mock<IEnvironmentInitializeUpdateAction>().Object;
 
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
 
@@ -659,6 +660,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentDeleteRestoreAction,
                 environmentIntializeResumeAction,
                 environmentIntializeExportAction,
+                environmentInitializeUpdateAction,
                 environmentFinalizeResumeAction,
                 environmentFinalizeExportAction,
                 environmentSuspendAction,

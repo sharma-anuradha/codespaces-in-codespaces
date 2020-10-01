@@ -403,6 +403,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public bool QueueResourceAllocation { get; set; }
 
         /// <summary>
+        /// Gets or sets the system update status.
+        /// </summary>
+        [JsonProperty(PropertyName = "systemStatusInfo")]
+        public SystemStatusInfo SystemStatusInfo { get; set; }
+
+        /// <summary>
         /// Indicates whether the environment is in a shutdown state.
         /// </summary>
         /// <returns>Whether it is shutdown.</returns>

@@ -483,6 +483,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         }
 
         /// <inheritdoc/>
+        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsToBeUpdatedAsync(
+            string idShard,
+            string skuName,
+            IDiagnosticsLogger logger)
+        {
+            if (await GetRolloutStatusAsync(logger) == RolloutStatus.Phase1)
+            {
+                // Note: We merge the global repository results in case the regional repository hasn't been (fully) populated by the migration yet.
+                var globalEnvironments = await GlobalRepository.GetEnvironmentsToBeUpdatedAsync(idShard, skuName, logger.NewChildLogger());
+                var regionalEnvironments = await RegionalRepository.GetEnvironmentsToBeUpdatedAsync(idShard, skuName, logger.NewChildLogger());
+
+                return MergeCloudEnvironments(globalEnvironments, regionalEnvironments);
+            }
+            else
+            {
+                return await RegionalRepository.GetEnvironmentsToBeUpdatedAsync(idShard, skuName, logger.NewChildLogger());
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetEnvironmentUpdateJobActiveCountAsync(IDiagnosticsLogger logger)
+        {
+            if (await GetRolloutStatusAsync(logger) == RolloutStatus.Phase1)
+            {
+                return await GlobalRepository.GetEnvironmentUpdateJobActiveCountAsync(logger.NewChildLogger());
+            }
+            else
+            {
+                return await RegionalRepository.GetEnvironmentUpdateJobActiveCountAsync(logger.NewChildLogger());
+            }
+        }
+
+        /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> GetFailedOperationAsync(string idShard, int count, IDiagnosticsLogger logger)
         {
             if (await GetRolloutStatusAsync(logger) == RolloutStatus.Phase1)

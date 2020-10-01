@@ -349,8 +349,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         {
             var connection = new ConnectionInfo();
 
-            // Set up liveshare workspace if user is not exporting
-            if (operationInput.ActionState != StartEnvironmentInputActionState.Export)
+            // Set up liveshare workspace if user is not exporting or not passing a UserProfile
+            if (operationInput.ShouldEstablishWorkspaceConnection())
             {
                 StartCloudEnvironmentParameters cloudEnvironmentParameters = (StartCloudEnvironmentParameters)operationInput.CloudEnvironmentParameters;
 
@@ -393,8 +393,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     record,
                     async (environment, innerLogger) =>
                     {
-                        // assign connection if environment is not exporting
-                        if (operationInput.ActionState != StartEnvironmentInputActionState.Export)
+                        // assign connection if environment is not exporting or not providing a UserProfile
+                        if (operationInput.ShouldEstablishWorkspaceConnection())
                         {
                             environment.Connection = connection;
                         }
@@ -422,7 +422,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             var storageResourceId = (record.Value.Storage?.Type == ResourceType.StorageFileShare) ? record.Value.Storage.ResourceId : operationInput.StorageResource?.ResourceId;
 
             // Get current action needed for starting compute
-            var startEnvironmentAction = operationInput.ActionState == StartEnvironmentInputActionState.Export ? StartEnvironmentAction.StartExport : StartEnvironmentAction.StartCompute;
+            var startEnvironmentAction = operationInput.ActionState switch
+            {
+                StartEnvironmentInputActionState.Export => StartEnvironmentAction.StartExport,
+                StartEnvironmentInputActionState.Update => StartEnvironmentAction.StartUpdate,
+                _ => StartEnvironmentAction.StartCompute
+            };
 
             // Kick off start-compute before returning.
             var environmentManager = serviceProvider.GetService<IEnvironmentManager>();
@@ -493,6 +498,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     break;
                 case StartEnvironmentInputActionState.Export:
                     await environmentMonitor.MonitorExportStateTransitionAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                    break;
+                case StartEnvironmentInputActionState.Update:
+                    await environmentMonitor.MonitorUpdateStateTransitionAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
                     break;
                 default:
                     throw new ArgumentException($"{operationInput.ActionState} value is not valid.", nameof(operationInput.ActionState));
@@ -624,6 +632,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             inputResource = resourceStatus.BuildQueueInputResource();
 
             return inputResource;
+        }
+
+        private static bool ShouldEstablishWorkspaceConnection(this IStartEnvironmentContinuationPayloadV2 operationInput)
+        {
+            return operationInput.ActionState != StartEnvironmentInputActionState.Export &&
+                operationInput.ActionState != StartEnvironmentInputActionState.Update;
         }
 
 #pragma warning restore SA1600 // Elements should be documented

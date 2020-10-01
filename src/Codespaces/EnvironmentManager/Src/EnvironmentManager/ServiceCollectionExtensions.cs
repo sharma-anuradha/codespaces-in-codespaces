@@ -141,8 +141,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IEnvironmentDeleteRestoreAction, EnvironmentDeleteRestoreAction>();
             services.AddSingleton<IEnvironmentIntializeResumeAction, EnvironmentIntializeResumeAction>();
             services.AddSingleton<IEnvironmentIntializeExportAction, EnvironmentIntializeExportAction>();
+            services.AddSingleton<IEnvironmentInitializeUpdateAction, EnvironmentInitializeUpdateAction>();
             services.AddSingleton<IEnvironmentResumeAction, EnvironmentResumeAction>();
             services.AddSingleton<IEnvironmentExportAction, EnvironmentExportAction>();
+            services.AddSingleton<IEnvironmentUpdateAction, EnvironmentUpdateAction>();
             services.AddSingleton<IEnvironmentFinalizeResumeAction, EnvironmentFinalizeResumeAction>();
             services.AddSingleton<IEnvironmentFinalizeExportAction, EnvironmentFinalizeExportAction>();
             services.AddSingleton<IEnvironmentSuspendAction, EnvironmentSuspendAction>();
@@ -167,6 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IWatchSoftDeletedEnvironmentToBeHardDeletedTask, WatchEnvironmentsToBeHardDeleteTask>();
             services.AddSingleton<IWatchDeletedPlanSecretStoresTask, WatchDeletedPlanSecretStoresTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
+            services.AddSingleton<IWatchEnvironmentsToBeUpdatedTask, WatchEnvironmentsToBeUpdatedTask>();
             services.AddSingleton<ICloudEnvironmentRegionalMigrationTask, CloudEnvironmentRegionalMigrationTask>();
             services.AddSingleton<ISyncRegionalEnvironmentsToGlobalTask, SyncRegionalEnvironmentsToGlobalTask>();
             services.AddSingleton<IWatchExportBlobsTask, WatchExportBlobsTask>();

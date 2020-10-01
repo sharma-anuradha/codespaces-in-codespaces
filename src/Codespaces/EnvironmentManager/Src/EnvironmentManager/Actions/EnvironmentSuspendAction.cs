@@ -142,6 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 case CloudEnvironmentState.Available:
                 case CloudEnvironmentState.Awaiting:
                 case CloudEnvironmentState.Exporting:
+                case CloudEnvironmentState.Updating:
                 case CloudEnvironmentState.Unavailable:
                     break;
 

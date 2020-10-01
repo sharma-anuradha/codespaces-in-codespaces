@@ -87,12 +87,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Fetch a list of environments that have pending updates.
+        /// </summary>
+        /// <param name="idShard">Pool Code.</param>
+        /// <param name="skuName">Sku to match against.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Returns a list of environments ready for update.</returns>
+        Task<IEnumerable<CloudEnvironment>> GetEnvironmentsToBeUpdatedAsync(
+            string idShard,
+            string skuName,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Gets the count of how many archive jobs are currently active.
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>The number of active jobs.</returns>
         Task<int> GetEnvironmentsArchiveJobActiveCountAsync(
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the count of active system updates.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>The number of active jobs.</returns>
+        Task<int> GetEnvironmentUpdateJobActiveCountAsync(IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets all environments that belong to a specific subscription.

@@ -97,9 +97,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         throw new ArgumentException($"Invalid SKU: {cloudEnvironment.SkuName}");
                     }
 
-                    // Geneate token
-                    var connectionToken = await TokenProvider.GenerateEnvironmentConnectionTokenAsync(
-                        cloudEnvironment, sku, cloudEnvironmentParameters.UserProfile, logger);
+                    // Geneate token if not doing an admin task (updating)
+                    var connectionToken = startAction == StartEnvironmentAction.StartUpdate ?
+                        null :
+                        await TokenProvider.GenerateEnvironmentConnectionTokenAsync(cloudEnvironment, sku, cloudEnvironmentParameters.UserProfile, logger);
 
                     // Construct the start-compute environment variables
                     var environmentVariables = EnvironmentVariableGenerator.Generate(
@@ -109,8 +110,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         connectionToken,
                         cloudEnvironmentOptions);
 
-                    // Construct the data for secret filtering
-                    var filterSecrets = await ConstructFilterSecretsDataAsync(cloudEnvironment, cloudEnvironmentParameters.CurrentUserIdSet, logger.NewChildLogger());
+                    // Construct the data for secret filtering if not doing an admin task (updating)
+                    var filterSecrets = startAction == StartEnvironmentAction.StartUpdate ?
+                        null :
+                        await ConstructFilterSecretsDataAsync(cloudEnvironment, cloudEnvironmentParameters.CurrentUserIdSet, logger.NewChildLogger());
 
                     // Setup input requests
                     var resources = new List<StartRequestBody>
@@ -149,9 +152,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         });
                     }
 
-                    var startRequestAction = (startAction == StartEnvironmentAction.StartExport) ?
-                                        StartRequestAction.StartExport :
-                                        StartRequestAction.StartCompute;
+                    var startRequestAction = startAction switch
+                    {
+                        StartEnvironmentAction.StartExport => StartRequestAction.StartExport,
+                        StartEnvironmentAction.StartUpdate => StartRequestAction.StartUpdate,
+                        _ => StartRequestAction.StartCompute
+                    };
 
                     // Execute start
                     return await ResourceBrokerClient.StartAsync(
