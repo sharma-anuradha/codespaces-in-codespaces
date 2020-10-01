@@ -109,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 if (record.Value.State == CloudEnvironmentState.Available)
                 {
                     logger.LogWarning(ExportRunningEnvironmentErrorMessage);
-                    throw new BadRequestException((int)MessageCodes.ExportRunningEnvironmentError, ExportRunningEnvironmentErrorMessage);
+                    throw new CodedValidationException((int)MessageCodes.ExportRunningEnvironmentError, ExportRunningEnvironmentErrorMessage);
                 }
 
                 return record.Value;

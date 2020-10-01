@@ -8,7 +8,6 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AutoMapper;
 using Kusto.Cloud.Platform.Utils;
@@ -382,20 +381,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                 ExportCloudEnvironmentParameters exportEnvParams = await GetExportCloudEnvironmentParametersAsync(requestBody, environment, logger);
 
-                try
-                {
-                    var environmentResult = await EnvironmentManager.ExportAsync(
-                                   environmentId,
-                                   exportEnvParams,
-                                   logger.NewChildLogger());
-                    var result = Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(environmentResult);
+                var environmentResult = await EnvironmentManager.ExportAsync(
+                                        environmentId,
+                                        exportEnvParams,
+                                        logger.NewChildLogger());
+                var result = Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(environmentResult);
 
-                    return Ok(result);
-                }
-                catch (BadRequestException bre)
-                {
-                    return BadRequest(new CodedValidationException(bre.MessageCode, bre.Message));
-                }
+                return Ok(result);
             }
             else
             {
@@ -435,7 +427,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return await DoGitHubCreateAsync(
                                 repository,
                                 createEnvironmentInput.SkuName,
-                                logger.NewChildLogger());        
+                                logger.NewChildLogger());
                 }
                 else
                 {
