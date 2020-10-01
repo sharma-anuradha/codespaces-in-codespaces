@@ -337,15 +337,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             var consolidatedloggerProperties = await BuildLoggingProperties(resourceId, reason, logger, loggingProperties);
 
-            var input = new CleanupResourceContinuationInput()
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                EnvironmentId = environmentId,
-                ResourceId = resourceId,
-                Reason = reason,
-            };
-            var target = CleanupResourceContinuationHandler.DefaultQueueTarget;
+                await JobQueueProducerFactory.GetOrCreate(CleanupResourceContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                    new CleanupResourceContinuationJobHandler.Payload()
+                    {
+                        EnvironmentId = environmentId,
+                        EntityId = resourceId,
+                        Reason = reason,
+                        LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
+                    },
+                    null,
+                    logger,
+                    CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var input = new CleanupResourceContinuationInput()
+                {
+                    EnvironmentId = environmentId,
+                    ResourceId = resourceId,
+                    Reason = reason,
+                };
+                var target = CleanupResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+                return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            }
         }
 
         /// <inheritdoc/>
