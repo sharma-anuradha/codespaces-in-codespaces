@@ -670,7 +670,7 @@ function Test-ResourceProviders {
                 ForEach ($provider in $defaultRPs) {
                     if (!($registeredRPs | Test-Any {$_.Provider -like $provider})) {
                         $sub.validation.resourceProviders.result = [ValidationResultType]::Error
-                        $sub.validation.resourceProviders.message =  "missing provider $provider"
+                        $sub.validation.resourceProviders.message = "missing provider $provider"
                     }
                 }
             }
@@ -710,15 +710,15 @@ function Test-32GbFlags {
     Process {
         ForEach ($sub in $Subscriptions) {
             $sub.validation.premiumFilesInternalSettings.result = [ValidationResultType]::Success
-            if (-not $sub.premiumFilesInternalSettings -like "done") {
+            if (-not ($sub.premiumFilesInternalSettings -like "done")) {
                 Write-Output $sub
                 continue
             }
 
             $response = az feature show --namespace Microsoft.Storage -n $featureFlag --subscription $sub.subscriptionId | ConvertFrom-Json
-            if (-not $response -or -not $response.properties.state -like "registered") {
+            if (-not $response -or -not ($response.properties.state -like "registered")) {
                 $sub.validation.premiumFilesInternalSettings.result = [ValidationResultType]::Error
-                $sub.validation.premiumFilesInternalSettings.message =  "missing feature flag $featureFlag"
+                $sub.validation.premiumFilesInternalSettings.message = "missing feature flag $featureFlag"
             }
 
             Write-Output $sub
@@ -740,15 +740,15 @@ function Test-PartionedDns {
     Process {
         ForEach ($sub in $Subscriptions) {
             $sub.validation.partitionedDns.result = [ValidationResultType]::Success
-            if (-not $sub.storagePartitionedDnsFlag -like "done") {
+            if (-not ($sub.storagePartitionedDnsFlag -like "done")) {
                 Write-Output $sub
                 continue
             }
 
             $response = az feature show --namespace Microsoft.Storage -n $featureFlag --subscription $sub.subscriptionId | ConvertFrom-Json
-            if (-not $response -or -not $response.properties.state -like "registered") {
+            if (-not $response -or -not ($response.properties.state -like "registered")) {
                 $sub.validation.partitionedDns.result = [ValidationResultType]::Error
-                $sub.validation.resourceProviders.message =  "missing feature flag $featureFlag"
+                $sub.validation.partitionedDns.message = "missing feature flag $featureFlag"
             }
 
             Write-Output $sub
@@ -914,6 +914,7 @@ function Enable-Subscription {
 
     Process {
         ForEach ($sub in $Subscriptions) {
+            Write-Host
             Write-Host "Processing $($sub.subscriptionName) ($($sub.subscriptionId)), with dbEnabled=$($sub.dbEnabled ? $sub.dbEnabled : "null"), location=$($sub.location)"
 
             $options = ""
