@@ -54,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         [JsonProperty(PropertyName = "updating")]
         public TransitionState Updating { get; set; }
 
+        /// <summary>
         /// Gets or sets the export environment transitions.
         /// </summary>
         [JsonProperty(PropertyName = "exportEnvironment")]

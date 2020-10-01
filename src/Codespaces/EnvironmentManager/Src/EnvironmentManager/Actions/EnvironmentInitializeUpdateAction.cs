@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 var startingStateReason = isArchivedEnvironment ? MessageCodes.RestoringFromArchive.ToString() : null;
                 await UpdateStateAsync(
                     record,
-                    CloudEnvironmentState.Exporting,
+                    CloudEnvironmentState.Updating,
                     startingStateReason,
                     CloudEnvironmentStateUpdateTriggers.ExportEnvironment,
                     logger);
