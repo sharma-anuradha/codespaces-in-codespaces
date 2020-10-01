@@ -30,8 +30,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// </summary>
     public class WatchOrphanedAzureResourceJobHandler : BaseDataPlaneResourceGroupJobHandler<WatchOrphanedAzureResourceJobHandler>
     {
-        private readonly Dictionary<string, string> apiVersionCache = new Dictionary<string, string>();
-
         private static readonly string[] DefaultEnabledResourceTypesToDelete = new[]
         {
             "Microsoft.Compute/virtualMachines",
