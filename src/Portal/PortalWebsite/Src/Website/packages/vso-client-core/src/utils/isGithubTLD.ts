@@ -1,12 +1,21 @@
+import { GITHUB_DOT_DEV_TLD, GITHUB_LOCAL_TLD } from '../constants';
+import { getParentDomain } from './getParentDomain';
+
 const GITHUB_TLDS = [
     'github.com',
-    'github.dev',
-    'github.localhost',
+    GITHUB_DOT_DEV_TLD,
+    GITHUB_LOCAL_TLD,
 ];
 
 export const isGithubTLD = (urlString: string): boolean => {
-    const url = new URL(urlString);
-    const locationSplit = url.hostname.split('.');
-    const mainDomain = locationSplit.slice(locationSplit.length - 2).join('.');
-    return GITHUB_TLDS.includes(mainDomain);
+    const tld = getParentDomain(urlString);
+    return GITHUB_TLDS.includes(tld);
+};
+
+export const isGithubDotDevTLD = (urlString: string): boolean => {
+    return GITHUB_DOT_DEV_TLD === getParentDomain(urlString);
+};
+
+export const isGithubLocalTLD = (urlString: string): boolean => {
+    return GITHUB_LOCAL_TLD === getParentDomain(urlString);
 };

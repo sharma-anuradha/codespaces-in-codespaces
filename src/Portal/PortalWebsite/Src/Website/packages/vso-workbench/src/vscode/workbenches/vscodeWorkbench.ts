@@ -2,6 +2,8 @@ import * as debug from 'debug';
 
 import { IVSCodeConfig, IEnvironment, randomString, vsls, VSCS_FEATURESET_LOCALSTORAGE_KEY} from 'vso-client-core';
 import { IWebSocketFactory, IWorkbenchConstructionOptions, IProductQualityChangeHandler } from 'vscode-web';
+import { BrowserConnectorMessages } from 'vso-ts-agent';
+
 import { postServiceWorkerMessage, disconnectCloudEnv } from 'vso-service-worker-client';
 
 import { EnvConnector } from '../../clients/envConnector';
@@ -16,7 +18,7 @@ import { config } from '../../config/config';
 import { getUriAuthority } from '../../utils/getUriAuthority';
 import { GitCredentialService } from '../../rpcServices/GitCredentialService';
 import { BrowserSyncService } from '../../rpcServices/BrowserSyncService';
-import { BrowserConnectorMessages } from 'vso-ts-agent';
+import { assertValidSubdomain } from '../../utils/assertValidSubdomain';
 
 interface IWorkbenchOptions {
     domElementId: string;
@@ -145,6 +147,8 @@ export class VSCodeWorkbench {
 
         const VSLSWebSocketFactory: IWebSocketFactory = {
             create(url: string) {
+                assertValidSubdomain(environmentInfo);
+
                 return new VSLSWebSocket(
                     url,
                     token,

@@ -1,9 +1,7 @@
-import { isSalesForceTLD } from './isSalesForceTLD';
 import { isGithubTLD } from './isGithubTLD';
-import { isLocalhostTLD } from './isLocalhostTLD';
+import { isSalesforceTLD } from './isSalesforceTLD';
 
 export const isKnownPartnerTLD = (urlString: string): boolean => {
     return isGithubTLD(urlString)
-        || isSalesForceTLD(urlString)
-        || isLocalhostTLD(urlString);
+        || isSalesforceTLD(urlString)
 };

@@ -13,3 +13,8 @@ export const VSCS_FEATURESET_LOCALSTORAGE_KEY = 'vso-featureset';
 
 export const VSCS_LOADING_SCREEN_THEME_COLOR_LS_KEY = 'vscs-loading-screen-theme-color';
 export const VSCS_LOADING_SCREEN_FAVICON_LS_KEY = 'vscs-loading-screen-favicon';
+
+export const GITHUB_DOT_DEV_TLD = 'github.dev';
+export const GITHUB_LOCAL_TLD = 'github.localhost';
+
+export const SALESFORCE_TLD = 'builder.code.com';

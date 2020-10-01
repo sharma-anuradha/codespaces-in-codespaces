@@ -6,7 +6,6 @@ module.exports = {
     ...tsjPreset,
     transform: {
         ...tsjPreset.transform,
-        '^.+\\.css$': '<rootDir>/jest/cssTransform.js',
     },
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
     globals: {
@@ -17,6 +16,4 @@ module.exports = {
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
     modulePathIgnorePatterns: ['<rootDir>/commonjs/', '<rootDir>/lib/'],
-    setupFilesAfterEnv: ['./jest/jest.setup.js'],
-    testPathIgnorePatterns: ['test-helpers/*']
 };

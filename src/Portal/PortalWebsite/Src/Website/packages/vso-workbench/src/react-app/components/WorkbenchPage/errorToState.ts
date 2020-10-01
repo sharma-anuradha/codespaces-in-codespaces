@@ -4,8 +4,16 @@ import { HttpError } from '../../../errors/HttpError';
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
 import { IWorkbenchStateObject } from './IWorkbenchStateObject';
 import { ConfigurationError } from '../../../errors/ConfigurationError';
+import { SubdomainMismatchError } from '../../../errors/SubdomainMismatchError';
 
 export const errorToState = (e: Error): IWorkbenchStateObject => {
+    if (e instanceof SubdomainMismatchError) {
+        return {
+            value: EnvironmentWorkspaceState.Error,
+            message: 'The Codespace does not belong here.',
+        };
+    }
+
     if (e instanceof RateLimitingError) {
         return {
             value: EnvironmentWorkspaceState.Error,

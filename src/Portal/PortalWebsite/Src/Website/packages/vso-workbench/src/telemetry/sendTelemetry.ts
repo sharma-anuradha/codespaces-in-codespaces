@@ -1,4 +1,4 @@
-import { ITelemetryEvent, cleanupPIIForExternal, TelemetryPropertyValue, EnvironmentType } from 'vso-client-core';
+import { ITelemetryEvent, cleanupPIIForExternal, TelemetryPropertyValue, EnvironmentType, TCodespaceEnvironment } from 'vso-client-core';
 
 import { telemetry } from './telemetry';
 import { authService } from '../auth/authService';
@@ -60,9 +60,15 @@ interface IVSCodeConnectPageReloadProperties extends IVSCodeConnectProperties {
     retry: number;
 }
 
+interface ISubdomainMismatchProperties {
+    topLevelDomain: string;
+    environment: TCodespaceEnvironment;
+}
+
 type SendTelemetryProps =
     | ['vsonline/workbench/resolve-external-uri', { port: number }]
     | ['vsonline/workbench/error', IVSOWorkbenchError]
+    | ['vsonline/workbench/bydesign-error/subdomain-mismatch', ISubdomainMismatchProperties]
     | ['vsonline/portal/ls-connection-page-reload', IVSCodeConnectPageReloadProperties]
     | ['vsonline/portal/ls-connection-failed', IVSCodeConnectionFailedProperties]
     | ['vsonline/portal/ls-connection-opened', IVSCodeConnectWithDurationProperties]

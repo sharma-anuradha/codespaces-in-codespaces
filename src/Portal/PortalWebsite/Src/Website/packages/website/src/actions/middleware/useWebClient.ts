@@ -3,7 +3,7 @@ import { isDefined } from 'vso-client-core';
 import { useActionContext } from './useActionContext';
 
 import { trace as baseTrace } from '../../utils/trace';
-import { getTopLevelDomain } from 'vso-client-core';
+import { getParentDomain } from 'vso-client-core';
 import { wait } from '../../dependencies';
 import { sendTelemetry } from '../../utils/telemetry';
 
@@ -144,7 +144,7 @@ async function request<TResult>(
             const redirectUrl = response.headers.get('location');
             if (redirectUrl) {
                 // allow only vs domain redirects
-                if (getTopLevelDomain(redirectUrl) === 'visualstudio.com') {
+                if (getParentDomain(redirectUrl) === 'visualstudio.com') {
                     const opts: RequestInit = {
                         ...options,
                     };

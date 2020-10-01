@@ -8,9 +8,9 @@ import { telemetry } from './telemetry/telemetry';
 import { initAMDConfig } from './amdconfig';
 import { WorkbenchPage } from './react-app/components/WorkbenchPage/WorkbenchPage';
 import { authService } from './auth/authService';
+import { getFaviconPath } from './utils/getFaviconPath';
 
 import './react-app/style/index.css';
-import { getFaviconPath } from './utils/getFaviconPath';
 
 initAMDConfig();
 

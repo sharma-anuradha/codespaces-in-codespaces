@@ -17,7 +17,9 @@ export { Signal, CancellationError } from './utils/Signal';
 export { randomString } from './utils/randomString';
 export { randomBytes } from './utils/randomBytes';
 export { isThenable } from './utils/isThenable';
-export { isGithubTLD } from './utils/isGithubTLD';
+export { isGithubTLD, isGithubDotDevTLD, isGithubLocalTLD } from './utils/isGithubTLD';
+export { isSalesforceTLD } from './utils/isSalesforceTLD';
+export { isKnownPartnerTLD } from './utils/isKnownPartnerTLD';
 export { isHostedOnGithub } from './utils/isHostedOnGithub';
 export { getFeatureSet, setFeatureSet } from './utils/getFeatureSet';
 export { getVSCodeScheme } from './utils/getVSCodeScheme';
@@ -35,7 +37,7 @@ export { debounceInterval } from './utils/debounceInterval';
 export { RequestStore } from './utils/RequestStore';
 export { arrayUnique } from './utils/arrayUnique';
 export { updateFavicon } from './utils/updateFavicon';
-export { getTopLevelDomain } from './utils/getTopLevelDomain';
+export { getParentDomain } from './utils/getParentDomain';
 export { cookies } from './utils/cookies';
 
 // interfaces
@@ -58,6 +60,7 @@ export {
     SecretAction,
     SecretErrorCodes,
 } from './interfaces/ISecret';
+export { TCodespaceEnvironment } from './interfaces/TCodespaceEnvironment';
 
 import * as vsls from './interfaces/vsls';
 export { vsls };

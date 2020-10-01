@@ -1,6 +1,6 @@
 import { telemetryMarks } from '../../telemetry/telemetryMarks';
 import { sendTelemetry } from '../../telemetry/telemetry';
-import { getTopLevelDomain, IPartnerInfo } from 'vso-client-core';
+import { getParentDomain, IPartnerInfo } from 'vso-client-core';
 import { authService } from '../../auth/authService';
 import { VSCodespacesPlatformInfoGeneral } from 'vs-codespaces-authorization';
 
@@ -63,7 +63,7 @@ export const commands = [
             const [measure] = window.performance.getEntriesByName(telemetryMarks.timeToInteractive);
             sendTelemetry(`vsonline/portal/vscode-time-to-interactive`, {
                 duration: measure.duration,
-                hostedOn: getTopLevelDomain(location.href),
+                hostedOn: getParentDomain(location.href),
             });
         },
     },

@@ -25,12 +25,14 @@ import { PlatformQueryParams, CONNECT_ATTEMPT_COUNT_LS_KEY } from '../../../cons
 import { getPlatformQueryParam } from '../../../utils/getPlatformQueryParam';
 import { MaybeDevPanel } from './DevPanel';
 
-import './WorkbenchPage.css';
 import { LOADING_ENVIRONMENT_STAGE } from './DevPanelHeader';
+import { assertValidSubdomain } from '../../../utils/assertValidSubdomain';
 
-const { SECOND_MS } = timeConstants;
+import './WorkbenchPage.css';
 
 const trace = createTrace('workbench');
+
+const { SECOND_MS } = timeConstants;
 
 interface IWorkbenchPageProps {
     platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null;
@@ -117,6 +119,8 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
             }
 
             trace.info(`[polling]: environment state -> ${this.environmentInfo.state}`);
+
+            assertValidSubdomain(this.environmentInfo);
 
             this.setState({
                 environmentInfo: this.environmentInfo,
@@ -208,6 +212,8 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
                  */
                 return;
             }
+
+            assertValidSubdomain(this.environmentInfo);
 
             /**
              * Check if we need to auto start the environment.

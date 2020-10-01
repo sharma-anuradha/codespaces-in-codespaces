@@ -69,6 +69,10 @@ export class TelemetryService {
         };
     }
 
+    public addContextProperty = (propertyName: string, value: TelemetryPropertyValue) => {
+        this.context[propertyName] = value;
+    }
+
     setCurrentEnvironmentId(id: string | undefined) {
         this.context.environmentId = id;
     }

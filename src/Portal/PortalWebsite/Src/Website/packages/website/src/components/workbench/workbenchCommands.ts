@@ -1,7 +1,7 @@
 import { PostMessageRepoInfoRetriever } from '../../split/github/postMessageRepoInfoRetriever';
 import { sendTelemetry } from 'vso-workbench/src/telemetry/telemetry';
 import { telemetryMarks } from 'vso-workbench/src/telemetry/telemetryMarks'
-import { getTopLevelDomain } from 'vso-client-core';
+import { getParentDomain } from 'vso-client-core';
 
 export enum commandIds {
     githubGoHome = '_github.gohome',
@@ -22,7 +22,7 @@ export const commands = [
             const [measure] = window.performance.getEntriesByName(telemetryMarks.timeToInteractive);
             sendTelemetry(`vsonline/portal/vscode-time-to-interactive`, {
                 duration: measure.duration,
-                hostedOn: getTopLevelDomain(location.href),
+                hostedOn: getParentDomain(location.href),
             });
         },
     },

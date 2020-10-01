@@ -4,6 +4,7 @@ import { TKnownPartners } from '../interfaces/TKnownPartners';
 import { ConfigurationError } from '../errors/ConfigurationError';
 
 import { getGitHubApiEndpoint } from '../utils/getGithubApiEndpoint';
+import { telemetry } from '../telemetry/telemetry';
 
 interface IPartnerConfig {
     loginRedirectUrl: string;
@@ -128,6 +129,7 @@ export class Config {
             ...locations,
         };
 
+        telemetry.addContextProperty('isConfigFetched', true);
         this[IS_FETCHED_SYMBOL] = true;
     };
 

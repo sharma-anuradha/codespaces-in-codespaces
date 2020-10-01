@@ -45,7 +45,7 @@ export const MaybeDevPanel: React.FunctionComponent<IMaybeDevPanelProps> = (
     return <DevPanel {...props} id={id} />;
 };
 
-export class DevPanel extends DevPanelToggleComponent<IDevPanelProps, IDevPanelState> {
+class DevPanel extends DevPanelToggleComponent<IDevPanelProps, IDevPanelState> {
     public render() {
         const { environment, codespaceInfo, className } = this.props;
         const { isOn } = this.state;
