@@ -82,6 +82,19 @@ if ($invalidSubscriptions) {
     Write-Host
 }
 
+Write-Host
+$FinalReport = @{
+    "Total Subscription Count"=($subscriptions ? $subscriptions.Count : 0)
+    "Inaccessible Subscription Count"=($inaccessibleSubs ? $inaccessibleSubs.Count : 0)
+    "Tested Subscription Count"=($testedSubscriptions ? $testedSubscriptions.Count : 0)
+    "Valid Subscription Count"=($validSubscriptions ? $validSubscriptions.Count : 0)
+    "Invalid Subscription Count"=($invalidSubscriptions ? $invalidSubscriptions.Count : 0)
+}
+$FinalReport | Format-Table
+
+Write-Host
+Write-Host "See log for details (warnings, etc)"
+
 if ($reportError) {
-    Write-Error "Validation failed. See log for details."
+    Write-Error "Validation failed."
 }
