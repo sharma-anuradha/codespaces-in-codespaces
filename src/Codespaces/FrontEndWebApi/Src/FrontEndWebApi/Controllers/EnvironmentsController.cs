@@ -497,14 +497,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 CloudEnvironmentResult codespace = null;
                 await Retry.DoWithCountWithDelayIntervalAsync(
-                    5,
-                    TimeSpan.FromSeconds(2),
+                    20,
+                    TimeSpan.FromSeconds(1),
                     async (retryCount) =>
                     {
                         try
                         {
                             logger.LogInfo($"Attempting to get codespace from GitHub, attempt {retryCount}.");
                             codespace = await client.GetCodespaceAsync(username, result.FriendlyName, logger.NewChildLogger());
+
+                            // this can happen, if the codespace is still being provisioned on our side,
+                            // and GitHub will have it marked as provisioning...
                             if (codespace == null)
                             {
                                 return (false, null);
@@ -514,6 +517,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         }
                         catch (Exception e)
                         {
+                            logger.LogWarning("github_get_codespace_attempt_failed", e);
                             return (false, e);
                         }
                     });

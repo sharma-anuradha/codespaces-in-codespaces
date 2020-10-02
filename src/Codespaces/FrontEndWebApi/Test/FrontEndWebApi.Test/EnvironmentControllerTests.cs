@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -860,6 +861,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             accessTokenReader ??= new Mock<ICascadeTokenReader>().Object;
             var gitHubFixedPlansMapper = new GitHubFixedPlansMapper(currentLocationProvider, settings);
             var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+            var hostEnvironment = new Mock<IHostEnvironment>();
 
             var environmentController = new EnvironmentsController(
                 environmentManager,
@@ -879,7 +881,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 environmentAccessManager,
                 environmentStateManager,
                 gitHubFixedPlansMapper,
-                new Providers.GitHubApiGatewayProvider(httpContextAccessorMock.Object, currentLocationProvider));
+                new Providers.GitHubApiGatewayProvider(httpContextAccessorMock.Object, currentLocationProvider, hostEnvironment.Object));
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();
@@ -888,6 +890,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             {
                 HttpContext = httpContext,
             };
+
+            hostEnvironment.Setup(x => x.EnvironmentName)
+                .Returns(Microsoft.Extensions.Hosting.Environments.Development);
 
             httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
 

@@ -3,6 +3,7 @@
 // </copyright>
 using System.Security.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
@@ -17,13 +18,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers
     {
         private readonly ICurrentLocationProvider currentLocationProvider;
         private readonly IHttpContextAccessor contextAccessor;
+        private readonly IHostEnvironment hostEnvironment;
 
         public GitHubApiGatewayProvider(
             IHttpContextAccessor contextAccessor,
-            ICurrentLocationProvider currentLocationProvider)
+            ICurrentLocationProvider currentLocationProvider,
+            IHostEnvironment hostEnvironment)
         {
             this.currentLocationProvider = Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
             this.contextAccessor = Requires.NotNull(contextAccessor, nameof(contextAccessor));
+            this.hostEnvironment = Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
         }
 
         public GitHubApiGateway New()
@@ -35,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers
                 throw new InvalidCredentialException("Missing or invalid GitHub Token.");
             }
 
-            return new GitHubApiGateway(currentLocationProvider, token);
+            return new GitHubApiGateway(currentLocationProvider, hostEnvironment, token);
         }
     }
 }

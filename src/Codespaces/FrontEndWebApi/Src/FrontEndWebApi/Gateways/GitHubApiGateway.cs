@@ -14,6 +14,8 @@ using System.Threading.Tasks;
 using Kusto.Cloud.Platform.Text;
 using Kusto.Cloud.Platform.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.ContainerRegistry.Fluent;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -35,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
         private readonly string token;
         private readonly JsonSerializer jsonSerializer;
         private readonly ICurrentLocationProvider currentLocationProvider;
+        private readonly IHostEnvironment hostEnvironment;
         private readonly HttpClient httpClient;
 
         /// <summary>
@@ -42,9 +45,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
         /// </summary>
         public GitHubApiGateway(
             ICurrentLocationProvider currentLocationProvider,
+            IHostEnvironment hostEnvironment,
             string token)
         {
             this.currentLocationProvider = Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
+            this.hostEnvironment = Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
+
             httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.UserAgent.Add(
                 new ProductInfoHeaderValue(
@@ -136,6 +142,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
                         Sku = sku,
                         Reference = reference ?? defaultBranch,
                     };
+
+                    // we can let GitHub know we're running in our "special" environments
+                    if (hostEnvironment.IsDevelopment())
+                    {
+                        requestBody.Target = GitHubCodespaceCreateRequest.Targets.Development;
+                    }
+                    else if (hostEnvironment.IsStaging())
+                    {
+                        requestBody.Target = GitHubCodespaceCreateRequest.Targets.Staging;
+                    }
 
                     request.Content = new StringContent(
                       JsonConvert.SerializeObject(requestBody),
@@ -291,8 +307,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
                     var repo = this.jsonSerializer.Deserialize<JObject>(
                         new JsonTextReader(new StreamReader(responseStream)));
 
-                    var environment = repo.Value<JObject>("environment");
-                    return environment.ToObject<CloudEnvironmentResult>();
+                    // try reading the GitHub state, and see if it's provisioned
+                    if (string.Equals(ReadValue<string>(repo, "state"), "provisioned", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var environment = repo.Value<JObject>("environment");
+                        return environment.ToObject<CloudEnvironmentResult>();
+                    }
+
+                    return null;
                 },
                 null,
                 swallowException: true);

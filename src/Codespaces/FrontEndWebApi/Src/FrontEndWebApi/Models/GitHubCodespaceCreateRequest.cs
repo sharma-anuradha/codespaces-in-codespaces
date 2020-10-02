@@ -2,11 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
@@ -26,5 +24,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 
         [JsonProperty(Required = Required.AllowNull, PropertyName = "sku", NullValueHandling = NullValueHandling.Ignore)]
         public string Sku { get; set; }
+
+        [JsonProperty(Required = Required.AllowNull, PropertyName = "vscs_target", NullValueHandling = NullValueHandling.Ignore)]
+        public Targets? Target { get; set; } = null;
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public enum Targets
+        {
+            [EnumMember(Value = "development")]
+            Development,
+            [EnumMember(Value = "ppe")]
+            Staging,
+            [EnumMember(Value = "production")]
+            Production,
+        }
     }
 }

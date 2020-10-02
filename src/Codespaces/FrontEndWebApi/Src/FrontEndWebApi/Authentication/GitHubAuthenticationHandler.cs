@@ -16,6 +16,7 @@ using Kusto.Cloud.Platform.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -74,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             ITokenProvider tokenProvider,
             IAuthenticationSchemeProvider authSchemeProvider,
             IPlanManager planManager,
+            IHostEnvironment hostEnvironment,
             GitHubFixedPlansMapper gitHubFixedPlansMapper,
             ICurrentUserProvider currentUserProvider,
             ICurrentLocationProvider currentLocationProvider)
@@ -91,6 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             GitHubFixedPlansMapper = Requires.NotNull(gitHubFixedPlansMapper, nameof(gitHubFixedPlansMapper));
             CurrentUserProvider = Requires.NotNull(currentUserProvider, nameof(currentUserProvider));
             CurrentLocationProvider = Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
+            HostEnvironment = Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
         }
 
         private IAuthenticationSchemeProvider AuthenticationSchemeProvider { get; }
@@ -104,6 +107,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         private ICurrentUserProvider CurrentUserProvider { get; }
 
         private ICurrentLocationProvider CurrentLocationProvider { get; }
+
+        private IHostEnvironment HostEnvironment { get; }
 
         /// <inheritdoc/>
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -129,7 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             var token = authHeaderValue.Parameter;
 
             // we do this, because we provide the token in a different way
-            var gateway = new GitHubApiGateway(CurrentLocationProvider, token);
+            var gateway = new GitHubApiGateway(CurrentLocationProvider, HostEnvironment, token);
 
             JObject user;
             try
