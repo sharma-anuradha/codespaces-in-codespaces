@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    ValidateCloudEnvironment(environmentTransition.Value, clientVersionData.EnvironmentId);
 
                    if (environmentTransition.Value.SystemStatusInfo?.UpdateState != clientVersionData.UpdateState ||
-                       environmentTransition.Value.SystemStatusInfo?.VsVersion != clientVersionData.Version)
+                       environmentTransition.Value.SystemStatusInfo?.VsVersion != clientVersionData.VsVersion)
                    {
                        environmentTransition.PushTransition(
                            (env) =>
@@ -83,13 +83,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                                    env.SystemStatusInfo = new SystemStatusInfo
                                    {
                                        UpdateState = clientVersionData.UpdateState,
-                                       VsVersion = clientVersionData.Version,
+                                       VsVersion = clientVersionData.VsVersion,
                                    };
                                }
                                else
                                {
                                    env.SystemStatusInfo.UpdateState = clientVersionData.UpdateState;
-                                   env.SystemStatusInfo.VsVersion = clientVersionData.Version;
+                                   env.SystemStatusInfo.VsVersion = clientVersionData.VsVersion;
                                }
                            });
                    }

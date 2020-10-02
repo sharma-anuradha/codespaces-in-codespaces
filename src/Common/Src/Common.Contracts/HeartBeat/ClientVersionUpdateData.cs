@@ -26,6 +26,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets or sets the Visual Studio version number.
         /// </summary>
         [DataMember]
-        public Version Version { get; set; }
+        public Version VsVersion { get; set; }
     }
 }
