@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
     /// Continuation job handler that manages delete of a resource
     /// </summary>
     public class DeleteResourceContinuationJobHandler
-        : ResourceContinuationJobHandlerBase<DeleteResourceContinuationJobHandler.Payload, EmptyContinuationState, EntityContinuationResult>
+        : ResourceContinuationJobHandlerBase<DeleteResourceContinuationJobHandler.Payload, EmptyContinuationState, DeleteResourceContinuationJobHandler.DeleteResourceContinuationResult>
     {
         /// <summary>
         /// Gets default target name for item on queue.
@@ -50,7 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="keyVaultProvider">KeyVault provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="diskProvider">Disk provider.</param>
-        /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         /// <param name="jobQueueProducerFactory">A job queue producer factory.</param>
         public DeleteResourceContinuationJobHandler(
@@ -60,10 +59,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IDiskProvider diskProvider,
             IKeyVaultProvider keyVaultProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider,
             IResourceStateManager resourceStateManager,
             IJobQueueProducerFactory jobQueueProducerFactory)
-            : base(serviceProvider, resourceRepository, resourceStateManager, jobQueueProducerFactory)
+            : base(resourceRepository, resourceStateManager, jobQueueProducerFactory)
         {
             RequestQueueProvider = requestQueueProvider;
             ComputeProvider = computeProvider;
@@ -92,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IKeyVaultProvider KeyVaultProvider { get; }
 
         /// <inheritdoc/>
-        protected override Task<ContinuationJobResult<EmptyContinuationState, EntityContinuationResult>> InitializePayload(Payload payload, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger)
+        protected override Task<ContinuationJobResult<EmptyContinuationState, DeleteResourceContinuationResult>> InitializePayload(Payload payload, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger)
         {
             // Increment the delete count
             record.Value.DeleteAttemptCount++;
@@ -101,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationJobResult<EmptyContinuationState, EntityContinuationResult>> ContinueAsync(Payload payload, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        protected override async Task<ContinuationJobResult<EmptyContinuationState, DeleteResourceContinuationResult>> ContinueAsync(Payload payload, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             var result = (ContinuationResult)null;
             logger.FluentAddValue("HandlerResourceHasAzureResourceInfo", record.Value.AzureResourceInfo != null);
@@ -230,19 +228,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 payload.DeleteInput = result.NextInput;
             }
 
-            if (result.Status == OperationState.Succeeded)
+            return ToContinuationInfo(result, payload);
+        }
+
+        /// <inheritdoc/>
+        protected override async Task<ContinuationJobResult<EmptyContinuationState, DeleteResourceContinuationResult>> ContinueAsync(IJob<Payload> job, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        {
+            var result = await base.ContinueAsync(job, record, logger, cancellationToken);
+            if (result.ResultState == ContinuationJobPayloadResultState.Succeeded)
             {
                 var deleted = await logger.RetryOperationScopeAsync(
                     $"{LogBaseName}_delete_record",
-                    (childLogger) => DeleteResourceAsync(payload.EntityId.ToString(), childLogger));
+                    (childLogger) => DeleteResourceAsync(job.Payload.EntityId.ToString(), childLogger));
 
                 if (!deleted)
                 {
-                    result = await FailOperationAsync(payload, record, "HandlerResourceRepositoryDeleteFailed", logger);
+                    return ToContinuationInfo(await FailOperationAsync(job.Payload, record, "HandlerResourceRepositoryDeleteFailed", logger), job.Payload);
                 }
             }
 
-            return ToContinuationInfo(result, payload);
+            return result;
         }
 
         private async Task<bool> DeleteResourceAsync(string id, IDiagnosticsLogger logger)
@@ -267,7 +272,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <summary>
-        /// Json converter for CloudEnvironmentParameters type
+        /// Json converter for DeleteInput type
         /// </summary>
         public class DeleteInputConverter : JsonTypeConverter
         {
@@ -285,6 +290,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             protected override Type BaseType => typeof(ContinuationInput);
 
             protected override IDictionary<string, Type> SupportedTypes => MapTypes;
+        }
+
+        public class DeleteResourceContinuationResult : EntityContinuationResult
+        {
         }
     }
 }

@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
     /// Continuation handler that manages starting of environment.
     /// </summary>
     public class ResumeEnvironmentContinuationJobHandler
-        : StartEnvironmentContinuationJobHandlerBase<ResumeEnvironmentContinuationJobHandler.Payload>
+        : StartEnvironmentContinuationJobHandlerBase<ResumeEnvironmentContinuationJobHandler.Payload, ResumeEnvironmentContinuationJobHandler.ResumeEnvironmentContinuationResult>
     {
         /// <summary>
         /// Gets default target name for item on queue.
@@ -36,7 +36,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="storageFileShareProviderHelper">Storage File Share Provider Helper.</param>
         /// <param name="queueProvider">Queue provider.</param>
         /// <param name="resourceStateManager">Resource state manager.</param>
@@ -45,12 +44,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider,
             IStorageFileShareProviderHelper storageFileShareProviderHelper,
             IQueueProvider queueProvider,
             IResourceStateManager resourceStateManager,
             IJobQueueProducerFactory jobQueueProducerFactory)
-            : base(computeProvider, storageProvider, resourceRepository, serviceProvider, storageFileShareProviderHelper, queueProvider, resourceStateManager, jobQueueProducerFactory)
+            : base(computeProvider, storageProvider, resourceRepository, storageFileShareProviderHelper, queueProvider, resourceStateManager, jobQueueProducerFactory)
         {
         }
 
@@ -88,6 +86,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             /// Gets or sets the devcontainer JSON.
             /// </summary>
             public string DevContainer { get; set; }
+        }
+
+        public class ResumeEnvironmentContinuationResult : EntityContinuationResult
+        {
         }
     }
 #pragma warning restore CA1501

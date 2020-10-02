@@ -33,28 +33,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceContinuationJobHandlerBase{T, TState, TResult}"/> class.
         /// </summary>
-        /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         /// <param name="jobQueueProducerFactory">A job queue producer factory.</param>
         /// <param name="dataflowBlockOptions">Dataflow execution options.</param>
         protected ResourceContinuationJobHandlerBase(
-            IServiceProvider serviceProvider,
             IResourceRepository resourceRepository,
             IResourceStateManager resourceStateManager,
             IJobQueueProducerFactory jobQueueProducerFactory,
             ExecutionDataflowBlockOptions dataflowBlockOptions = null)
             : base(jobQueueProducerFactory, dataflowBlockOptions)
         {
-            ServiceProvider = serviceProvider;
             ResourceRepository = resourceRepository;
             ResourceStateManager = resourceStateManager;
         }
-
-        /// <summary>
-        /// Gets the Service Provider.
-        /// </summary>
-        protected IServiceProvider ServiceProvider { get; }
 
         /// <summary>
         /// Gets the Resource Repository.

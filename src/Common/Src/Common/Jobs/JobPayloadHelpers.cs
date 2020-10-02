@@ -75,10 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             return CachedTypes.GetOrAdd(type, (t) =>
             {
                 var typeTag = GetTypeTagInternal(t);
-                if (!NameTypes.TryAdd(typeTag, type))
-                {
-                    throw new Exception($"type tag:'{typeTag}' already exists");
-                }
+                NameTypes.TryAdd(typeTag, type);
 
                 return typeTag;
             });
@@ -90,6 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             if (fieldInfo == null)
             {
                 var typeName = GetTypeName(type)
+                    .Replace(',', '_')
                     .Replace('<', '_')
                     .Replace('>', '_')
                     .Replace('.', '_')

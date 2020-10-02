@@ -28,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
     /// Continuation handler that manages exporting of environment.
     /// </summary>
     public class ExportEnvironmentContinuationJobHandler
-        : StartEnvironmentContinuationJobHandlerBase<ExportEnvironmentContinuationJobHandler.Payload>
+        : StartEnvironmentContinuationJobHandlerBase<ExportEnvironmentContinuationJobHandler.Payload, ExportEnvironmentContinuationJobHandler.ExportEnvironmentContinuationResult>
     {
         /// <summary>
         /// Gets default target name for item on queue.
@@ -41,7 +41,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="storageFileShareProviderHelper">Storage File Share Provider Helper.</param>
         /// <param name="queueProvider">Queue provider.</param>
         /// <param name="resourceStateManager">Resource state manager.</param>
@@ -51,13 +50,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider,
             IStorageFileShareProviderHelper storageFileShareProviderHelper,
             IQueueProvider queueProvider,
             IExportStorageProvider exportStorageProvider,
             IResourceStateManager resourceStateManager,
             IJobQueueProducerFactory jobQueueProducerFactory)
-            : base(computeProvider, storageProvider, resourceRepository, serviceProvider, storageFileShareProviderHelper, queueProvider, resourceStateManager, jobQueueProducerFactory)
+            : base(computeProvider, storageProvider, resourceRepository, storageFileShareProviderHelper, queueProvider, resourceStateManager, jobQueueProducerFactory)
         {
             ExportStorageProvider = exportStorageProvider;
         }
@@ -133,6 +131,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         [JobPayload(JobPayloadNameOption.Name)]
         public class Payload : StartEnvironmentContinuationPayloadBase
+        {
+        }
+
+        public class ExportEnvironmentContinuationResult : EntityContinuationResult
         {
         }
     }

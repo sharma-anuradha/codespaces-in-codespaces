@@ -89,18 +89,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 };
             }
 
-            var input = new CreateResourceContinuationInput()
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                Type = type,
-                ResourcePoolDetails = details,
-                ResourceId = resourceId,
-                Reason = reason,
-                IsAssigned = false,
-                Options = options,
-            };
-            var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
+                await JobQueueProducerFactory.GetOrCreate(CreateResourceContinuationJobHandlerV2.DefaultQueueId).AddJobAsync(
+                    new CreateResourceContinuationJobHandlerV2.Payload()
+                    {
+                        Type = type,
+                        ResourcePoolDetails = details,
+                        EntityId = resourceId,
+                        Reason = reason,
+                        IsAssigned = false,
+                        Options = options,
+                        LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
+                    }.WithCorrelationId(),
+                    null,
+                    logger,
+                    CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var input = new CreateResourceContinuationInput()
+                {
+                    Type = type,
+                    ResourcePoolDetails = details,
+                    ResourceId = resourceId,
+                    Reason = reason,
+                    IsAssigned = false,
+                    Options = options,
+                };
+                var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+                return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            }
         }
 
         /// <inheritdoc/>
@@ -127,20 +148,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 };
             }
 
-            var input = new CreateResourceContinuationInput()
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                Type = type,
-                ResourcePoolDetails = details,
-                ResourceId = resourceId,
-                Reason = reason,
-                Options = options,
-                IsAssigned = true,
-            };
-            var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
+                await JobQueueProducerFactory.GetOrCreate(CreateResourceContinuationJobHandlerV2.DefaultQueueId).AddJobAsync(
+                    new CreateResourceContinuationJobHandlerV2.Payload()
+                    {
+                        Type = type,
+                        ResourcePoolDetails = details,
+                        EntityId = resourceId,
+                        Reason = reason,
+                        Options = options,
+                        IsAssigned = true,
+                        LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
+                    }.WithCorrelationId(),
+                    null,
+                    logger,
+                    CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var input = new CreateResourceContinuationInput()
+                {
+                    Type = type,
+                    ResourcePoolDetails = details,
+                    ResourceId = resourceId,
+                    Reason = reason,
+                    Options = options,
+                    IsAssigned = true,
+                };
+                var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
 
-            await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+                await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            }
+
             var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
-
             return resource;
         }
 
@@ -179,7 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         DevContainer = devcontainerJson,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    },
+                    }.WithCorrelationId(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -238,7 +280,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         UserSecrets = userSecrets,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    },
+                    }.WithCorrelationId(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -307,7 +349,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         EntityId = resourceId,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    },
+                    }.WithCorrelationId(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -346,7 +388,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         EntityId = resourceId,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    },
+                    }.WithCorrelationId(),
                     null,
                     logger,
                     CancellationToken.None);

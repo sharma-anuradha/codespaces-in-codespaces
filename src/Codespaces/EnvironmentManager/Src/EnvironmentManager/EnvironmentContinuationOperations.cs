@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         LastStateUpdated = lastStateUpdated,
                         Reason = reason,
                         LoggerProperties = loggingProperties.CreateLoggerProperties(),
-                    },
+                    }.WithCorrelationId(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -124,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         Reason = reason,
                         Force = forceSuspend,
                         LoggerProperties = loggingProperties.CreateLoggerProperties(),
-                    },
+                    }.WithCorrelationId(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -179,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         Reason = reason,
                         LoggerProperties = loggingProperties.CreateLoggerProperties(),
                         CurrentState = StartEnvironmentContinuationInputState.StartQueuedStateMonitor,
-                    },
+                    }.WithCorrelationId(),
                     null,
                     logger,
                     CancellationToken.None);

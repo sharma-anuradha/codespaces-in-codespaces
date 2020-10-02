@@ -50,8 +50,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// <summary>
     /// The continuation job payload.
     /// </summary>
+    public class ContinuationJobPayload : JobPayload
+    {
+        /// <summary>
+        /// Gets or sets a correlation id to track this payload.
+        /// </summary>
+        public Guid CorrelationId { get; set; }
+    }
+
+    /// <summary>
+    /// The continuation job payload with current state.
+    /// </summary>
     /// <typeparam name="TState">Type of the state enums.</typeparam>
-    public abstract class ContinuationJobPayload<TState> : JobPayload
+    public abstract class ContinuationJobPayload<TState> : ContinuationJobPayload
         where TState : System.Enum
     {
         /// <summary>
@@ -204,6 +215,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 
             int currentStateIndex = Array.IndexOf(ContinuationStates, job.Payload.CurrentState);
 
+            logger.AddBaseValue("CorrelationId", job.Payload.CorrelationId.ToString());
             var continueJobResult = await logger.OperationScopeAsync(
                 "job_continuation_handler_continue",
                 async (childLogger) =>
@@ -331,6 +343,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 CurrentState = continueJobResult.NextState.HasValue ? continueJobResult.NextState.Value : job.Payload.CurrentState,
                 CompletionState = continueJobResult.ResultState,
                 Result = continueJobResult.Result,
+                CorrelationId = job.Payload.CorrelationId,
             };
 
             var queueInfo = GetQueueInfo(job, continueJobResult);

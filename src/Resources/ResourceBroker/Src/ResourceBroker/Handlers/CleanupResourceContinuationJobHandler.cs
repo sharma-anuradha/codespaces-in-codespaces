@@ -30,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
     /// Continuation job handler that manages starting of environment.
     /// </summary>
     public class CleanupResourceContinuationJobHandler
-        : ResourceContinuationJobHandlerBase<CleanupResourceContinuationJobHandler.Payload, EmptyContinuationState, EntityContinuationResult>
+        : ResourceContinuationJobHandlerBase<CleanupResourceContinuationJobHandler.Payload, EmptyContinuationState, CleanupResourceContinuationJobHandler.CleanupResourceContinuationResult>
     {
         /// <summary>
         /// Gets default queue id for item on queue.
@@ -42,18 +42,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// </summary>
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="serviceProvider">Service provider.</param>
         /// <param name="queueProvider">Queue provider.</param>
         /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         /// <param name="jobQueueProducerFactory">Job queue producer factory</param>
         public CleanupResourceContinuationJobHandler(
             IComputeProvider computeProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider,
             IQueueProvider queueProvider,
             IResourceStateManager resourceStateManager,
             IJobQueueProducerFactory jobQueueProducerFactory)
-            : base(serviceProvider, resourceRepository, resourceStateManager, jobQueueProducerFactory)
+            : base(resourceRepository, resourceStateManager, jobQueueProducerFactory)
         {
             ComputeProvider = computeProvider;
             QueueProvider = queueProvider;
@@ -73,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IQueueProvider QueueProvider { get; set; }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationJobResult<EmptyContinuationState, EntityContinuationResult>> ContinueAsync(Payload payload, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        protected override async Task<ContinuationJobResult<EmptyContinuationState, CleanupResourceContinuationResult>> ContinueAsync(Payload payload, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             var result = (ContinuationResult)null;
 
@@ -149,6 +147,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             public Guid EnvironmentId { get; set; }
 
             public VirtualMachineProviderShutdownInput VirtualMachineShutdownInput { get; set; }
+        }
+
+        public class CleanupResourceContinuationResult : EntityContinuationResult
+        {
         }
     }
 }

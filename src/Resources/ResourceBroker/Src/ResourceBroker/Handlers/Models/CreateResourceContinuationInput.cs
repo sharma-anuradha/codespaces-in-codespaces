@@ -1,4 +1,4 @@
-﻿// <copyright file="CreateResourceContinuationInput.cs" company="Microsoft">
+// <copyright file="CreateResourceContinuationInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -17,6 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// <summary>
         /// Gets or sets the details of pool.
         /// </summary>
+        [JsonConverter(typeof(ResourcePoolResourceDetailsConverter))]
         public ResourcePoolResourceDetails ResourcePoolDetails { get; set; }
 
         /// <summary>

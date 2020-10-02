@@ -26,9 +26,10 @@ using QueueMessage = Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.C
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
-    public abstract class StartEnvironmentContinuationJobHandlerBase<TPayload>
-        : ResourceContinuationJobHandlerBase<TPayload, EmptyContinuationState, EntityContinuationResult>
+    public abstract class StartEnvironmentContinuationJobHandlerBase<TPayload, TResult>
+        : ResourceContinuationJobHandlerBase<TPayload, EmptyContinuationState, TResult>
         where TPayload : StartEnvironmentContinuationPayloadBase
+        where TResult : EntityContinuationResult, new()
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseStartEnvironmentContinuationHandler{TI}"/> class.
@@ -36,7 +37,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="storageFileShareProviderHelper">Storage File Share Provider Helper.</param>
         /// <param name="queueProvider">Queue provider.</param>
         /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
@@ -45,12 +45,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider,
             IStorageFileShareProviderHelper storageFileShareProviderHelper,
             IQueueProvider queueProvider,
             IResourceStateManager resourceStateManager,
             IJobQueueProducerFactory jobQueueProducerFactory)
-            : base(serviceProvider, resourceRepository, resourceStateManager, jobQueueProducerFactory)
+            : base(resourceRepository, resourceStateManager, jobQueueProducerFactory)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
@@ -82,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         protected IQueueProvider QueueProvider { get; }
 
         /// <inheritdoc/>
-        protected override async Task<ContinuationJobResult<EmptyContinuationState, EntityContinuationResult>> ContinueAsync(TPayload payload, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        protected override async Task<ContinuationJobResult<EmptyContinuationState, TResult>> ContinueAsync(TPayload payload, IEntityRecordRef<ResourceRecord> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             if (payload.ComputeInput == null)
             {

@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VsSaaS.Diagnostics;
@@ -74,6 +75,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 MergeLoggerProperties(jobPayload, logValues);
             }
 
+            return jobPayload;
+        }
+
+        /// <summary>
+        /// Define a correlation id on a continuation job payload.
+        /// </summary>
+        /// <typeparam name="T">Type of the payload.</typeparam>
+        /// <param name="jobPayload">The job payload instance.</param>
+        /// <returns>Reference to the job payload.</returns>
+        public static T WithCorrelationId<T>(this T jobPayload)
+            where T : ContinuationJobPayload
+        {
+            jobPayload.CorrelationId = Guid.NewGuid();
             return jobPayload;
         }
     }

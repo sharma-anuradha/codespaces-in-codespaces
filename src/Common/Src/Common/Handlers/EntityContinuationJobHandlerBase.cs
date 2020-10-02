@@ -131,6 +131,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
             var record = await logger.TrackDurationAsync(
                 "HandlerFetchReference", () => FetchReferenceAsync(payload, logger));
 
+            return await ContinueAsync(job, record, logger, cancellationToken);
+        }
+
+        protected virtual async Task<ContinuationJobResult<TState, TResult>> ContinueAsync(IJob<TPayload> job, IEntityRecordRef<TRecord> record, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        {
+            var payload = job.Payload;
             if (!payload.IsInitialized)
             {
                 return await InitializePayload(payload, record, logger);
@@ -207,12 +213,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
             if (continuationResult.RetryAfter != default)
             {
                 nextPayloadOptions = new JobPayloadOptions() { InitialVisibilityDelay = continuationResult.RetryAfter };
-                if (continuationResult.Status != OperationState.InProgress)
-                {
-                    return new ContinuationJobResult<TState, TResult>(
-                        ContinuationJobPayloadResultState.Retry,
-                        nextPayloadOptions: nextPayloadOptions);
-                }
             }
 
             ContinuationJobPayloadResultState continuationJobPayloadResultState;
