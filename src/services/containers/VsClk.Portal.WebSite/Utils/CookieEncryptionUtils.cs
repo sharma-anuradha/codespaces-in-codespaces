@@ -83,7 +83,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             return str;
         }
 
-
         private (string Token, string IV) ParseCascadeCookie(string encryptedCookie)
         {
             var split = encryptedCookie.Split(CookieIVSeparator);

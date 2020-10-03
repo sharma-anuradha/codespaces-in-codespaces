@@ -1,18 +1,21 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using System.Net.Http;
+using System.IO;
+using System.Collections.Generic;
+using System;
 using Newtonsoft.Json;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication;
+using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -153,12 +156,31 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [HttpPost("~/platform-authentication")]
         [Authorize(AuthenticationSchemes = AuthenticationServiceCollectionExtensions.VsoBodyAuthenticationScheme)]
         [Consumes("application/x-www-form-urlencoded")]
+        [HttpOperationalScope("workbench_auth")]
         public IActionResult PlatformAuthentication(
             [FromForm] string partnerInfo,
             [FromForm] string codespaceToken,
-            [FromForm] string cascadeToken
+            [FromForm] string cascadeToken,
+            [FromServices] IDiagnosticsLogger logger
         )
         {
+            logger?
+                .FluentAddValue("Status", "Partner authorization request start.")
+                .LogInfo("platform_authentication_partner_auth_request");
+
+            var isValidOrigin = Partners.IsValidAuthRequestOrigin(
+                HttpUtils.GetRequestOrigin(Request),
+                Request.Host.Host,
+                HostEnvironment.IsProduction(),
+                AppSettings.IsLocal,
+                logger
+            );
+
+            if (!isValidOrigin)
+            {
+                return BadRequest("Unknown origin.");
+            }
+
             if (string.IsNullOrWhiteSpace(partnerInfo))
             {
                 return BadRequest("No `partnerInfo` set in the body.");

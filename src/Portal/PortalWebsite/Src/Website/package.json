@@ -41,6 +41,7 @@
     "setup:update-github-secret": "node --unhandled-rejections=strict scripts/npm/update-github-secret.js",
     "test": "yarn workspaces run test",
     "test:ci": "yarn workspaces run test --ci --reporters=\"jest-junit\"",
+    "test:portal": "dotnet test ../../../../services/containers/VsClk.Portal.WebSite/Tests/VsClk.Portal.WebSite.Test.csproj",
     "start:dns": "run-script-os",
     "start:dns:win32": "powershell .\\scripts\\shell\\start-dns-server-win32.ps1",
     "start:dns:linux": "sh ./scripts/shell/start-dns-server-linux.sh",
