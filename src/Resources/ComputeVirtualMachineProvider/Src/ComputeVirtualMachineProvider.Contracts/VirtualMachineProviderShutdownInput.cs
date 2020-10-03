@@ -1,4 +1,4 @@
-﻿// <copyright file="VirtualMachineProviderShutdownInput.cs" company="Microsoft">
+// <copyright file="VirtualMachineProviderShutdownInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -37,5 +37,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets a value indicating whether to preserve the OS disk.
         /// </summary>
         public bool PreserveOSDisk { get; set; }
+
+        /// <summary>
+        /// Gets or sets the compute resource ID.
+        /// </summary>
+        public string ComputeResourceId { get; set; }
     }
 }

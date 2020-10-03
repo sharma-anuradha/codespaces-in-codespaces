@@ -147,6 +147,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             {
                 Command = ShutdownEnvironmentCommand,
                 Id = input.EnvironmentId.ToString(),
+                Parameters = new Dictionary<string, string>
+                {
+                    ["computeResourceId"] = input.ComputeResourceId,
+                },
             };
 
             return queueMessage;
@@ -155,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         /// Creates queue payload for system update.
         /// </summary>
-        /// <param name="input">Update Visual Studio input.</param>
+        /// <param name="environmentId">The Environment ID.</param>
         /// <returns>Queue payload.</returns>
         public static QueueMessage GenerateUpdateSystemPayload(this Guid environmentId)
         {

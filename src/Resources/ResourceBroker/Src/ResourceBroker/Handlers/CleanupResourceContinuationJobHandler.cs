@@ -97,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     ComputeOS = record.Value.PoolReference.GetComputeOS(),
                     EnvironmentId = payload.EnvironmentId.ToString(),
                     PreserveOSDisk = keepDisk,
+                    ComputeResourceId = record.Value.Id,                    
                 };           
             }
 
