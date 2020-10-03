@@ -31,6 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public const string FeatureFlagCustomContainers = "FF_CUSTOM_CONTAINERS";
         public const string FeatureFlagNewTerminal = "FF_NEW_TERMINAL";
         public const string FeatureFlagShallowClone = "FF_SHALLOW_CLONE";
+        public const string FeatureFlagLocalCredentialHelper = "FF_LOCAL_CREDENTIAL_HELPER";
 #pragma warning restore SA1600 // Elements should be documented
     }
 }

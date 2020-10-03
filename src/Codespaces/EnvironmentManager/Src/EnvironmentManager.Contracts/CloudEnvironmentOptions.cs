@@ -28,5 +28,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets a value indicating whether to shallow clone first, then fetch and build devcontainer concurrently.
         /// </summary>
         public bool ShallowClone { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to add the git credential helper with local or system scope.
+        /// </summary>
+        public bool LocalCredentialHelper { get; set; }
     }
 }
