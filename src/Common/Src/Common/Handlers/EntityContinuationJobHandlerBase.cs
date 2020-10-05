@@ -20,14 +20,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
        where TResult : EntityContinuationResult, new()
     {
         /// <summary>
-        /// Max time a job payload would run after a fresh job payload is being created
-        /// </summary>
-        private static readonly TimeSpan MaxTimeJobPayloadRunAfterCreated = TimeSpan.FromHours(1);
-
-        /// <summary>
         /// Define default job handler options.
         /// </summary>
-        private static readonly JobHandlerOptions DefaultJobHandlerOptions = new JobHandlerOptions() { MaxHandlerRetries = 1, ExpireTimeout = MaxTimeJobPayloadRunAfterCreated };
+        private static readonly JobHandlerOptions DefaultJobHandlerOptions = new JobHandlerOptions() { MaxHandlerRetries = 1 };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EntityContinuationJobHandlerBase{T, TState, TResult}"/> class.
@@ -115,13 +110,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
         /// <inheritdoc/>
         protected override async Task<ContinuationJobResult<TState, TResult>> ContinueAsync(IJob<TPayload> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
-            // Note: to avoid get stuck in an infinity retries we will limit the amount of time when a job payload was created
-            if ((DateTime.UtcNow - job.Created) > MaxTimeJobPayloadRunAfterCreated)
-            {
-                logger.FluentAddValue("ContinuationIsRunningTimeValid", false);
-                return ReturnFailed("Maximum time waiting for continuation job to complete");
-            }
-
             var payload = job.Payload;
 
             // Initial base values for the logger property.

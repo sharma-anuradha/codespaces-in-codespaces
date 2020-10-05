@@ -79,16 +79,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         }
 
         /// <summary>
-        /// Define a correlation id on a continuation job payload.
+        /// Initialize a continuation job payload.
         /// </summary>
         /// <typeparam name="T">Type of the payload.</typeparam>
-        /// <param name="jobPayload">The job payload instance.</param>
+        /// <param name="jobContinuationPayload">The job continuation payload instance.</param>
         /// <returns>Reference to the job payload.</returns>
-        public static T WithCorrelationId<T>(this T jobPayload)
+        public static T Initialize<T>(this T jobContinuationPayload)
             where T : ContinuationJobPayload
         {
-            jobPayload.CorrelationId = Guid.NewGuid();
-            return jobPayload;
+            jobContinuationPayload.UtcCreated = DateTime.UtcNow;
+            jobContinuationPayload.LoggerProperties.Add("CorrelationId", Guid.NewGuid());
+            return jobContinuationPayload;
         }
     }
 }

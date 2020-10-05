@@ -101,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         IsAssigned = false,
                         Options = options,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.WithCorrelationId(),
+                    }.Initialize(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -160,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         Options = options,
                         IsAssigned = true,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.WithCorrelationId(),
+                    }.Initialize(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -221,7 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         DevContainer = devcontainerJson,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.WithCorrelationId(),
+                    }.Initialize(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -280,7 +280,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         UserSecrets = userSecrets,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.WithCorrelationId(),
+                    }.Initialize(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -349,7 +349,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         EntityId = resourceId,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.WithCorrelationId(),
+                    }.Initialize(),
                     null,
                     logger,
                     CancellationToken.None);
@@ -388,7 +388,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         EntityId = resourceId,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.WithCorrelationId(),
+                    }.Initialize(),
                     null,
                     logger,
                     CancellationToken.None);

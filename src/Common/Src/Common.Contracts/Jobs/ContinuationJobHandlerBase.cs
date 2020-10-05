@@ -45,6 +45,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Retry this job message.
         /// </summary>
         Retry,
+
+        /// <summary>
+        /// The conitnuation job has expired.
+        /// </summary>
+        Expired,
     }
 
     /// <summary>
@@ -53,9 +58,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     public class ContinuationJobPayload : JobPayload
     {
         /// <summary>
-        /// Gets or sets a correlation id to track this payload.
+        /// Gets or sets the utc creation timestamp when this continuation payload is created.
         /// </summary>
-        public Guid CorrelationId { get; set; }
+        public DateTime UtcCreated { get; set; }
     }
 
     /// <summary>
@@ -167,6 +172,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
        where TState : struct, System.Enum
        where TResult : class
     {
+        /// <summary>
+        /// Max time a job payload would run after a fresh job payload is being created
+        /// </summary>
+        private static readonly TimeSpan MaxTimeJobPayloadRunAfterCreated = TimeSpan.FromHours(1);
+
         private static readonly TState[] ContinuationStates = (TState[])Enum.GetValues(typeof(TState));
 
         /// <summary>
@@ -213,9 +223,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 
             job.Completed += jobCompletedCallback;
 
+            // check expiration for initially created continuation payload
+            TimeSpan expireTimeout = GetJobOptions(job)?.ExpireTimeout ?? MaxTimeJobPayloadRunAfterCreated;
+            var utcCreated = job.Payload.UtcCreated;
+            if (utcCreated != default && ((DateTime.UtcNow - utcCreated) > expireTimeout))
+            {
+                logger.FluentAddValue("ContinuationIsRunningTimeValid", false);
+                await CompleteJobAsync(job, new ContinuationJobResult<TState, TResult>(ContinuationJobPayloadResultState.Expired), logger, cancellationToken);
+                return;
+            }
+
             int currentStateIndex = Array.IndexOf(ContinuationStates, job.Payload.CurrentState);
 
-            logger.AddBaseValue("CorrelationId", job.Payload.CorrelationId.ToString());
             var continueJobResult = await logger.OperationScopeAsync(
                 "job_continuation_handler_continue",
                 async (childLogger) =>
@@ -261,9 +280,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             {
                 if (!(continueJobResult.ResultState == ContinuationJobPayloadResultState.Succeeded && continueJobResult.Result == null))
                 {
-                    await logger.OperationScopeAsync(
-                        "job_continuation_complete",
-                        (childLogger) => CompleteJobAsync(job, continueJobResult, logger, cancellationToken));
+                    await CompleteJobAsync(job, continueJobResult, logger, cancellationToken);
                 }
             }
         }
@@ -338,16 +355,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 
         private Task CompleteJobAsync(IJob<T> job, ContinuationJobResult<TState, TResult> continueJobResult, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
-            var resultPayload = new ContinuationJobPayloadResult<TState, TResult>()
-            {
-                CurrentState = continueJobResult.NextState.HasValue ? continueJobResult.NextState.Value : job.Payload.CurrentState,
-                CompletionState = continueJobResult.ResultState,
-                Result = continueJobResult.Result,
-                CorrelationId = job.Payload.CorrelationId,
-            };
+            return logger.OperationScopeAsync(
+                "job_continuation_complete",
+                (childLogger) =>
+                {
+                    var resultPayload = new ContinuationJobPayloadResult<TState, TResult>()
+                    {
+                        CurrentState = continueJobResult.NextState.HasValue ? continueJobResult.NextState.Value : job.Payload.CurrentState,
+                        CompletionState = continueJobResult.ResultState,
+                        Result = continueJobResult.Result,
+                        LoggerProperties = job.Payload.LoggerProperties,
+                    };
 
-            var queueInfo = GetQueueInfo(job, continueJobResult);
-            return JobQueueProducerFactory.GetOrCreate(queueInfo.Item1, queueInfo.Item2).AddJobAsync(resultPayload, null, logger, cancellationToken);
+                    var queueInfo = GetQueueInfo(job, continueJobResult);
+                    return JobQueueProducerFactory.GetOrCreate(queueInfo.Item1, queueInfo.Item2).AddJobAsync(resultPayload, null, childLogger, cancellationToken);
+                });
         }
     }
 #pragma warning restore SA1649
