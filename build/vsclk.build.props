@@ -58,7 +58,7 @@
     <ReportGeneratorVersion>4.0.15</ReportGeneratorVersion>
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
     <FxCopAnalyzersPackageVersion>3.3.0</FxCopAnalyzersPackageVersion>
-    <SwashbuckleAspNetCorePackageVersion>5.0.0-rc5</SwashbuckleAspNetCorePackageVersion>
+    <SwashbuckleAspNetCorePackageVersion>5.6.3</SwashbuckleAspNetCorePackageVersion>
     <SystemIdentityModelTokensJwtPackageVersion>5.6.0</SystemIdentityModelTokensJwtPackageVersion>
     <VisualStudioValidationVersion>15.5.31</VisualStudioValidationVersion>
     <VsSaaSPackageVersion>1.0.58</VsSaaSPackageVersion>

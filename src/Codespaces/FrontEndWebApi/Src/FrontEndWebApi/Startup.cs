@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -601,11 +602,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             {
                 if (context.Type.IsEnum)
                 {
-                    model.Enum.Clear();
-                    foreach (var value in Enum.GetValues(context.Type))
+                    try
                     {
-                        var displayString = $"{(int)value} ({value.ToString()})";
-                        model.Enum.Add(new OpenApiString(displayString));
+                        var displayStrings = new List<OpenApiString>();
+                        foreach (var value in Enum.GetValues(context.Type))
+                        {
+                            var displayString = $"{Convert.ToInt32(value)} ({value.ToString()})";
+                            displayStrings.Add(new OpenApiString(displayString));
+                        }
+
+                        model.Enum.Clear();
+                        foreach (var displayString in displayStrings)
+                        {
+                            model.Enum.Add(displayString);
+                        }
+                    }
+                    catch
+                    {
+                        // Do nothing, use the default
                     }
                 }
             }

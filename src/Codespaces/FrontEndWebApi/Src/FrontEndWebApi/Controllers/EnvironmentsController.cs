@@ -376,7 +376,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpPost("{environmentId}/export")]
         [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(ExportAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(CodedValidationException), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status503ServiceUnavailable)]
