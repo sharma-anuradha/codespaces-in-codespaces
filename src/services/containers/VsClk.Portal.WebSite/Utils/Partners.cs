@@ -94,10 +94,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             IDiagnosticsLogger logger = null
         )
         {
-            var host = HttpUtils.GetHost(origin);
+            var originHost = HttpUtils.GetHost(origin);
             if (isProductionEnvironment)
             {
-                var doesMatch = (host == SalesforceProductionOriginTLD);
+                var doesMatch = (originHost == SalesforceProductionOriginTLD);
 
                 logger?
                     .FluentAddValue("Status", $"Production Salesforce, matches salesforce origin?: {doesMatch}")
@@ -107,8 +107,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 return doesMatch;
             }
 
-            var result = origin.EndsWith($"lightning.{SalesforceOriginTLD}") &&
-                        (host != SalesforceProductionOriginTLD);
+            var result = originHost.EndsWith($"lightning.{SalesforceOriginTLD}") &&
+                        (originHost != SalesforceProductionOriginTLD);
 
             logger?
                 .FluentAddValue("Status", $"Non-production Salesforce, matches salesforce origin?: {result}")
