@@ -6,9 +6,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 {
     public static class HttpUtils
     {
-        public static string GetRequestOrigin(HttpRequest request)
+        public static string GetRequestHeader(HttpRequest request, string headerName)
         {
-            request.Headers.TryGetValue("Origin", out var originValues);
+            request.Headers.TryGetValue(headerName, out var originValues);
 
             return originValues;
         }

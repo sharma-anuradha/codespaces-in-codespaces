@@ -169,16 +169,33 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 .LogInfo("platform_authentication_partner_auth_request");
 
             var isValidOrigin = Partners.IsValidAuthRequestOrigin(
-                HttpUtils.GetRequestOrigin(Request),
+                HttpUtils.GetRequestHeader(Request, "Origin"),
                 Request.Host.Host,
                 HostEnvironment.IsProduction(),
                 AppSettings.IsLocal,
                 logger
             );
 
-            if (!isValidOrigin)
+            // *Can be removed once Salesforce auth flow if improved or removed.*
+            // Mainly for Salesforce auth cases, since the Salesforce POST submit interaction is considered to be a "webby" request by the browsers
+            // ("user-initiated" term is [poorly defined](https://w3c.github.io/webappsec-fetch-metadata/#directly-user-initiated)
+            // by the spec hence will always vary between browser implementations), and Chromium browsers to obscure the
+            // `Origin` header by setting it to the current origin in such cases:
+            //  - [link1](https://w3c.github.io/webappsec-fetch-metadata/#directly-user-initiated)
+            //  - [link2](https://github.com/w3c/webappsec-fetch-metadata/issues/28)
+            //  - [link3](https://github.com/w3c/webappsec-fetch-metadata/issues/39))
+            // Hence we need to also consider the `Referer` header on the auth endpoint to keep supporting Salesforce scenario.
+            var isValidReferrer = Partners.IsValidAuthRequestOrigin(
+                HttpUtils.GetRequestHeader(Request, "Referer"),
+                Request.Host.Host,
+                HostEnvironment.IsProduction(),
+                AppSettings.IsLocal,
+                logger
+            );
+
+            if (!isValidOrigin && !isValidReferrer)
             {
-                return BadRequest("Unknown origin.");
+                return BadRequest("Unknown request origin.");
             }
 
             if (string.IsNullOrWhiteSpace(partnerInfo))
