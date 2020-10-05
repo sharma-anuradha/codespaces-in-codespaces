@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -16,9 +17,11 @@ using Kusto.Cloud.Platform.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Management.ContainerRegistry.Fluent;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
@@ -270,18 +273,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
             return result;
         }
 
-        public async Task<IActionResult> ResumeCodespaceAsync(
-            string friendlyName,
+        public async Task<CloudEnvironmentResult> ResumeCodespaceAsync(
+            Guid codespaceId,
             IDiagnosticsLogger logger)
         {
             var result = await logger.OperationScopeAsync("github_apigateway_resume_codespace", async (logger) =>
             {
-                var request = NewRequest(HttpMethod.Post, $"vscs_internal/proxy/environments/{friendlyName}/start");
+                var request = NewRequest(HttpMethod.Post, $"vscs_internal/proxy/environments/{codespaceId.ToString()}/start");
                 var response = await this.httpClient.SendAsync(request);
 
                 logger.AddValue("GitHubApiStatusCode", response.StatusCode.ToString());
 
-                return new StatusCodeResult((int)response.StatusCode);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var responseStream = await response.Content.ReadAsStreamAsync();
+                var result = this.jsonSerializer.Deserialize<CloudEnvironmentResult>(
+                    new JsonTextReader(new StreamReader(responseStream)));
+
+                return result;
             });
 
             return result;
@@ -320,6 +332,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
                 swallowException: true);
 
             return result;
+        }
+
+        public async Task<CloudEnvironmentResult> GetCloudEnvironmentResultById(
+            string username,
+            Guid environmentId,
+            IDiagnosticsLogger logger)
+        {
+            var list = await this.GetCodespacesAsync(username, logger);
+            var element = list.FirstOrDefault(x => x.Id == environmentId.ToString());
+
+            return element;
         }
 
         private async Task<CloudEnvironmentResult> GetCodespaceAsync(
@@ -419,6 +442,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
             request.Headers.Authorization = new AuthenticationHeaderValue("token", token);
 
             return request;
+        }
+
+        public static bool GetGitHubUsername(ClaimsPrincipal user, out string username)
+        {
+            username = user.FindFirst(CustomClaims.Username)?.Value;
+            return !string.IsNullOrWhiteSpace(username);
         }
 
         public static bool IsGitHubRepository(string seedMoniker, out string repository)

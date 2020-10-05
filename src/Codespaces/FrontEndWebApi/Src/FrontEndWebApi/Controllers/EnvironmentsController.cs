@@ -176,6 +176,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [Required, FromRoute] Guid environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
+            if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _))
+            {
+                if (!GitHubApiGateway.GetGitHubUsername(User, out string username))
+                {
+                    return new ForbidResult();
+                }
+
+                var gateway = GitHubApiGatewayProvider.New();
+                var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
+
+                if (element != null)
+                {
+                    var getResult = await gateway.GetCodespaceAsync(username, element.FriendlyName, logger.NewChildLogger());
+                    if (getResult != null)
+                    {
+                        return Ok(getResult);
+                    }
+
+                    // there was an error, so we should try calling it as an ADO repo and
+                    // see what happens
+                }
+            }
+
             var environment = await EnvironmentManager.GetAsync(environmentId, logger);
             ValidateEnvironmentIsNotSoftDeleted(environment, logger);
 
@@ -292,24 +315,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
-            var environment = await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
 
-            try
+            if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _))
             {
-                if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _)
-                    && User?.Identity != null
-                    && environment.Partner == Partner.GitHub)
+                if (!GitHubApiGateway.GetGitHubUsername(User, out string username))
                 {
-                    var client = GitHubApiGatewayProvider.New();
-                    return await client.ResumeCodespaceAsync(environment.FriendlyName, logger);
+                    return new ForbidResult();
+                }
+
+                var gateway = GitHubApiGatewayProvider.New();
+                var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
+
+                if (element != null)
+                {
+                    var resumeResult = await gateway.ResumeCodespaceAsync(environmentId, logger);
+                    if (resumeResult != null)
+                    {
+                        return Ok(resumeResult);
+                    }
+
+                    // there was an error, so we should try calling it as an ADO repo and
+                    // see what happens
                 }
             }
-            catch (Exception e)
-            {
-                logger.AddExceptionInfo(e);
-                logger.LogError("resume_from_github_failed");
-                return BadRequest();
-            }
+
+            await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
 
             // Manually read the request body
             ResumeCloudEnvironmentBody requestBody;
@@ -554,24 +584,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
-            var cloudEnvironment = await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
-            if (cloudEnvironment?.Partner == Partner.GitHub
-                && GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _))
+
+            if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _))
             {
-                var username = User.FindFirst(CustomClaims.Username)?.Value;
-                if (string.IsNullOrEmpty(username))
+                if (!GitHubApiGateway.GetGitHubUsername(User, out string username))
                 {
                     return new ForbidResult();
                 }
 
-                // split out and call the GitHub API
                 var gateway = GitHubApiGatewayProvider.New();
-                return await gateway.DeleteCodespaceAsync(
+                var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
+
+                if (element != null)
+                {
+                    return await gateway.DeleteCodespaceAsync(
                     username,
-                    cloudEnvironment.FriendlyName,
+                    element.FriendlyName,
                     logger.NewChildLogger());
+                }
             }
 
+            await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
             await EnvironmentManager.SoftDeleteAsync(environmentId, logger.NewChildLogger());
 
             return NoContent();
