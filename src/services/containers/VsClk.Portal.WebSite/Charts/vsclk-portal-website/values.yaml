@@ -48,7 +48,7 @@ pfingress:
     nginx.ingress.kubernetes.io/auth-url: "http://portal-vsclk-portal-website.default.svc.cluster.local/auth"
     nginx.ingress.kubernetes.io/auth-signin: "/signin?cid=$request_id"
     nginx.ingress.kubernetes.io/auth-cache-key: $remote_addr$http_x_vsonline_authentication$cookie_vso_pf
-    nginx.ingress.kubernetes.io/auth-cache-duration: 200 1m
+    nginx.ingress.kubernetes.io/auth-cache-duration: 200 10m
     nginx.ingress.kubernetes.io/auth-response-headers: X-VSOnline-Forwarding-Token,X-VSOnline-Forwarding-Port,X-VSOnline-Forwarding-WorkspaceId,X-VSOnline-Forwarding-EnvironmentId,X-Codespaces-State
     # Server configurations from canary ingresses don't have effect, the annotations need to be applied to non-canary ingress rules.
     nginx.ingress.kubernetes.io/configuration-snippet: |

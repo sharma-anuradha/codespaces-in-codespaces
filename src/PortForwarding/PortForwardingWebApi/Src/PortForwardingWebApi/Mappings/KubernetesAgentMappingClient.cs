@@ -442,6 +442,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                 ["kubernetes.io/ingress.class"] = "nginx",
                 ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth",
                 ["nginx.ingress.kubernetes.io/auth-signin"] = "/signin?cid=$request_id",
+                ["nginx.ingress.kubernetes.io/auth-cache-key"] = "$remote_addr$http_x_vsonline_authentication$cookie_vso_pf",
+                ["nginx.ingress.kubernetes.io/auth-cache-duration"] = "200 10m",
                 ["nginx.ingress.kubernetes.io/upstream-vhost"] = "localhost",
                 ["nginx.ingress.kubernetes.io/configuration-snippet"] = CleanUpIndentation(@"
                     set $new_cookie $http_cookie;
