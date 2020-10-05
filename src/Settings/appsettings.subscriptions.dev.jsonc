@@ -6,7 +6,6 @@
       "subscriptions": {
         "vscs-codesp-dev-data-keyvault-eu-w-001": {
           "subscriptionId": "cd6a254d-0a70-4179-aea8-376a13fabe11",
-          "enabled": false,
           "locations": [
             "westeurope"
           ],
@@ -14,7 +13,6 @@
         },
         "vscs-codesp-dev-data-keyvault-us-w2-001": {
           "subscriptionId": "9913076c-ae80-4ba8-9205-a7b92a80ab64",
-          "enabled": false,
           "locations": [
             "westus2"
           ],
@@ -22,7 +20,6 @@
         },
         "vscs-codesp-dev-data-network-eu-w-001": {
           "subscriptionId": "a58a7754-44fc-4c38-aecf-e641f305ab7b",
-          "enabled": false,
           "locations": [
             "westeurope"
           ],
@@ -30,7 +27,6 @@
         },
         "vscs-codesp-dev-data-network-us-w2-001": {
           "subscriptionId": "105133ff-05aa-4fe9-89f9-f1483f96041f",
-          "enabled": false,
           "locations": [
             "westus2"
           ],

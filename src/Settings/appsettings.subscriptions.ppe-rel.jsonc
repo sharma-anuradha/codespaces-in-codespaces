@@ -6,7 +6,6 @@
       "subscriptions": {
         "vscs-codesp-ppe-data-keyvault-ap-se-001": {
           "subscriptionId": "d98f29c5-7bc0-4551-ac62-8ec6ad95cc75",
-          "enabled": false,
           "locations": [
             "southeastasia"
           ],
@@ -30,7 +29,6 @@
         },
         "vscs-codesp-ppe-data-keyvault-us-w2-001": {
           "subscriptionId": "b54f6c7b-4a4d-46c2-a3e4-57467a714dfe",
-          "enabled": false,
           "locations": [
             "westus2"
           ],
@@ -38,7 +36,6 @@
         },
         "vscs-codesp-ppe-data-network-ap-se-001": {
           "subscriptionId": "69f8fa94-9d26-4d1b-9db5-600299c7c0aa",
-          "enabled": false,
           "locations": [
             "southeastasia"
           ],
@@ -62,7 +59,6 @@
         },
         "vscs-codesp-ppe-data-network-us-w2-001": {
           "subscriptionId": "e59bcf31-832e-45ec-92c1-34e15607ca2c",
-          "enabled": false,
           "locations": [
             "westus2"
           ],
