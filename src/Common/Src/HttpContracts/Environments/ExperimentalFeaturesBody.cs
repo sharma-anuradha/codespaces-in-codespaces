@@ -1,4 +1,4 @@
-﻿// <copyright file="ExperimentalFeaturesBody.cs" company="Microsoft">
+// <copyright file="ExperimentalFeaturesBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -27,10 +27,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments
         public bool NewTerminal { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to queue resource allocation..
+        /// Gets or sets a value indicating whether to queue resource allocation.
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         [Default(false)]
         public bool QueueResourceAllocation { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to start with a shallow clone during creation.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        [Default(false)]
+        public bool ShallowClone { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to install the git credential helper at the
+        /// local/repo scope instead of system scope.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        [Default(false)]
+        public bool LocalCredentialHelper { get; set; }
     }
 }

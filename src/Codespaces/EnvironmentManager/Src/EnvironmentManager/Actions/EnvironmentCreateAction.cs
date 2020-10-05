@@ -213,11 +213,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             var queueResourceRequestFlag = await SystemConfiguration.GetValueAsync(QueueResourceAllocationFeatureFlagKey, logger.NewChildLogger(), QueueResourceAllocationDefault);
             var queueResourceRequestForWindows = queueResourceRequestFlag && sku.ComputeOS == ComputeOS.Windows;
             var environmentOptions = new CloudEnvironmentOptions();
-            if (input.Details.ExperimentalFeatures != null)
+            var experimentalFeatures = input.Details.ExperimentalFeatures;
+            if (experimentalFeatures != null)
             {
-                environmentOptions.CustomContainers = input.Details.ExperimentalFeatures.CustomContainers;
-                environmentOptions.NewTerminal = input.Details.ExperimentalFeatures.NewTerminal;
-                record.Value.QueueResourceAllocation = input.Details.ExperimentalFeatures.QueueResourceAllocation || queueResourceRequestForWindows;
+                environmentOptions.CustomContainers = experimentalFeatures.CustomContainers;
+                environmentOptions.NewTerminal = experimentalFeatures.NewTerminal;
+                environmentOptions.ShallowClone = experimentalFeatures.ShallowClone;
+                environmentOptions.LocalCredentialHelper = experimentalFeatures.LocalCredentialHelper;
+                record.Value.QueueResourceAllocation = experimentalFeatures.QueueResourceAllocation || queueResourceRequestForWindows;
             }
 
             logger.FluentAddBaseValue(nameof(record.Value.QueueResourceAllocation), record.Value.QueueResourceAllocation);
