@@ -296,7 +296,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             };
 
             // Invalidate PF auth cookie so next time user goes through auth flow.
-            Response.Cookies.Append(Constants.PFCookieName, "expired", new CookieOptions { Expires = DateTimeOffset.Now.Subtract(TimeSpan.FromHours(2)) });
+            Response.Cookies.Append(Constants.PFCookieName, "expired", new CookieOptions { Expires = DateTimeOffset.Now.Subtract(TimeSpan.FromHours(2)), HttpOnly = true, Secure = true });
 
             var response = View("exception", details);
             response.StatusCode = failureReason == PortForwardingFailure.Unknown
