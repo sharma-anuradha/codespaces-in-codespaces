@@ -25,17 +25,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="resourceRepository">Resource repository.</param>
         /// <param name="requestQueueManager">Resource request manager.</param>
+        /// <param name="serviceProvider">Service provider.</param>
         public ResourceStateManager(
             IResourceRepository resourceRepository,
-            IResourceRequestManager requestQueueManager)
+            IResourceRequestManager requestQueueManager,
+            IServiceProvider serviceProvider)
         {
             ResourceRepository = resourceRepository;
             ResourceRequestManager = requestQueueManager;
+            ServiceProvider = serviceProvider;
         }
 
         private IResourceRepository ResourceRepository { get; }
 
         private IResourceRequestManager ResourceRequestManager { get; }
+
+        private IServiceProvider ServiceProvider { get; }
 
         /// <inheritdoc/>
         public Task<ResourceRecord> MarkResourceReady(ResourceRecord resource, string reason, IDiagnosticsLogger logger)
@@ -45,16 +50,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{LogBaseName}_mark_resource_ready",
                 async (IDiagnosticsLogger innerLogger) =>
                 {
-                    if (!resource.IsAssigned)
-                    {
-                        resource = await ResourceRequestManager.TryAssignAsync(resource, reason, logger);
-                    }
-
                     // Update os disk record if it exists.
                     if (resource.Type == Common.Contracts.ResourceType.ComputeVM)
                     {
                         var computeDetails = resource.GetComputeDetails();
                         var osDiskRecordId = computeDetails.OSDiskRecordId;
+                        innerLogger.FluentAddBaseValue("OSDiskComponentFound", osDiskRecordId != default);
+
+                        if (osDiskRecordId == default && computeDetails.ComputeOS == Common.Contracts.ComputeOS.Windows)
+                        {
+                            // This resource is imcomplete wihtout OS Disk component. So delete the resource to free up capacity to create good resource.
+                            var resourceContinuation = (IResourceContinuationOperations)ServiceProvider.GetService(typeof(IResourceContinuationOperations));
+                            await resourceContinuation.DeleteAsync(default, Guid.Parse(resource.Id), "OSDiskMissing", innerLogger.NewChildLogger());
+                            throw new InvalidOperationException("osdisk_component_missing");
+                        }
+
                         if (osDiskRecordId != default)
                         {
                             var osDiskResourceRecord = await ResourceRepository.GetAsync(osDiskRecordId.ToString(), logger.NewChildLogger());
@@ -72,6 +82,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                 await ResourceRepository.UpdateAsync(osDiskResourceRecord, logger.NewChildLogger());
                             }
                         }
+                    }
+
+                    if (!resource.IsAssigned)
+                    {
+                        resource = await ResourceRequestManager.TryAssignAsync(resource, reason, logger);
                     }
 
                     // Update core properties to indicate that its assigned

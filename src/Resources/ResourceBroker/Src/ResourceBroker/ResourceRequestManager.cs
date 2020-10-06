@@ -259,6 +259,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 var osDiskResource = computeDetails.CreateOSDiskRecord();
                 osDiskResource.IsAssigned = true;
                 osDiskResource.Assigned = DateTime.UtcNow;
+                osDiskResource.IsReady = false;
+                osDiskResource.ProvisioningStatus = OperationState.Initialized;
+                osDiskResource.ProvisioningReason = "shadow_record";
                 var componentId = Guid.NewGuid().ToString();
 
                 resource.Components = new ResourceComponentDetail()
