@@ -2,7 +2,7 @@
 {{- $serviceName := include "service.servicename" . -}}
 {{- $servicePort := .Values.service.externalPort -}}
 {{- $ingressPaths := .Values.githubAuthEndpoint.paths -}}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: {{ template "service.fullname" . }}-gh-auth

@@ -6,7 +6,7 @@ spec:
   minReplicas: {{ .Values.pods.replicaCount }}
   maxReplicas: {{ .Values.pods.maxReplicaCount }}
   scaleTargetRef:
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     kind: Deployment
     name: {{ template "service.fullname" . }}
   targetCPUUtilizationPercentage: {{ .Values.pods.targetCpuUtilizationPercentage }}
