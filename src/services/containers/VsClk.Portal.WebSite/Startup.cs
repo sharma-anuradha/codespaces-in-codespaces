@@ -26,6 +26,10 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using System.Text.Json.Serialization;
+using Microsoft.Net.Http.Headers;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -66,6 +70,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             });
 
             services.AddDistributedMemoryCache();
+            services.AddMemoryCache();
 
             services.AddSession(options => { });
 
@@ -76,7 +81,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 options.Providers.Add<BrotliCompressionProvider>();
                 options.Providers.Add<GzipCompressionProvider>();
             });
-            services.AddControllersWithViews().AddControllersAsServices();
+
+            services
+                .AddControllersWithViews(options =>
+                    {
+                        options.InputFormatters.Insert(0, new CSPReportInputFormatter());
+                    }
+                ).AddControllersAsServices();
+
 
             // Configuration
             var appSettingsConfiguration = Configuration.GetSection("AppSettings");

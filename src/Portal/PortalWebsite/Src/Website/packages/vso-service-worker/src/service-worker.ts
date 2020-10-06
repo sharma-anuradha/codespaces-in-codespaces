@@ -81,10 +81,15 @@ async function handleUnhandledError(error: any) {
 
 let configurationUpdateRequest: Promise<void> | undefined = undefined;
 self.addEventListener('fetch', async (event) => {
+    const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
+    const configuration = configurationManager.getConfigurationSync();
+
+    if (isDefined(configuration) && configuration.passthroughUrls.includes(event.request.url)) {
+        return false;
+    }
+
     event.respondWith(
         (async () => {
-            const configurationManager = serviceRegistry.getInstance('ConfigurationManager');
-            const configuration = configurationManager.getConfigurationSync();
             if (
                 !isDefined(configurationUpdateRequest) &&
                 !isDefined(configuration) &&

@@ -24,6 +24,8 @@ export const initAMDConfig = async () => {
             'vscode-oniguruma': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/vscode-oniguruma/release/main`,
             'xterm': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm/lib/xterm.js?v=2`,
             'xterm-addon-search': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm-addon-search/lib/xterm-addon-search.js?v=2`,
+            'xterm-addon-unicode11': `${window.location.origin}/static/remote/web/node_modules/xterm-addon-unicode11/lib/xterm-addon-unicode11.js?v=2`,
+            'xterm-addon-webgl': `${window.location.origin}/static/remote/web/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js?v=2`,
             'xterm-addon-web-links': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js?v=2`,
             'semver-umd': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/semver-umd/lib/semver-umd.js?v=2`,
             'iconv-lite-umd': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/iconv-lite-umd/lib/iconv-lite-umd.js?v=2`,
@@ -52,6 +54,9 @@ export const initAMDConfig = async () => {
     document.head.appendChild(cssLink);
 
     var serverUmdLink = document.createElement('link');
+    // since the `prefetch-src` does not have proper browser support https://caniuse.com/?search=prefetch-src
+    // and the only workaround is to change the `default-src` to `'self'` which is decreases security of CSP,
+    // we can preload instead of prefetching the asset for now as a workaround
     serverUmdLink.rel = 'prefetch';
     serverUmdLink.href = `/workbench-page/web-standalone/${vscodeCommitId}/node_modules/semver-umd/lib/semver-umd.js?v=2`;
     document.head.appendChild(serverUmdLink);

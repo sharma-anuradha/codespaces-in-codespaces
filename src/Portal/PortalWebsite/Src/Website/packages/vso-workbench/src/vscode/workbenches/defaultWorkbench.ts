@@ -21,7 +21,6 @@ import { getWorkbenchDefaultLayout } from '../../utils/getWorkbenchDefaultLayout
 import { commands } from './workbenchCommands';
 import { getProductConfiguration } from './getProductConfiguration';
 import { getDefaultSettings } from './getDefaultSettings';
-import { authService } from '../../auth/authService';
 import { codespaceInitializationTracker } from '../../utils/CodespaceInitializationTracker/CodespaceInitializationTracker';
 import { TunnelProvider } from '../providers/tunnelProvider';
 
@@ -158,6 +157,9 @@ export class Workbench {
 
             await Promise.all([
                 registerServiceWorker({
+                    passthroughUrls: [
+                        `${location.origin}/csp-report`,
+                    ],
                     liveShareEndpoint,
                     features: {
                         useSharedConnection: true,

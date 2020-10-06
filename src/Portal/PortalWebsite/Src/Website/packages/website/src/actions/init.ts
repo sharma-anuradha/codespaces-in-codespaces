@@ -38,6 +38,7 @@ export async function init(getAuthTokenAction: () => Promise<string>) {
 
         const configurationPromise = fetchConfiguration().then((configuration) => {
             registerServiceWorker({
+                passthroughUrls: [],
                 liveShareEndpoint: configuration.liveShareEndpoint,
                 features: {
                     useSharedConnection: true,

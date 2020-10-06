@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.VsSaaS.Caching" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Caching.Redis" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="SmartFormat.NET" Version="2.5.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

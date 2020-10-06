@@ -4,6 +4,12 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 {
+    public class WorkbenchCspPartnerEndpoints
+    {
+        public string ProxyApiEndpoint { get; set; }
+        public string FaviconsEndpoint { get; set; }
+    }
+
     public static class Partners
     {
         public const string GitHub = "GitHub";

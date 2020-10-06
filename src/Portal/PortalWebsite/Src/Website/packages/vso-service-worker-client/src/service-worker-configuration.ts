@@ -3,6 +3,7 @@ export type ServiceWorkerFeatures = {
 };
 
 export type ServiceWorkerConfiguration = {
+    passthroughUrls: string[];
     liveShareEndpoint: string;
     features: ServiceWorkerFeatures;
 };
