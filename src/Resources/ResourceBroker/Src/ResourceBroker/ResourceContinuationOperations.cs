@@ -318,16 +318,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 .FluentAddBaseValue("StorageResourceId", fileResourceId);
 
             var consolidatedloggerProperties = await BuildLoggingProperties(blobResourceId, reason, logger, loggingProperties);
-            var input = new StartArchiveContinuationInput()
-            {
-                EnvironmentId = environmentId,
-                ResourceId = blobResourceId,
-                FileShareResourceId = fileResourceId,
-                Reason = reason,
-            };
-            var target = StartArchiveContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
+            {
+                await JobQueueProducerFactory.GetOrCreate(StartArchiveContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                   new StartArchiveContinuationJobHandler.Payload()
+                   {
+                       EnvironmentId = environmentId,
+                       EntityId = blobResourceId,
+                       FileShareResourceId = fileResourceId,
+                       Reason = reason,
+                       LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
+                   }.Initialize(),
+                   null,
+                   logger,
+                   CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var input = new StartArchiveContinuationInput()
+                {
+                    EnvironmentId = environmentId,
+                    ResourceId = blobResourceId,
+                    FileShareResourceId = fileResourceId,
+                    Reason = reason,
+                };
+                var target = StartArchiveContinuationHandler.DefaultQueueTarget;
+
+                return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+            }
         }
 
         /// <inheritdoc/>
