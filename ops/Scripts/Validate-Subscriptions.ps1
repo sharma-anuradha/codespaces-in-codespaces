@@ -83,7 +83,7 @@ if ($invalidSubscriptions) {
 }
 
 Write-Host
-$FinalReport = @{
+$FinalReport = [ordered]@{
     "Total Subscription Count"=($subscriptions ? $subscriptions.Count : 0)
     "Inaccessible Subscription Count"=($inaccessibleSubs ? $inaccessibleSubs.Count : 0)
     "Tested Subscription Count"=($testedSubscriptions ? $testedSubscriptions.Count : 0)
