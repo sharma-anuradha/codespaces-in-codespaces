@@ -273,7 +273,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger)
         {
-            return ConfigurationReader.ReadFeatureFlagAsync("job-continuation-handler", logger, false);
+            return ConfigurationReader.ReadFeatureFlagAsync("job-continuation-handler", logger, true);
         }
     }
 }

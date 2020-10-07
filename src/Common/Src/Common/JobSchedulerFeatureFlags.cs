@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 queueName,
                 claimSpan,
                 jobSchedulePayloadFactory,
-                (dt) => string.IsNullOrEmpty(featureFlagName) ? Task.FromResult(true) : IsFeatureFlagEnabledAsync(featureFlagName));
+                (dt) => string.IsNullOrEmpty(featureFlagName) ? Task.FromResult(true) : IsFeatureFlagEnabledAsync(featureFlagName, true));
         }
     }
 }
