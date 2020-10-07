@@ -1,0 +1,33 @@
+.create-or-alter function
+with (docstring = 'Gets Workspace Creation events, on the continuation.', folder='Events')
+getWorkspaceCreationOnContinuationEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    NewWorkspaceId: string,
+    NewSessionId: string,
+    CloudEnvironmentId: string,
+    SkuName: string,
+    HttpRequestMethod: string,
+    HttpRequestUri: string,
+    ContinuationPayloadTrackingInstanceId: string))
+{
+    T
+        | where msg == "WorkspaceManager_created_new_workspace"
+        | where ContinuationPayloadTrackingInstanceId != ""
+        | extend EventAtWorkspaceCreationContinuation = 1
+        | extend EventAtWorkspaceCreationContinuation_ContinuationPayloadTrackingInstanceId = ContinuationPayloadTrackingInstanceId
+        | extend EventAtWorkspaceCreationContinuation_Time = ["time"]
+        | extend EventAtWorkspaceCreationContinuation_SkuName = SkuName
+        | extend EventAtWorkspaceCreationContinuation_CloudEnvironmentId = CloudEnvironmentId
+        | extend EventAtWorkspaceCreationContinuation_NewWorkspaceId = NewWorkspaceId
+        | extend EventAtWorkspaceCreationContinuation_NewSessionId = NewSessionId
+        | project EventAtWorkspaceCreationContinuation,
+            EventAtWorkspaceCreationContinuation_Time, 
+            EventAtWorkspaceCreationContinuation_ContinuationPayloadTrackingInstanceId, 
+            EventAtWorkspaceCreationContinuation_SkuName, 
+            EventAtWorkspaceCreationContinuation_CloudEnvironmentId,
+            EventAtWorkspaceCreationContinuation_NewWorkspaceId,
+            EventAtWorkspaceCreationContinuation_NewSessionId
+        | summarize arg_max(EventAtWorkspaceCreationContinuation_Time, *) by EventAtWorkspaceCreationContinuation_ContinuationPayloadTrackingInstanceId
+}

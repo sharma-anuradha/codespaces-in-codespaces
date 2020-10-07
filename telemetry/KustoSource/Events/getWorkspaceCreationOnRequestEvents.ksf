@@ -1,0 +1,30 @@
+#function("Gets Workspace Creation events, on the request.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    NewWorkspaceId: string,
+    NewSessionId: string,
+    CloudEnvironmentId: string,
+    SkuName: string,
+    HttpRequestMethod: string,
+    HttpRequestUri: string))
+{
+    T
+        | where msg == "WorkspaceManager_created_new_workspace"
+        | where CorrelationId != ""
+        | extend EventAtWorkspaceCreationOnRequest = 1
+        | extend EventAtWorkspaceCreationOnRequest_CorrelationId = CorrelationId
+        | extend EventAtWorkspaceCreationOnRequest_Time = ["time"]
+        | extend EventAtWorkspaceCreationOnRequest_SkuName = SkuName
+        | extend EventAtWorkspaceCreationOnRequest_CloudEnvironmentId = CloudEnvironmentId
+        | extend EventAtWorkspaceCreationOnRequest_NewWorkspaceId = NewWorkspaceId
+        | extend EventAtWorkspaceCreationOnRequest_NewSessionId = NewSessionId
+        | project EventAtWorkspaceCreationOnRequest,
+            EventAtWorkspaceCreationOnRequest_Time, 
+            EventAtWorkspaceCreationOnRequest_CorrelationId, 
+            EventAtWorkspaceCreationOnRequest_SkuName, 
+            EventAtWorkspaceCreationOnRequest_CloudEnvironmentId,
+            EventAtWorkspaceCreationOnRequest_NewWorkspaceId,
+            EventAtWorkspaceCreationOnRequest_NewSessionId
+        | summarize arg_max(EventAtWorkspaceCreationOnRequest_Time, *) by EventAtWorkspaceCreationOnRequest_CorrelationId
+}

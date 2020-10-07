@@ -26,7 +26,9 @@
     ComputeResourceId: string,
     ComputeId: string,
     JobCollectedData: string,
-    ContinuationPayloadTrackingInstanceId: string))
+    ContinuationPayloadTrackingInstanceId: string,
+    NewWorkspaceId: string,
+    NewSessionId: string))
 {
     let ResumeEnvironmentRequestStartEvents = getResumeEnvironmentRequestStartEvents(T);
     let ResumeEnvironmentRequestStopEvents = getResumeEnvironmentRequestStopEvents(T);
@@ -41,24 +43,22 @@
     let BugExcludeDupeStartingEvents = getBugExcludeDupeStartingEvents(T);
     let AgentCollectedErrorDataOnJobEvents = getAgentCollectedErrorDataOnJobEvents(T);
     let ComputeResourceForResumeEvents =  getResumeEnvironmentComputeResourceEvents(T);
-    let ResumeContinuationEvents = getResumeContinuationEvents(T);
+    let AllWorkspaceCreationEvents = getAllWorkspaceCreationEvents(T);
     ResumeEnvironmentRequestStartEvents
         | join kind=leftouter (ResumeEnvironmentRequestStopEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeRequestStop_CorrelationId
         | join kind=leftouter (ResumeActionErrorEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeActionError_CorrelationId
         | join kind=leftouter (ResumeEnvironmentRequestSkuResolveEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeSkuResolve_CorrelationId
-        | join kind=leftouter (ResumeContinuationEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeContinuation_CorrelationId
-        | join kind=leftouter (ResumeEnvironmentWorkspaceIdEvents) on $left.EventAtResumeContinuation_ContinuationPayloadTrackingInstanceId == $right.EventAtResumeHasWorkspace_ContinuationPayloadTrackingInstanceId
-        //| join kind=leftouter (ComputeResourceForResumeEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeComputeResource_CorrelationId
-        | join kind=leftouter (StartingToAvailableEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToAvailable_WorkspaceId
+        | join kind=leftouter (AllWorkspaceCreationEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtWorkspaceCreation_CorrelationId
+        | extend WorkspaceId = EventAtWorkspaceCreation_NewWorkspaceId
+        | join kind=leftouter (StartingToAvailableEvents) on $left.WorkspaceId == $right.EventAtStartingToAvailable_WorkspaceId
         | join kind=leftouter (StartingToDeletedEvents) on $left.EventAtResumeSkuResolve_CloudEnvironmentId == $right.EventAtStartingToDeleted_CodespaceId
-        | join kind=leftouter (StartingToFailedEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToFailed_WorkspaceId
-        | join kind=leftouter (StartingToShutdownEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToShutdown_WorkspaceId
-        | join kind=leftouter (StartingToArchivedEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToArchived_WorkspaceId
+        | join kind=leftouter (StartingToFailedEvents) on $left.WorkspaceId == $right.EventAtStartingToFailed_WorkspaceId
+        | join kind=leftouter (StartingToShutdownEvents) on $left.WorkspaceId == $right.EventAtStartingToShutdown_WorkspaceId
+        | join kind=leftouter (StartingToArchivedEvents) on $left.WorkspaceId == $right.EventAtStartingToArchived_WorkspaceId
         | join kind=leftouter (BugExcludeDupeStartingEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.PreviousCorrelationId
         | join kind=leftouter (AgentCollectedErrorDataOnJobEvents) on $left.EventAtStartingToShutdown_CorrelationId == $right.EventAtAgentCollectedError_CorrelationId
         | extend SkuName = EventAtResumeSkuResolve_SkuName
         | extend CodespaceId = EventAtResumeSkuResolve_CloudEnvironmentId
-        | extend WorkspaceId = EventAtResumeHasWorkspace_WorkspaceId
         | extend TimeStamp = EventAtResumeRequestStart_Time
         | summarize arg_max(TimeStamp, *) by EventAtResumeRequestStart_CorrelationId
 }

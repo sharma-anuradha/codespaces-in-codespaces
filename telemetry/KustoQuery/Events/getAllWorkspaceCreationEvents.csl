@@ -1,0 +1,36 @@
+.create-or-alter function
+with (docstring = 'Gets Workspace Creation events', folder='Events')
+getAllWorkspaceCreationEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    WorkspaceId: string,
+    NewWorkspaceId: string,
+    NewSessionId: string,
+    CloudEnvironmentId: string,
+    SkuName: string,
+    HttpRequestMethod: string,
+    HttpRequestUri: string,
+    ContinuationPayloadTrackingInstanceId: string))
+{
+    let WorkspaceCreatedOnRequest = getWorkspaceCreationOnRequestEvents(T);
+    let WorkspaceCreatedOnContinuation = getWorkspaceCreationOnContinuationEvents(T);
+    let ResumeContinuations = getResumeContinuationEvents(T);
+    ResumeContinuations
+        | join kind=leftouter WorkspaceCreatedOnRequest on $left.EventAtResumeContinuation_CorrelationId == $right.EventAtWorkspaceCreationOnRequest_CorrelationId
+        | join kind=leftouter WorkspaceCreatedOnContinuation on $left.EventAtResumeContinuation_ContinuationPayloadTrackingInstanceId == $right.EventAtWorkspaceCreationContinuation_ContinuationPayloadTrackingInstanceId
+        | extend NewWorkspaceId = coalesce(EventAtWorkspaceCreationOnRequest_NewWorkspaceId, EventAtWorkspaceCreationContinuation_NewWorkspaceId)
+        | extend NewSessionId = coalesce(EventAtWorkspaceCreationOnRequest_NewSessionId, EventAtWorkspaceCreationContinuation_NewSessionId)
+        | where NewWorkspaceId != ""
+        | summarize arg_max(EventAtResumeContinuation_Time, *) by NewWorkspaceId, EventAtResumeContinuation_CorrelationId
+        | extend EventAtWorkspaceCreation = 1
+        | extend EventAtWorkspaceCreation_CorrelationId = EventAtResumeContinuation_CorrelationId
+        | extend EventAtWorkspaceCreation_NewWorkspaceId = NewWorkspaceId
+        | extend EventAtWorkspaceCreation_NewSessionId = NewSessionId
+        | extend EventAtWorkspaceCreation_Time = EventAtResumeContinuation_Time
+        | project EventAtWorkspaceCreation,
+            EventAtWorkspaceCreation_CorrelationId,
+            EventAtWorkspaceCreation_NewWorkspaceId,
+            EventAtWorkspaceCreation_NewSessionId,
+            EventAtWorkspaceCreation_Time
+}

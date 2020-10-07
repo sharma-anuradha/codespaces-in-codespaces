@@ -1,0 +1,9 @@
+#function("Tabulates create workspace request time.")
+(T:(['time']: datetime, msg: string, Duration: string))
+{
+    T
+    | where msg == "httpclientworkspacerepository_create_retry_scope_complete"
+    | extend TimeStamp = ['time']
+    | extend DurationInSeconds = todouble(totime(Duration) / 1s)
+    | project DurationInSeconds, TimeStamp
+}

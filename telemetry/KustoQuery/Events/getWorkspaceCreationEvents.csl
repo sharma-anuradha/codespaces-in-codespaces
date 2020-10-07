@@ -1,0 +1,32 @@
+.create-or-alter function
+with (docstring = 'Gets Workspace Creation events, on the request.', folder='Events')
+getWorkspaceCreationEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    NewWorkspaceId: string,
+    NewSessionId: string,
+    CloudEnvironmentId: string,
+    SkuName: string,
+    HttpRequestMethod: string,
+    HttpRequestUri: string))
+{
+    T
+        | where msg == "WorkspaceManager_created_new_workspace"
+        | where CorrelationId != ""
+        | extend EventAtWorkspaceCreation = 1
+        | extend EventAtWorkspaceCreation_CorrelationId = CorrelationId
+        | extend EventAtWorkspaceCreation_Time = ["time"]
+        | extend EventAtWorkspaceCreation_SkuName = SkuName
+        | extend EventAtWorkspaceCreation_CloudEnvironmentId = CloudEnvironmentId
+        | extend EventAtWorkspaceCreation_NewWorkspaceId = NewWorkspaceId
+        | extend EventAtWorkspaceCreation_NewSessionId = NewSessionId
+        | project EventAtWorkspaceCreation,
+            EventAtWorkspaceCreation_Time, 
+            EventAtWorkspaceCreation_CorrelationId, 
+            EventAtWorkspaceCreation_SkuName, 
+            EventAtWorkspaceCreation_CloudEnvironmentId,
+            EventAtWorkspaceCreation_NewWorkspaceId,
+            EventAtWorkspaceCreation_NewSessionId
+        | summarize arg_max(EventAtWorkspaceCreation_Time, *) by EventAtWorkspaceCreation_CorrelationId
+}

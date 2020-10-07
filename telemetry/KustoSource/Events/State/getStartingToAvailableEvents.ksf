@@ -13,6 +13,7 @@
     CloudEnvironmentNewUpdatedTrigger: string))
 {
     getStateTransitionEvents(T, fromState="Starting", toState="Available")
+        | where WorkspaceId != ""
         | extend EventAtStartingToAvailable = 1
         | extend EventAtStartingToAvailable_Time = ['time']
         | extend EventAtStartingToAvailable_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
