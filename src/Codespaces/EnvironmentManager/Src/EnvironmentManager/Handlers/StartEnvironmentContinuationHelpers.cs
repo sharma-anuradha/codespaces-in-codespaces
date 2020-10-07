@@ -437,6 +437,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                  record.Value.OSDisk?.ResourceId,
                  storageResourceId,
                  archiveStorageResourceId,
+                 operationInput.CloudEnvironmentOptions,
                  operationInput.CloudEnvironmentParameters,
                  startEnvironmentAction,
                  logger.NewChildLogger());

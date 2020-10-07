@@ -636,12 +636,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid? osDiskResourceId,
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
+            CloudEnvironmentOptions cloudEnvironmentOptions,
             CloudEnvironmentParameters cloudEnvironmentParameters,
             StartEnvironmentAction startEnvironmentAction,
             IDiagnosticsLogger logger)
         {
             return ResourceStartManager.StartComputeAsync(
-                cloudEnvironment, computeResourceId, osDiskResourceId, storageResourceId, archiveStorageResourceId, null, cloudEnvironmentParameters, startEnvironmentAction, logger.NewChildLogger());
+                cloudEnvironment, computeResourceId, osDiskResourceId, storageResourceId, archiveStorageResourceId, cloudEnvironmentOptions, cloudEnvironmentParameters, startEnvironmentAction, logger.NewChildLogger());
         }
 
         /// <inheritdoc/>

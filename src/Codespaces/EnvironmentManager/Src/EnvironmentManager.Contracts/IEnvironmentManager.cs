@@ -252,21 +252,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Start Compute.
         /// </summary>
-        /// <param name="cloudEnvironment">cloud environment.</param>
-        /// <param name="computeResourceId">compute resource id.</param>
-        /// <param name="osDiskResourceId">os disk resource id.</param>
-        /// <param name="storageResourceId">storage resource id.</param>
-        /// <param name="archiveStorageResourceId">archive storage id.</param>
-        /// <param name="cloudEnvironmentParameters">start environment params.</param>
-        /// <param name="startEnvironmentAction">start environment action.</param>
-        /// <param name="logger">logger.</param>
-        /// <returns>resule.</returns>
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        /// <param name="computeResourceId">The compute resource id.</param>
+        /// <param name="osDiskResourceId">The OS disk resource id.</param>
+        /// <param name="storageResourceId">The storage resource id.</param>
+        /// <param name="archiveStorageResourceId">The archive storage id.</param>
+        /// <param name="cloudEnvironmentOptions">The cloud environment options.</param>
+        /// <param name="cloudEnvironmentParameters">The start environment params.</param>
+        /// <param name="startEnvironmentAction">The start environment action.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>True if start is successful, otherwise false.</returns>
         Task<bool> StartComputeAsync(
             CloudEnvironment cloudEnvironment,
             Guid computeResourceId,
             Guid? osDiskResourceId,
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
+            CloudEnvironmentOptions cloudEnvironmentOptions,
             CloudEnvironmentParameters cloudEnvironmentParameters,
             StartEnvironmentAction startEnvironmentAction,
             IDiagnosticsLogger logger);
