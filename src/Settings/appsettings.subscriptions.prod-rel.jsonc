@@ -652,6 +652,86 @@
           ],
           "serviceType": "network"
         },
+        "vscs-codesp-prod-data-storage-ap-se-001": {
+          "subscriptionId": "3006c40a-e298-4d16-b3a6-42b2d2bc7929",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-002": {
+          "subscriptionId": "98a4c78e-6ebe-4e3b-947c-539c4554210e",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-003": {
+          "subscriptionId": "de38c38e-36ce-48e9-a088-d69536fdc729",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-004": {
+          "subscriptionId": "6da73a66-4914-4fab-beb8-326ca50d8d01",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-005": {
+          "subscriptionId": "536a3277-4236-472a-a380-f3885a60f93e",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-006": {
+          "subscriptionId": "2ffe6df5-7ec3-457e-96ba-9ea2ecbc99cd",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-007": {
+          "subscriptionId": "0bfe3a4f-1532-41ad-ab12-c70d00bdbc09",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-008": {
+          "subscriptionId": "047fc0a8-4ef4-47b6-bd37-869869504e91",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-009": {
+          "subscriptionId": "ea1d90f6-c782-45f7-b996-d61d7ddfffb7",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-ap-se-010": {
+          "subscriptionId": "5bc848fb-b35a-420a-bced-dbc95b52c68c",
+          "enabled": false,
+          "locations": [
+            "southeastasia"
+          ],
+          "serviceType": "storage"
+        },
         "vscs-codesp-prod-data-storage-ap-se-011": {
           "subscriptionId": "67581270-dcf0-407d-81a2-bc8ce99a9f11",
           "enabled": false,
@@ -748,6 +828,86 @@
           ],
           "serviceType": "storage"
         },
+        "vscs-codesp-prod-data-storage-eu-w-001": {
+          "subscriptionId": "118b780b-0bdf-4927-8f1e-a1aa0a821916",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-002": {
+          "subscriptionId": "20418f2d-a4e7-439a-9399-994fb9a32d68",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-003": {
+          "subscriptionId": "9d53ab0e-d8ab-436d-b620-9dc694a04841",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-004": {
+          "subscriptionId": "306d1121-f7cf-48de-b603-0b0c2a7e6fa9",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-005": {
+          "subscriptionId": "3839ac56-8768-4a8c-8567-1942728171b7",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-006": {
+          "subscriptionId": "1b48bfb0-145f-4d8a-8723-84c5bd8393d0",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-007": {
+          "subscriptionId": "2e85659e-1bd4-489c-8b2f-41fb42eeaefa",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-008": {
+          "subscriptionId": "273562d9-26da-43e6-a5ff-6e523c25fc5a",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-009": {
+          "subscriptionId": "41ebdbbb-efaf-436b-aec5-1f3234dbe4e1",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-eu-w-010": {
+          "subscriptionId": "b1f2a529-33db-45df-88ca-1ef55b9f99d6",
+          "enabled": false,
+          "locations": [
+            "westeurope"
+          ],
+          "serviceType": "storage"
+        },
         "vscs-codesp-prod-data-storage-eu-w-011": {
           "subscriptionId": "d480f831-8796-486f-a4c8-e57abe13dba4",
           "enabled": false,
@@ -817,6 +977,86 @@
           "enabled": false,
           "locations": [
             "westeurope"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-001": {
+          "subscriptionId": "94f02be7-2a72-412f-82df-af3fcf97167b",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-002": {
+          "subscriptionId": "80daec0b-56f3-4837-bc0b-6e60aae2c0dd",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-003": {
+          "subscriptionId": "e8791c4d-b38e-4806-9e33-8e1a273d13ae",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-004": {
+          "subscriptionId": "a64af558-a8ca-4583-81d5-00b1c0efea19",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-005": {
+          "subscriptionId": "2f321653-4fe1-460f-be05-d3ef73816909",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-006": {
+          "subscriptionId": "d2b8d152-d3ff-4c3c-b059-54bd2b7b9280",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-007": {
+          "subscriptionId": "40c14917-4f7e-4f97-ae43-953604469dfa",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-008": {
+          "subscriptionId": "1a297bac-154e-45e5-8d35-d0292c9a5f8e",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-009": {
+          "subscriptionId": "bcb6c332-25e9-4b67-8d7b-5edfcbab08c5",
+          "enabled": false,
+          "locations": [
+            "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e-010": {
+          "subscriptionId": "d2ec8646-9f26-4120-a0fe-4d47142f6618",
+          "enabled": false,
+          "locations": [
+            "eastus"
           ],
           "serviceType": "storage"
         },
@@ -897,6 +1137,94 @@
           "enabled": false,
           "locations": [
             "eastus"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-e2c-001": {
+          "subscriptionId": "27d27eb6-441a-498b-87d8-d947aec0831e",
+          "enabled": false,
+          "locations": [
+            "eastus2euap"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-001": {
+          "subscriptionId": "79910d50-849b-45ab-bff9-ed7028769a81",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-002": {
+          "subscriptionId": "01f3e4ff-a9e9-4281-a7b5-4f018fca7e8a",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-003": {
+          "subscriptionId": "35513e36-d6ae-4d8a-923a-1d9b3ff59e4a",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-004": {
+          "subscriptionId": "b3a87d1a-0aee-4ad7-94a4-1960e4af7f7d",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-005": {
+          "subscriptionId": "bf6fb180-06be-49b9-a4d3-b86e220fa5ed",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-006": {
+          "subscriptionId": "d1ce5e0c-3f76-4b0b-b9ae-9cf705bd4907",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-007": {
+          "subscriptionId": "6dd1ca97-d0c2-4e29-bd47-5d4cd1565e13",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-008": {
+          "subscriptionId": "5c2c5e0b-2dfc-47c9-be86-95a86ae7ab55",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-009": {
+          "subscriptionId": "c5362d0e-003e-4bdf-b9d0-429d40b019c6",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "storage"
+        },
+        "vscs-codesp-prod-data-storage-us-w2-010": {
+          "subscriptionId": "5326e846-8eff-4cfe-a06b-39f3d70cba4a",
+          "enabled": false,
+          "locations": [
+            "westus2"
           ],
           "serviceType": "storage"
         },
