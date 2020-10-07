@@ -470,6 +470,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     createEnvironmentInput.PlanId = plan.Plan.ResourceId;
                 }
+            }            
+            else if (Request.Headers.TryGetValue(GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader, out var headerValue)
+                && headerValue.All(x => string.IsNullOrEmpty(x)))
+            {
+                // HOTFIX for release 10/5 weekly release - disable GitHub API forking
+                // To remove: delete this whole `else if` block
+
+                // get the plan, fix it, and let the rest of the code do its thing
+                var plan = GitHubFixedPlansMapper.GetPlanToUse();
+                if (plan == null)
+                {
+                    return Forbid();
+                }
+
+                createEnvironmentInput.PlanId = plan.Plan.ResourceId;
             }
 
             var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);

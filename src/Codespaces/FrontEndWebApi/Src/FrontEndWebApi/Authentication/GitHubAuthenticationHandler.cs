@@ -240,6 +240,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         public static bool IsInGitHubAuthenticatedSession(HttpRequest request, out string token)
         {
+            // HOTFIX for release 10/5 weekly release - disable GitHub API forking
+            // To remove: delete these 2 lines and uncomment the below code
+            token = null;
+            return false;
+
+            /*
             token = null;
             request.Headers.TryGetValue(
                 GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader,
@@ -253,6 +259,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             token = headerValue.FirstOrDefault();
             return true;
+            */
         }
     }
 }
