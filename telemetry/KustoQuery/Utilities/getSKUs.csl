@@ -1,0 +1,13 @@
+.create-or-alter function
+with (docstring = 'Gets all skus.', folder='Utilities')
+getSKUs
+(T:(msg: string, ['time']: datetime, SkuName: string))
+{
+    T
+        | where ['time']  > ago(7d)
+        | where msg == "environment_manager_update_complete"
+        | where isnotempty(SkuName)
+        | project SkuName, msg
+        | distinct SkuName
+        | sort by SkuName asc
+}
