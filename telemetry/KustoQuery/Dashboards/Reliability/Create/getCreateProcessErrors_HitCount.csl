@@ -1,0 +1,14 @@
+.create-or-alter function
+with (docstring = 'Create codespaces - orders the infrastructure or bugs by hitcount', folder='Dashboards/Reliability/Create')
+getCreateProcessErrors_HitCount
+(T:(EventAtCreateRequestStop_ResponseCode: int, 
+    TimeStamp: datetime, 
+    CreateOutcome: string))
+{
+    T
+        | where EventAtCreateRequestStop_ResponseCode == 201
+        | where TimeStamp < ago(1h)
+        | where CreateOutcome startswith "Infrastructure:" or CreateOutcome startswith "Bug:"
+        | summarize HitCount = count() by CreateOutcome
+        | project HitCount, CreateOutcome
+}

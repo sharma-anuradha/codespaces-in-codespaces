@@ -1,11 +1,15 @@
-#function("Create codespaces - orders the infrastructure or bugs by hitcount")
-(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, CreateOutcome: string))
+#function("Create codespaces - failure correlation id and codespace id")
+(T:(EventAtCreateRequestStop_ResponseCode: int, 
+    TimeStamp: datetime, 
+    CreateOutcome: string,
+    EventAtCreateRequestStart_CorrelationId: string, 
+    CodespaceId: string, 
+    BuildId: string))
 {
     T
-    | where EventAtCreateRequestStop_ResponseCode == 201
-    | where TimeStamp < ago(1h)
-    | where CreateOutcome startswith "Infrastructure:" or CreateOutcome startswith "Bug:"
-    | summarize HitCount = count() by CreateOutcome
-    | project HitCount, CreateOutcome
-    | order by HitCount desc
+        | where EventAtCreateRequestStop_ResponseCode == 201
+        | where TimeStamp < ago(1h)
+        | where CreateOutcome startswith "Infrastructure:" or CreateOutcome startswith "Bug:"
+        | project CreateOutcome, EventAtCreateRequestStart_CorrelationId, CodespaceId, BuildId, TimeStamp
+        | order by TimeStamp desc 
 }
