@@ -146,6 +146,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
                     var snapshotRecord = await CreateOSDiskSnapshotRecord(Guid.Parse(snapshot.Key), snapshot.Name, input.Location, diskRecord, childLogger);
 
+                    // Update resource tags for orphan tracking
+                    await snapshot.Update()
+                        .WithTags(snapshotRecord.GetResourceTags(trigger))
+                        .ApplyAsync();
+
                     return Mapper.Map<AllocateResult>(snapshotRecord);
                 });
         }
@@ -206,6 +211,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                             diskRecord.ProvisioningStatus = diskRecord.StartingStatus = OperationState.Succeeded;
                             diskRecord.ProvisioningStatusChanged = diskRecord.StartingStatusChanged = diskRecord.Ready = DateTime.UtcNow;
                         });
+
+                    // Update resource tags for orphan tracking
+                    await disk.Update()
+                        .WithTags(diskRecord.GetResourceTags(trigger))
+                        .ApplyAsync();
 
                     return Mapper.Map<AllocateResult>(diskRecord);
                 });
