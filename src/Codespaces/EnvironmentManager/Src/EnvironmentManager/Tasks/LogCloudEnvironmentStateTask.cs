@@ -141,11 +141,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             {
                 childLogger.FluentAddValue("EnvironmentSku", sku.Key)
                            .FluentAddValue("EnvironmentCount", sku.Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentTotalCount", total)
-                           .FluentAddValue("EnvironmentActiveCount", sku.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentShutdownCount", sku.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentArchivedCount", sku.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
-                           .LogInfo("cloud_environment_sku_measure");
+                           .FluentAddValue("EnvironmentTotalCount", total);
+
+                AddCountsByCloudEnvironmentState(childLogger, sku);
+
+                childLogger.LogInfo("cloud_environment_sku_measure");
             }
 
             // Aggregate by Location
@@ -154,11 +154,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             {
                 childLogger.FluentAddValue("EnvironmentLocation", location.Key)
                            .FluentAddValue("EnvironmentCount", location.Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentTotalCount", total)
-                           .FluentAddValue("EnvironmentActiveCount", location.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentShutdownCount", location.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentArchivedCount", location.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
-                           .LogInfo("cloud_environment_location_measure");
+                           .FluentAddValue("EnvironmentTotalCount", total);
+
+                AddCountsByCloudEnvironmentState(childLogger, location);
+
+                childLogger.LogInfo("cloud_environment_location_measure");
             }
 
             // Aggregate by Partner
@@ -167,11 +167,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             {
                 childLogger.FluentAddValue("EnvironmentPartner", PartnerString(partner.Key))
                            .FluentAddValue("EnvironmentCount", partner.Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentTotalCount", total)
-                           .FluentAddValue("EnvironmentActiveCount", partner.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentShutdownCount", partner.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentArchivedCount", partner.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
-                           .LogInfo("cloud_environment_partner_measure");
+                           .FluentAddValue("EnvironmentTotalCount", total);
+
+                AddCountsByCloudEnvironmentState(childLogger, partner);
+
+                childLogger.LogInfo("cloud_environment_partner_measure");
             }
 
             // Aggregate by Country
@@ -180,11 +180,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             {
                 childLogger.FluentAddValue("EnvironmentCountryCode", country.Key)
                            .FluentAddValue("EnvironmentCount", country.Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentTotalCount", total)
-                           .FluentAddValue("EnvironmentActiveCount", country.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentShutdownCount", country.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
-                           .FluentAddValue("EnvironmentArchivedCount", country.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
-                           .LogInfo("cloud_environment_country_measure");
+                           .FluentAddValue("EnvironmentTotalCount", total);
+
+                AddCountsByCloudEnvironmentState(childLogger, country);
+
+                childLogger.LogInfo("cloud_environment_country_measure");
             }
 
             // Aggregate by Geo
@@ -193,12 +193,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             {
                 childLogger.FluentAddValue("EnvironmentAzureGeography", geo.Key)
                            .FluentAddValue($"EnvironmentCount", geo.Sum(x => x.Count))
-                           .FluentAddValue($"EnvironmentTotalCount", total)
-                           .FluentAddValue($"EnvironmentActiveCount", geo.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
-                           .FluentAddValue($"EnvironmentShutdownCount", geo.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
-                           .FluentAddValue($"EnvironmentArchivedCount", geo.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
-                           .LogInfo("cloud_environment_geo_measure");
+                           .FluentAddValue($"EnvironmentTotalCount", total);
+
+                AddCountsByCloudEnvironmentState(childLogger, geo);
+
+                childLogger.LogInfo("cloud_environment_geo_measure");
             }
+        }
+
+        private IDiagnosticsLogger AddCountsByCloudEnvironmentState<T>(IDiagnosticsLogger logger, IGrouping<T, CloudEnvironmentCountByDimensions> grouping)
+        {
+            foreach (CloudEnvironmentState state in Enum.GetValues(typeof(CloudEnvironmentState)))
+            {
+                logger.FluentAddValue($"Environment{state}Count", grouping.Where(x => x.State == state).Sum(x => x.Count));
+            }
+
+            return logger;
         }
 
         private async Task<IEnumerable<CloudEnvironmentCountByDimensions>> GetCountByDimensionsForDataPlaneLocationsAsync(IDiagnosticsLogger logger)
