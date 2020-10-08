@@ -42,6 +42,7 @@ class Subscription {
     [string]$storagePartitionedDnsFlag
     [System.Guid]$subscriptionId
     [string]$subscriptionName
+    [string]$subscriptionNewName
     [string]$subscriptionOldName
     [string]$vnetInjection
     [SubscriptionValidation]$validation = [SubscriptionValidation]::new()
@@ -264,16 +265,19 @@ function Format-ExcelToJson {
 
             $subscription.subscriptionName = $subscriptionName
 
-            # If Subscription has old name, and rename isn't completeted,
-            # keep using old name for now.
             $subscriptionOldName = Get-CellValue $dataTable.Rows[$i] $subscriptionOldNameColumn
             $subscription.subscriptionOldName = $subscriptionOldName
-            if ($null -ne $subscriptionOldName -and $subscriptionOldName.Trim().Length -ne 0) {
-                $renameDoneValue = Get-CellValue $dataTable.Rows[$i] $subscriptionRenameDoneColumn
-                [bool]$renameDone = $false
-                if (![System.Boolean]::TryParse($renameDoneValue, [ref]$renameDone) -or !$renameDone) {
-                    $subscription.subscriptionName = $subscriptionOldName
-                }
+
+            # Don't set subscriptionNewName if there isn't an old name
+            $subscription.subscriptionNewName = $subscription.subscriptionOldName ? $subscriptionName : ""
+
+            $renameDoneValue = Get-CellValue $dataTable.Rows[$i] $subscriptionRenameDoneColumn
+            [bool]$renameDone = $null
+            [System.Boolean]::TryParse($renameDoneValue, [ref]$renameDone)
+
+            # subscriptionName property should be set to what we believe is current in Azure
+            if ($subscription.subscriptionOldName -and -not $renameDone) {
+                $subscription.subscriptionName = $subscriptionOldName
             }
 
             $subscription.subscriptionId = $subscriptionId
@@ -377,13 +381,13 @@ function Get-Subscriptions {
 
     $subscriptions = Get-Content $SubscriptionJsonFile | Out-String | ConvertFrom-Json
     if ( [System.Guid]::Empty -ne $SubscriptionId) {
-        $subscriptions = $subscriptions |  Where-Object {
+        $subscriptions = $subscriptions | Where-Object {
             $_.subscriptionId -eq $SubscriptionId
         }
     }
 
     if ($SubscriptionName.Length -ne 0) {
-        $subscriptions = $subscriptions |  Where-Object {
+        $subscriptions = $subscriptions | Where-Object {
             $_.subscriptionName -like "$($SubscriptionName)"
         }
     }
@@ -930,6 +934,23 @@ function Enable-Subscription {
             Push-Location $VsoUtilDirectory
             dotnet VsoUtil.dll enable-subscription --verbose --location $sub.location --env $env --subscription $sub.subscriptionId $options
             Pop-Location
+        }
+    }
+}
+
+function Rename-Subscription {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Object[]]$Subscriptions
+    )
+
+    Process {
+        ForEach ($sub in $Subscriptions) {
+            Write-Host
+            Write-Host "Renaming $($sub.subscriptionOldName) ($($sub.subscriptionId)) to $($sub.subscriptionNewName)"
+
+            az account subscription rename --id $sub.subscriptionId --name $sub.subscriptionNewName
         }
     }
 }

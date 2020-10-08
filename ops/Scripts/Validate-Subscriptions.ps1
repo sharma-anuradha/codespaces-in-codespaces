@@ -84,11 +84,11 @@ if ($invalidSubscriptions) {
 
 Write-Host
 $FinalReport = [ordered]@{
-    "Total Subscription Count"=($subscriptions ? $subscriptions.Count : 0)
-    "Inaccessible Subscription Count"=($inaccessibleSubs ? $inaccessibleSubs.Count : 0)
-    "Tested Subscription Count"=($testedSubscriptions ? $testedSubscriptions.Count : 0)
-    "Valid Subscription Count"=($validSubscriptions ? $validSubscriptions.Count : 0)
-    "Invalid Subscription Count"=($invalidSubscriptions ? $invalidSubscriptions.Count : 0)
+    "Total Subscription Count"=@($subscriptions).Count
+    "Inaccessible Subscription Count"=@($inaccessibleSubs).Count
+    "Tested Subscription Count"=@($testedSubscriptions).Count
+    "Valid Subscription Count"=@($validSubscriptions).Count
+    "Invalid Subscription Count"=@($invalidSubscriptions).Count
 }
 $FinalReport | Format-Table
 
