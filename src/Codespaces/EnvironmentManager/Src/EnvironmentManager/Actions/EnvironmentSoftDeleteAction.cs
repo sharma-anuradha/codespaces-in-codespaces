@@ -90,12 +90,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
                     await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
 
-                    if (record.Value.Type == EnvironmentType.StaticEnvironment)
-                    {
-                        // Return after setting the delete flag for static environment.
-                        return record.Value;
-                    }
-
                     // Added the actual suspend action call in the "try" block so that we always emit "Deleted" billing event even if
                     // suspend call fails and throws exception. As environment was marked as deleted in the previous "update" statement,
                     // it will ensure that billing is always stopped when we mark the environment as deleted.
