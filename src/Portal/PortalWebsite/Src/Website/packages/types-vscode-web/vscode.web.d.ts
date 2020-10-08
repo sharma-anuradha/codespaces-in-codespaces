@@ -747,6 +747,13 @@ declare module 'vscode-web' {
         staticExtensions?: { packageJSON: IExtensionManifest; extensionLocation: URI }[];
 
         /**
+         * [TEMPORARY]: This will be removed soon.
+         * Enable `<iframe>` wrapping.
+         * Defaults to false.
+         */
+        readonly _wrapWebWorkerExtHostInIframe?: boolean;
+
+        /**
          * Experimental: Support for URL callbacks.
          */
         urlCallbackProvider?: IURLCallbackProvider;

@@ -160,6 +160,7 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
             resolveCommonTelemetryProperties,
             staticExtensions,
             commands,
+            _wrapWebWorkerExtHostInIframe: false,
         };
 
         vscode.create(this.workbenchRef, config);
