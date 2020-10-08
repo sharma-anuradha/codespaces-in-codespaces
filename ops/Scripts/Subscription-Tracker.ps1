@@ -272,8 +272,9 @@ function Format-ExcelToJson {
             $subscription.subscriptionNewName = $subscription.subscriptionOldName ? $subscriptionName : ""
 
             $renameDoneValue = Get-CellValue $dataTable.Rows[$i] $subscriptionRenameDoneColumn
-            [bool]$renameDone = $null
-            [System.Boolean]::TryParse($renameDoneValue, [ref]$renameDone)
+            [bool]$renameDone = $false
+            [Diagnostics.CodeAnalysis.SuppressMessageAttribute('UseDeclaredVarsMoreThanAssignments', '', Justification='Capture to prevent output in script')]
+            $_discard = [System.Boolean]::TryParse($renameDoneValue, [ref]$renameDone)
 
             # subscriptionName property should be set to what we believe is current in Azure
             if ($subscription.subscriptionOldName -and -not $renameDone) {
@@ -944,6 +945,16 @@ function Rename-Subscription {
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
         [Object[]]$Subscriptions
     )
+
+    Begin {
+        $extensionInfo = az extension show --name account | ConvertFrom-Json
+        if (-not $extensionInfo) {
+            Write-Host "Renaming subscriptions requires the 'account' extension"
+            Write-Host "You can install with:"
+            Write-Host "  az extension add --name account"
+            Write-Error "Try again after installing"
+        }
+    }
 
     Process {
         ForEach ($sub in $Subscriptions) {
