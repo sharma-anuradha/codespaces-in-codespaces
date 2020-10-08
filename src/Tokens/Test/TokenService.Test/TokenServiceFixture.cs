@@ -43,6 +43,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             new X509EncryptingCredentials(GetTestCert("TestAudience", isPrivate: true));
 
         public static readonly TimeSpan ExchangeLifetime = TimeSpan.FromHours(1);
+        public static readonly TimeSpan AnonymousLifetime = TimeSpan.FromHours(1);
+        public const int AnonymousDisplayNameMaxLength = 40;
 
         private readonly IWebHost webHost;
 

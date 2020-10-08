@@ -319,6 +319,33 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
         }
 
         /// <summary>
+        /// Creates an anonymous token via the token service.
+        /// </summary>
+        /// <param name="anonymousParameters">Optional Display name and parameters for the anonymous token.</param>
+        /// <param name="cancellation">Cancellation token.</param>
+        /// <returns>The issued JWT token.</returns>
+        /// <exception cref="ArgumentException">Some claims or parameters were missing or invalid.
+        /// The exception message often contains details.</exception>
+        /// <exception cref="UnauthorizedAccessException">The client authentication token was
+        /// missing or invalid.</exception>
+        public async Task<string> CreateAnonymousTokenAsync(
+            AnonymousParameters? anonymousParameters,
+            CancellationToken cancellation)
+        {
+            this.httpClient.DefaultRequestHeaders.Authorization = await this.authCallback();
+            var response = await this.httpClient.PostAsJsonAsync(
+                TokensApiPath + "/anonymous",
+                anonymousParameters,
+                cancellation);
+
+            var result = await ConvertResponseAsync<IssueResult>(
+                response,
+                allowNotFound: false,
+                cancellation);
+            return result!.Token;
+        }
+
+        /// <summary>
         /// Gets public certificates for the issuer.
         /// </summary>
         /// <param name="issuer">Issuer URI.</param>

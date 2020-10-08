@@ -78,5 +78,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Array of VSO environment IDs.
         /// </summary>
         public const string Environments = "environments";
+
+        /// <summary>
+        /// If the token is anonymous, then this claim value is 'anonymous'
+        /// </summary>
+        public const string Anonymous = "anonymous";
     }
 }

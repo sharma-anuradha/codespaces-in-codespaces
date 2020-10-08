@@ -42,5 +42,10 @@ namespace Microsoft.VsSaaS.Services.TokenService.Settings
         /// Gets or sets settings for token exchange operations.
         /// </summary>
         public TokenExchangeSettings ExchangeSettings { get; set; } = null!;
+
+        /// <summary>
+        /// Gets or sets settings for anonymous token operations.
+        /// </summary>
+        public AnonymousTokenSettings AnonymousTokenSettings { get; set; } = null!;
     }
 }

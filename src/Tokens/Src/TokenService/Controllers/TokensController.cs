@@ -10,6 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Kusto.Cloud.Platform.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -44,6 +45,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         private readonly IAuthenticationSchemeProvider authSchemeProvider;
         private readonly TokenServiceAppSettings settings;
         private readonly TokenIssuerSettings? exchangeIssuer;
+        private readonly TokenIssuerSettings? anonymousIssuer;
+        private static readonly string[] DisplayNameForbiddenChars = new string[] { "<", ">", "&", ";", "?", "=" };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TokensController"/> class.
@@ -69,6 +72,12 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 this.settings.IssuerSettings?.TryGetValue(
                     settings.ExchangeSettings.Issuer, out this.exchangeIssuer);
             }
+
+            if (!string.IsNullOrEmpty(settings.AnonymousTokenSettings?.Issuer))
+            {
+                this.settings.IssuerSettings?.TryGetValue(
+                    settings.AnonymousTokenSettings.Issuer, out this.anonymousIssuer);
+            }
         }
 
         /// <summary>
@@ -85,8 +94,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpOperationalScope("issue")]
         public IActionResult Issue(
-            [FromBody]IssueParameters parameters,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromBody] IssueParameters parameters,
+            [FromServices] IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(parameters, nameof(parameters));
             ValidationUtil.IsRequired(parameters.Claims, "claims");
@@ -161,8 +170,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpOperationalScope("validate")]
         public IActionResult Validate(
-            [FromBody]ValidateParameters parameters,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromBody] ValidateParameters parameters,
+            [FromServices] IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(parameters, nameof(parameters));
             ValidationUtil.IsRequired(parameters.Token, "token");
@@ -239,8 +248,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpOperationalScope("exchange")]
         public async Task<IActionResult> ExchangeAsync(
-            [FromBody]ExchangeParameters? parameters,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromBody] ExchangeParameters? parameters,
+            [FromServices] IDiagnosticsLogger logger)
         {
             if (this.exchangeIssuer == null || string.IsNullOrEmpty(this.exchangeIssuer.IssuerUri))
             {
@@ -335,11 +344,99 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         }
 
         /// <summary>
+        /// Issues a new anonymous token with the requested scope.
+        /// </summary>
+        /// <param name="parameters">Optional Display Name and parameters for the anonymous token.</param>
+        /// <param name="logger">Diagnostic logger.</param>
+        /// <returns>An issue result including the issued token.</returns>
+        [HttpPost("anonymous")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(IssueResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpOperationalScope("anonymous-token")]
+        public IActionResult AnonymousToken(
+            [FromBody] AnonymousParameters? parameters,
+            [FromServices] IDiagnosticsLogger logger)
+        {
+            if (this.anonymousIssuer == null || string.IsNullOrEmpty(this.anonymousIssuer.IssuerUri))
+            {
+                return Problem("Missing anonymous issuer configuration.");
+            }
+
+            var payload = new JwtPayload();
+
+            var audience = ValidateAnonymousAudience(parameters?.Audience);
+            if (audience == null)
+            {
+                logger.AddValue("audience", parameters?.Audience);
+                logger.LogError("anonymous_token_invalid_audience");
+                return Problem("Invalid audience: " + parameters?.Audience ??
+                        this.settings.AnonymousTokenSettings?.ValidAudiences?.FirstOrDefault() ??
+                        string.Empty);
+            }
+
+            payload.AddClaim(new Claim(JwtRegisteredClaimNames.Aud, audience));
+            payload.AddClaim(new Claim(JwtRegisteredClaimNames.Iss, this.anonymousIssuer?.IssuerUri));
+
+            if (parameters?.DisplayName != null)
+            {
+                // Trim whitespace from begin end
+                var displayName = parameters.DisplayName.Trim();
+
+                // Remove forbidden chars
+                DisplayNameForbiddenChars.ForEach(fc => displayName = displayName.Replace(fc, string.Empty));
+
+                // Limit length
+                if (displayName.Length > this.settings.AnonymousTokenSettings.DisplayNameMaxLength)
+                {
+                    displayName = displayName.Substring(0, this.settings.AnonymousTokenSettings.DisplayNameMaxLength);
+                }
+
+                if (!string.IsNullOrEmpty(displayName))
+                {
+                    payload.AddClaim(new Claim(CustomClaims.DisplayName, displayName));
+                }
+            }
+
+            payload.AddClaim(new Claim(CustomClaims.Anonymous, "anonymous"));
+
+            var defaultLifetime = this.settings.AnonymousTokenSettings?.Lifetime ??
+                this.anonymousIssuer?.MaxLifetime;
+            var lifetime = parameters?.Lifetime != null &&
+                (defaultLifetime == null || parameters.Lifetime < defaultLifetime) ?
+                parameters.Lifetime.Value : defaultLifetime;
+            if (lifetime != null)
+            {
+                var exp = DateTime.UtcNow + lifetime.Value;
+                payload.AddClaim(JwtWriter.CreateDateTimeClaim(JwtRegisteredClaimNames.Exp, exp));
+            }
+
+            string token;
+            try
+            {
+                token = this.jwtWriter.WriteToken(payload, logger);
+            }
+            catch (SecurityTokenException ex)
+            {
+                // Exception details are also logged by WriteToken().
+                logger.LogErrorWithDetail("token_issue_invalid_claims", ex.Message);
+                return Problem("Invalid token claims.", detail: ex.Message);
+            }
+
+            var result = new IssueResult
+            {
+                Token = token,
+            };
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Attempts to reauthenticate the current request with a token extracted from the body.
         /// </summary>
         private async Task<AuthenticateResult> ReauthenticateAsync(
-            string authenticationScheme,
-            string token)
+        string authenticationScheme,
+        string token)
         {
             // Place the token into the auth header before re-authenticating the request.
             var headerAuthScheme = authenticationScheme == AadAuthenticationScheme
@@ -419,8 +516,22 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         {
             var exchangeSettings = this.settings.ExchangeSettings ??
                 throw new InvalidOperationException("Missing exchange settings.");
-            var audienceSettings = this.settings.AudienceSettings ??
+            return ValidateAudience(audience, exchangeSettings.ValidAudiences, this.settings.AudienceSettings);
+        }
+
+        private string? ValidateAnonymousAudience(string? audience)
+        {
+            var anonymousSettings = this.settings.AnonymousTokenSettings ??
+                throw new InvalidOperationException("Missing anonymous settings.");
+            return ValidateAudience(audience, anonymousSettings.ValidAudiences, this.settings.AudienceSettings);
+        }
+
+        private static string? ValidateAudience(string? audience, string[] validAudiences, IDictionary<string, TokenAudienceSettings>? audienceSettings)
+        {
+            if (audienceSettings == null)
+            {
                 throw new InvalidOperationException("Missing audience settings.");
+            }
 
             TokenAudienceSettings validAudience;
             if (!string.IsNullOrEmpty(audience))
@@ -435,20 +546,20 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                     return null;
                 }
 
-                if (exchangeSettings.ValidAudiences?.Contains(audienceKey) != true)
+                if (validAudiences?.Contains(audienceKey) != true)
                 {
-                    // The audience is known but is not allowed for exchanging.
+                    // The audience is known but is not allowed.
                     return null;
                 }
             }
             else
             {
-                // No audience was specified. Use the default audience for exchanging.
-                var audienceKey = exchangeSettings.ValidAudiences?.FirstOrDefault();
+                // No audience was specified. Use the default audience.
+                var audienceKey = validAudiences?.FirstOrDefault();
                 if (audienceKey == null ||
                     !audienceSettings.TryGetValue(audienceKey, out validAudience!))
                 {
-                    // An unknown audience is configured as the default exchange audience.
+                    // An unknown audience is configured as the default audience.
                     return null;
                 }
             }
