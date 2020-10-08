@@ -37,3 +37,7 @@ port-forwarding-web-api:
       - hosts:
           - '*.apps.codespaces.githubusercontent.com'
         secretName: ssl-cert-github-cs-pf
+errors-backend:
+  config:
+    aspNetEnv: Production
+    overrideAppSettingsJson: false
