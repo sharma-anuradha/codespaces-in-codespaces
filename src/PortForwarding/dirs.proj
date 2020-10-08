@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="Connections.Contracts\dirs.proj" />
+    <ProjectReference Include="PortForwarding.ErrorsBackend\PortForwarding.ErrorsBackend.csproj" />
     <ProjectReference Include="PortForwardingWebApi\dirs.proj" />
     <ProjectReference Include="PortForwarding.Common\dirs.proj" />
   </ItemGroup>

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.Build.NoTargets">
+<Project Sdk="Microsoft.Build.NoTargets">
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
@@ -26,6 +26,9 @@
 
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)\..\PortForwarding\PortForwardingWebApi\Src\PortForwardingWebApi\Charts\**" LinkBase="$(WebChartName)\charts">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)\..\PortForwarding\PortForwarding.ErrorsBackend\Charts\**" LinkBase="$(WebChartName)\charts">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

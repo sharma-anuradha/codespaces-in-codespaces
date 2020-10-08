@@ -43,3 +43,7 @@ port-forwarding-web-api:
       - hosts:
           - '*.apps.dev.codespaces.githubusercontent.com'
         secretName: ssl-cert-github-cs-pf
+errors-backend:
+  pods:
+    minReplicaCount: 1
+    maxReplicaCount: 1

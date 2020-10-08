@@ -10,6 +10,10 @@ variable "pfa_tag" {
   type = string
 }
 
+variable "errors_tag" {
+  type = string
+}
+
 variable "portal_tag" {
   type = string
 }
@@ -21,6 +25,11 @@ variable "pfs_registry" {
 variable "portal_registry" {
   default = "vsclkonlinedev.azurecr.io"
 }
+
+variable "errors_registry" {
+  default = "vsclkonlinedev.azurecr.io"
+}
+
 variable "location" {
   default = "westus2"
 }
@@ -355,6 +364,21 @@ resource "kubernetes_secret" "web_secrets" {
   type = "Opaque"
 }
 
+resource "kubernetes_secret" "errors_backend_secrets" {
+  metadata {
+    name = "web-errors-backend-settings"
+  }
+
+  data = {
+    "APPSECRETS__APPSERVICEPRINCIPALCLIENTSECRET" = data.azurerm_key_vault_secret.app_sp_password.value
+    "ASPNETCORE_ENVIRONMENT"                      = "Development"
+    "RUNNING_IN_AZURE"                            = "true"
+    "OVERRIDE_APPSETTINGS_JSON"                   = "appsettings.dev-ci.json"
+  }
+
+  type = "Opaque"
+}
+
 # Web includes latest PFA
 resource "helm_release" "web" {
   name  = "web"
@@ -397,6 +421,21 @@ resource "helm_release" "web" {
   set {
     name  = "port-forwarding-web-api.serviceBus.resourceGroup"
     value = azurerm_resource_group.rg.name
+  }
+
+  set {
+    name  = "errors-backend.image.repositoryUrl"
+    value = var.errors_registry
+  }
+
+  set {
+    name  = "errors-backend.image.tag"
+    value = var.errors_tag
+  }
+
+  set {
+    name  = "errors-backend.image.pullPolicy"
+    value = "Always"
   }
 }
 
@@ -576,6 +615,12 @@ resource "local_file" "chart_values_web_bin" {
     "    overrideDev: true",
     "    namespace: ${var.alias}sb",
     "    resourceGroup: ${azurerm_resource_group.rg.name}",
+    "",
+    "errors-backend:",
+    "  image:",
+    "    repositoryUrl: ${var.errors_registry}",
+    "    tag: ${var.errors_tag}",
+    "    pullPolicy: Always",
     ""
   ])
 

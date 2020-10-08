@@ -21,6 +21,7 @@ az account set --sub vsclk-core-dev
 user_alias=""
 pfs_tag=""
 pfa_tag=""
+errors_tag=""
 portal_tag=""
 verbose=false
 
@@ -39,6 +40,10 @@ do
         --pfa-tag)
             shift
             pfa_tag="$1"
+            ;;
+        --errors-tag)
+            shift
+            errors_tag="$1"
             ;;
         --portal-tag)
             shift
@@ -78,6 +83,12 @@ function main () {
         portal_tag="$(az acr repository show-tags --name vsclkonlinedev --repository vsclk.portal.website --orderby time_desc --query "[?starts_with(@, '1')]|[0]" | sed s/\"//g)"
     fi
 
+    if [ -z "$errors_tag" ]
+    then
+        echo "Searching for latest errors-backend tag"
+        errors_tag="$(az acr repository show-tags --name vsclkonlinedev --repository errors-backend --orderby time_desc --query "[?starts_with(@, '1')]|[0]" | sed s/\"//g)"
+    fi
+
     if [ -f "terraform.tfstate" ]; then
         execute "mv terraform.tfstate bak.terraform.tfstate"
     fi
@@ -96,7 +107,7 @@ function main () {
         execute "terraform init"
     fi
 
-    execute "terraform apply -var 'alias=$user_alias' -var 'pfs_tag=$pfs_tag' -var 'pfa_tag=$pfa_tag' -var 'portal_tag=$portal_tag' -auto-approve"
+    execute "terraform apply -var 'alias=$user_alias' -var 'pfs_tag=$pfs_tag' -var 'pfa_tag=$pfa_tag' -var 'portal_tag=$portal_tag' -var 'errors_tag=$errors_tag' -auto-approve"
 
     if [ -f "bak.terraform.tfstate" ]; then
         execute "mkdir -p $HOME/CEDev"

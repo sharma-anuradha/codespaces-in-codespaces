@@ -54,6 +54,7 @@ pfingress:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_intercept_errors on;
       error_page 302 = @handle_error;
+      error_page 401 404 500 502 503 504 @default_errors_backend;
     nginx.ingress.kubernetes.io/server-snippet: |
       location @handle_error {
         set $new_cookie $http_cookie;
@@ -90,6 +91,27 @@ pfingress:
         if ($upstream_http_location ~* "^(?<pfa_scheme>https?):\/\/(?<pfa_service>[^\/]+)(?<path>\/.*)$") {
           proxy_pass '$pfa_scheme://$pfa_service';
         }
+      }
+      location @default_errors_backend {
+        proxy_set_header       X-Code             $status;
+        proxy_set_header       X-Format           $http_accept;
+        proxy_set_header       X-Original-URI     $request_uri;
+        proxy_set_header       X-Namespace        $namespace;
+        proxy_set_header       X-Ingress-Name     $ingress_name;
+        proxy_set_header       X-Service-Name     $service_name;
+        proxy_set_header       X-Service-Port     $service_port;
+        proxy_set_header       X-Request-ID       $req_id;
+        proxy_set_header       Host               $best_http_host;
+
+        set $new_cookie $http_cookie;
+
+        if ($new_cookie ~ "(.*)(?:^|;)\s*use_vso_pfs=[^;]+(.*)") {
+          set $new_cookie $1$2;
+        }
+
+        proxy_set_header Cookie $new_cookie;
+
+        proxy_pass 'http://web-errors-backend.default.svc.cluster.local';
       }
       location /authenticate-port-forwarder {
         proxy_pass_request_body on;
@@ -129,6 +151,9 @@ pfingress:
       }
       location /ms-logo.svg {
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
+      location /images/desktop-device-24.svg {
+        proxy_pass 'http://web-errors-backend.default.svc.cluster.local';
       }
   path: /
 

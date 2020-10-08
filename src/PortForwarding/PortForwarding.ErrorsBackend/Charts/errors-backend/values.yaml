@@ -1,0 +1,57 @@
+# Default values for errors-backend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+appSettings:
+  - ASPNETCORE_ENVIRONMENT
+  - RUNNING_IN_AZURE
+  - APPSECRETS__APPSERVICEPRINCIPALCLIENTSECRET
+  - OVERRIDE_APPSETTINGS_JSON
+
+pods:
+  minReplicaCount: 3
+  maxReplicaCount: 10
+  minReadySeconds: 1
+  progressDeadlineSeconds: 300
+  livenessProbePath:
+  livenessProbeDelaySeconds: 15
+  livenessProbeDelayTimeoutSeconds:
+  readinessProbePath:
+  readinessProbeDelaySeconds: 15
+  readinessProbeTimeoutSeconds: 60
+  targetCpuUtilizationPercentage: 80
+
+image:
+  pullPolicy: IfNotPresent
+  repositoryUrl:
+  repositoryName: errors-backend
+  tag:
+  imagePullSecret:
+
+service:
+  type: ClusterIP
+  port: 80
+  containerPort: 80
+
+ingress:
+  enabled: false
+  annotations: {}
+  paths: []
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 500m
+    memory: 1024Mi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
