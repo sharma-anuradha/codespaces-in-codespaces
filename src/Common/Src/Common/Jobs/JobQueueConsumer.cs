@@ -488,10 +488,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
         private (JobPayloadInfo, JobPayload) CreateJobPayload(QueueMessage queueMessage)
         {
+            string rawContent = null;
             try
             {
-                var json = Encoding.UTF8.GetString(queueMessage.Content);
-                var jobPayloadInfo = JobPayloadInfo.FromJson(json);
+                rawContent = Encoding.UTF8.GetString(queueMessage.Content);
+                var jobPayloadInfo = JobPayloadInfo.FromJson(rawContent);
                 var jobPayload = JobPayloadHelpers.FromJson(jobPayloadInfo.TagType, jobPayloadInfo.Payload);
                 lock (this.lockRegisteredJobHandlers)
                 {
@@ -505,7 +506,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             }
             catch (Exception error)
             {
-                this.logger.LogException($"Failed to create payload for job id:{queueMessage.Id}", error);
+                this.logger
+                    .WithValues(new LogValueSet()
+                    {
+                        { JobQueueLoggerConst.JobId, queueMessage.Id },
+                        { JobQueueLoggerConst.JobRawContent, rawContent },
+                        { JobQueueLoggerConst.JobQueueId, Queue.Id },
+                    })
+                    .LogException($"create_job_payload_failed", error);
                 return (new JobPayloadInfo(null, null, DateTime.UtcNow), new JobPayloadError(error));
             }
         }

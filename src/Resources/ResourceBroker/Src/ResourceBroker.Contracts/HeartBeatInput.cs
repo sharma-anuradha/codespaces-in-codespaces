@@ -1,4 +1,4 @@
-﻿// <copyright file="HeartBeatInput.cs" company="Microsoft">
+// <copyright file="HeartBeatInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -31,11 +31,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// </summary>
         [JsonProperty("resourceId")]
         public Guid ResourceId { get; set; }
-
-        /// <summary>
-        /// Gets or sets a list of data collected and sent by the VSOAgent.
-        /// </summary>
-        [JsonProperty("collectedDataList")]
-        public IEnumerable<CollectedData> CollectedDataList { get; set; }
     }
 }

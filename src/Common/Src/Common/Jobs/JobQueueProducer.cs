@@ -51,7 +51,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         .FluentAddValue(JobQueueLoggerConst.JobId, cloudMessage.Id)
                         .FluentAddValue(JobQueueLoggerConst.JobType, tagType)
                         .FluentAddValue(JobQueueLoggerConst.InitialVisibilityDelay, jobPayloadOptions?.InitialVisibilityDelay)
-                        .FluentAddValue(JobQueueLoggerConst.ExpireTimeout, jobPayloadOptions?.ExpireTimeout);
+                        .FluentAddValue(JobQueueLoggerConst.ExpireTimeout, jobPayloadOptions?.ExpireTimeout)
+                        .FluentAddBaseValues(job.LoggerProperties);
                     return cloudMessage;
                 },
                 errCallback: (err, logger) =>
