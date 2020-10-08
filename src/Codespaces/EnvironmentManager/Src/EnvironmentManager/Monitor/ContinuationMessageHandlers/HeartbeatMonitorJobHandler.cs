@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers
 {
@@ -59,6 +60,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             IEnvironmentSuspendAction environmentSuspendAction,
             IEnvironmentForceSuspendAction environmentForceSuspendAction,
             IEnvironmentUnavailableAction environmentUnavailableAction,
+            VsoSuperuserClaimsIdentity superuserIdentity,
+            ICurrentIdentityProvider currentIdentityProvider,
             EnvironmentMonitorSettings environmentMonitorSettings)
 
             : base(environmentRepository, latestHeartbeatMonitor, environmentMonitor, environmentMonitorSettings)
@@ -67,6 +70,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
             EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(EnvironmentForceSuspendAction));
             EnvironmentUnavailableAction = Requires.NotNull(environmentUnavailableAction, nameof(EnvironmentUnavailableAction));
+            SuperuserIdentity = Requires.NotNull(superuserIdentity, nameof(superuserIdentity));
+            CurrentIdentityProvider = Requires.NotNull(currentIdentityProvider, nameof(currentIdentityProvider));
         }
 
         private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
@@ -76,6 +81,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
 
         private IEnvironmentUnavailableAction EnvironmentUnavailableAction { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
+
+        private ICurrentIdentityProvider CurrentIdentityProvider { get; }
 
         /// <inheritdoc/>
         public override string QueueId => DefaultQueueId;
@@ -116,42 +125,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
 
             logger.FluentAddBaseValue(nameof(lastUpdatedByHeartBeat), lastUpdatedByHeartBeat);
 
-            if (environment.Type != EnvironmentType.StaticEnvironment)
+            using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
             {
-                if (environment.State == CloudEnvironmentState.Unavailable)
+                if (environment.Type != EnvironmentType.StaticEnvironment)
                 {
-                    var unavailableTimeout = await EnvironmentMonitorSettings.UnavailableEnvironmentTimeout(logger);
-
-                    if (environment.LastStateUpdated + unavailableTimeout < DateTime.UtcNow)
+                    if (environment.State == CloudEnvironmentState.Unavailable)
                     {
-                        // environment has been stuck in unavailable (for more than an hour by default)
-                        if (await EnvironmentMonitorSettings.EnableUnavailableEnvironmentHeartbeatMonitoring(logger))
+                        var unavailableTimeout = await EnvironmentMonitorSettings.UnavailableEnvironmentTimeout(logger);
+
+                        if (environment.LastStateUpdated + unavailableTimeout < DateTime.UtcNow)
                         {
-                            await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
-                            return (OperationState.Failed, EnvironmentMonitorConstants.UnhealthyUnavailableHeartbeatReason);
+                            // environment has been stuck in unavailable (for more than an hour by default)
+                            if (await EnvironmentMonitorSettings.EnableUnavailableEnvironmentHeartbeatMonitoring(logger))
+                            {
+                                await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
+                                return (OperationState.Failed, EnvironmentMonitorConstants.UnhealthyUnavailableHeartbeatReason);
+                            }
                         }
                     }
-                }
 
-                if (StateToProcess.Contains(environment.State) && hasHeartbeatTimeExpired)
-                {
-                    await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
-                    return (OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatReason);
+                    if (StateToProcess.Contains(environment.State) && hasHeartbeatTimeExpired)
+                    {
+                        await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
+                        return (OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatReason);
+                    }
                 }
-            }
-            else
-            {
-                if (environment.State == CloudEnvironmentState.Available && hasHeartbeatTimeExpired)
+                else
                 {
-                    await EnvironmentUnavailableAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentUnavailableReason, logger.NewChildLogger());
+                    if (environment.State == CloudEnvironmentState.Available && hasHeartbeatTimeExpired)
+                    {
+                        await EnvironmentUnavailableAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentUnavailableReason, logger.NewChildLogger());
 
-                    await EnvironmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
-                    return (OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatMarkingUnavailableReason);
-                }
-                else if (environment.State == CloudEnvironmentState.Unavailable && hasHeartbeatTimeExpired)
-                {
-                    await EnvironmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
-                    return (OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatForUnavailableEnvironmentReason);
+                        await EnvironmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
+                        return (OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatMarkingUnavailableReason);
+                    }
+                    else if (environment.State == CloudEnvironmentState.Unavailable && hasHeartbeatTimeExpired)
+                    {
+                        await EnvironmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
+                        return (OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatForUnavailableEnvironmentReason);
+                    }
                 }
             }
 
