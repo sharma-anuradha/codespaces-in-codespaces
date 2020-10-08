@@ -9,6 +9,8 @@ getStartingToShutdownEvents
     HttpRequestUri: string, 
     HttpRequestMethod: string, 
     WorkspaceId: string,
+    ErrorDetail: string,
+    ErrorMessage: string,
     ComputeResourceId: string,
     CloudEnvironmentOldState: string,
     CloudEnvironmentNewState: string,

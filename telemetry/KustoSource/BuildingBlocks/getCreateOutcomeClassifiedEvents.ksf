@@ -12,6 +12,7 @@
     CloudEnvironmentNewState: string, 
     CloudEnvironmentFailedStateReason: string, 
     CloudEnvironmentNewUpdatedTrigger: string,
+    ContinuationPayloadTrackingInstanceId: string,
     Service: string,
     CommitId: string,
     ServiceEnvironment: string,
@@ -38,9 +39,11 @@
     | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 503, "Infrastructure: Out of capacity 503", ResponseOutcome)
     | extend ResponseOutcome = iff(ResponseOutcome == "unknown", "Bug: unclassified response", ResponseOutcome)
     | extend CreateOutcome = iff(EventAtCreateRequestStop_ResponseCode != 201, "Non-success response", "unknown")
-    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToAvailable == 1, "Available", CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToAvailable == 1, "Available", CreateOutcome) 
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToFailedTask == 1, strcat("Infrastructure: Failure - ", EventAtProvisioningToFailedTask_ErrorMessage), CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtCreateActionError == 1, strcat("Infrastructure: Failure - ", EventAtCreateActionError_ErrorMessage), CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtContinuationHasError == 1, strcat("Infrastructure: Failure - ", EventAtContinuationHasError_ErrorMessage), CreateOutcome)
     | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToFailed == 1 and EventAtProvisioningToFailed_UserAttributed == 1, "User: Failed", CreateOutcome)
-    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToFailed == 1 and EventAtProvisioningToFailed_UserAttributed != 1, "Infrastructure: Failed", CreateOutcome)
     | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToDeleted == 1 and EventAtProvisioningToDeleted_UserInitiated == 1, "User: Deleted", CreateOutcome)
     | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToDeleted == 1 and EventAtProvisioningToDeleted_UserInitiated != 1, "Infrastructure: Deleted", CreateOutcome)
     | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToShutdown == 1 and EventAtProvisioningToShutdown_UserInitiated == 1, "User: Deleted", CreateOutcome)

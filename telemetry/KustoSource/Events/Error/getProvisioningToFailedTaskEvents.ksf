@@ -1,0 +1,28 @@
+#function("Get error for create action events by correlationId.")
+(T:(msg: string, 
+["time"]: datetime, 
+CorrelationId: string, 
+ErrorException: string, 
+ErrorMessage: string, 
+ErrorDetail:string, 
+level: string))
+{
+    T
+        | where level == "error"
+        | where CorrelationId != ""
+        | extend EventAtProvisioningToFailedTask = 1
+        | extend EventAtProvisioningToFailedTask_msg = msg
+        | extend EventAtProvisioningToFailedTask_Time = ["time"]
+        | extend EventAtProvisioningToFailedTask_CorrelationId = CorrelationId
+        | extend EventAtProvisioningToFailedTask_ErrorException = ErrorException
+        | extend EventAtProvisioningToFailedTask_ErrorMessage = ErrorMessage
+        | extend EventAtProvisioningToFailedTask_ErrorDetail = ErrorDetail
+        | project EventAtProvisioningToFailedTask, 
+            EventAtProvisioningToFailedTask_Time, 
+            EventAtProvisioningToFailedTask_msg, 
+            EventAtProvisioningToFailedTask_CorrelationId,
+            EventAtProvisioningToFailedTask_ErrorException,
+            EventAtProvisioningToFailedTask_ErrorMessage,
+            EventAtProvisioningToFailedTask_ErrorDetail
+        | summarize arg_max(EventAtProvisioningToFailedTask_Time, *) by EventAtProvisioningToFailedTask_CorrelationId
+}

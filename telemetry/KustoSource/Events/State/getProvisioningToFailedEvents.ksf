@@ -7,6 +7,8 @@
     HttpRequestUri: string, 
     HttpRequestMethod: string, 
     WorkspaceId: string, 
+    ErrorDetail: string,
+    ErrorMessage: string,
     CloudEnvironmentId: string, 
     CloudEnvironmentOldState: string, 
     CloudEnvironmentNewState: string, 
@@ -21,10 +23,14 @@
         | extend EventAtProvisioningToFailed_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
         | extend EventAtProvisioningToFailed_CorrelationId = CorrelationId
         | extend EventAtProvisioningToFailed_WorkspaceId = WorkspaceId
+        | extend EventAtProvisioningToFailed_ErrorDetail = ErrorDetail
+        | extend EventAtProvisioningToFailed_ErrorMessage = ErrorMessage
         | project EventAtProvisioningToFailed, 
             EventAtProvisioningToFailed_Time, 
             EventAtProvisioningToFailed_UserAttributed, 
             EventAtProvisioningToFailed_ViaHeartbeat, 
             EventAtProvisioningToFailed_CorrelationId,
-            EventAtProvisioningToFailed_WorkspaceId
+            EventAtProvisioningToFailed_WorkspaceId,
+            EventAtProvisioningToFailed_ErrorDetail,
+            EventAtProvisioningToFailed_ErrorMessage
 }

@@ -14,6 +14,7 @@ getCreateOutcomeEvents
     CloudEnvironmentNewState: string, 
     CloudEnvironmentFailedStateReason: string, 
     CloudEnvironmentNewUpdatedTrigger: string,
+    ContinuationPayloadTrackingInstanceId: string,
     Service: string,
     CommitId: string,
     ServiceEnvironment: string,
@@ -36,6 +37,8 @@ getCreateOutcomeEvents
     let ProvisioningToDeletedEvents = getProvisioningToDeletedEvents(T);
     let ProvisioningToShutdownEvents = getProvisioningToShutdownEvents(T);
     let ProvisioningToFailedEvents = getProvisioningToFailedEvents(T);
+    let ProvisioningToFailedTaskEvents = getProvisioningToFailedTaskEvents(T);
+    let ContinuationErrorEvents = getContinuationErrorEvents(T);
     let SelectedKitchenSinkEvents = getSelectedKitchenSinkEvents(T);
     let SelectedCustomContainerEvents = getSelectedCustomContainerEvents(T);
     CreateEnvironmentRequestStartEvents
@@ -47,6 +50,8 @@ getCreateOutcomeEvents
         | join kind=leftouter (ProvisioningToDeletedEvents) on $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtProvisioningToDeleted_CloudEnvironmentId
         | join kind=leftouter (ProvisioningToShutdownEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtProvisioningToShutdown_WorkspaceId
         | join kind=leftouter (ProvisioningToFailedEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtProvisioningToFailed_WorkspaceId
+        | join kind=leftouter (ProvisioningToFailedTaskEvents) on $left.EventAtProvisioningToFailed_CorrelationId == $right.EventAtProvisioningToFailedTask_CorrelationId
+        | join kind=leftouter (ContinuationErrorEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtContinuationHasError_WorkspaceId
         | join kind=leftouter (SelectedKitchenSinkEvents) on $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtSelectedKitchenSink_CloudEnvironmentId and $left.EventAtCreateHasWorkspace_ComputeResourceId == $right.EventAtSelectedKitchenSink_ComputeId
         | join kind=leftouter (SelectedCustomContainerEvents) on $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtSelectedCustomContainer_CloudEnvironmentId and $left.EventAtCreateHasWorkspace_ComputeResourceId == $right.EventAtSelectedCustomContainer_ComputeId
         | extend SkuName = EventAtCreateRequestStop_SkuName

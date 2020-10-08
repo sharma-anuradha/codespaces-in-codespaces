@@ -3,6 +3,8 @@
     TimeStamp: datetime, 
     CreateOutcome: string,
     EventAtCreateRequestStart_CorrelationId: string, 
+    EventAtProvisioningToFailed_ErrorDetail: string, 
+    EventAtProvisioningToFailedTask_ErrorDetail: string, 
     CodespaceId: string, 
     BuildId: string))
 {
@@ -10,6 +12,6 @@
         | where EventAtCreateRequestStop_ResponseCode == 201
         | where TimeStamp < ago(1h)
         | where CreateOutcome startswith "Infrastructure:" or CreateOutcome startswith "Bug:"
-        | project CreateOutcome, EventAtCreateRequestStart_CorrelationId, CodespaceId, BuildId, TimeStamp
+        | project CreateOutcome, EventAtProvisioningToFailed_ErrorDetail, EventAtProvisioningToFailedTask_ErrorDetail, EventAtCreateRequestStart_CorrelationId, CodespaceId, BuildId, TimeStamp
         | order by TimeStamp desc 
 }

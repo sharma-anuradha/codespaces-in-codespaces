@@ -9,6 +9,8 @@ getProvisioningToDeletedEvents
     HttpRequestUri: string, 
     HttpRequestMethod: string, 
     WorkspaceId: string, 
+    ErrorDetail: string,
+    ErrorMessage: string,
     CloudEnvironmentId: string, 
     CloudEnvironmentOldState: string, 
     CloudEnvironmentNewState: string, 

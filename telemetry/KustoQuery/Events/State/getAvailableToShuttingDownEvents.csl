@@ -8,6 +8,8 @@ getAvailableToShuttingDownEvents
     HttpRequestUri: string, 
     HttpRequestMethod: string, 
     WorkspaceId: string,
+    ErrorDetail: string,
+    ErrorMessage: string,
     CloudEnvironmentOldState: string,
     CloudEnvironmentNewState: string,
     CloudEnvironmentId: string,

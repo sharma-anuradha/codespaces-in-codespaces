@@ -155,7 +155,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     await EnvironmentStateChangeManager.CreateAsync(plan, environment, oldState, newState, logger.NewChildLogger());
 
                     // Mutates environment state
-                    var lastStateUpdated = DateTime.UtcNow;
                     record.PushTransition((environment) =>
                     {
                         // Update session used date time
@@ -176,7 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                         environment.State = newState;
                         environment.LastStateUpdateTrigger = trigger;
-                        environment.LastStateUpdated = lastStateUpdated;
+                        environment.LastStateUpdated = DateTime.UtcNow;
                         environment.StateTimeout = null; // reset the state timeout as the transition has now occurred
 
                         if (reason != null)
@@ -210,7 +209,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var originalState = cloudEnvironment.State;
                     var newState = originalState;
 
-                    logger.FluentAddBaseValue("CloudEnvironmentOldState", originalState)
+                    childLogger
+                        .FluentAddBaseValue("CloudEnvironmentOldState", originalState)
                         .FluentAddValue("CloudEnvironmentOldStateUpdated", cloudEnvironment.LastStateUpdated)
                         .FluentAddValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
                         .FluentAddValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason);
@@ -225,15 +225,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             var timeInProvisioningStateInMin = (DateTime.UtcNow - cloudEnvironment.LastStateUpdated).TotalMinutes;
                             var timeOverLimit = timeInProvisioningStateInMin > 60;
 
-                            logger.FluentAddBaseValue("CloudEnvironmentTimeInProvisioningStateInMin", timeInProvisioningStateInMin)
+                            childLogger
+                                .FluentAddBaseValue("CloudEnvironmentTimeInProvisioningStateInMin", timeInProvisioningStateInMin)
                                 .FluentAddBaseValue("CloudEnvironmentTimeOverLimit", timeOverLimit);
 
                             if (timeOverLimit)
                             {
                                 newState = CloudEnvironmentState.Failed;
 
-                                childLogger.NewChildLogger()
-                                    .LogErrorWithDetail($"{LogBaseName}_normalize_error", $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes.");
+                                childLogger.LogException($"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes.", new TimeoutException());
                             }
 
                             break;
@@ -247,7 +247,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                 var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
                                 var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
 
-                                logger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
+                                childLogger
+                                    .FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
                                     .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
                                     .FluentAddBaseValue("CloudEnvironmentIsHostConnectedValue", workspace?.IsHostConnected);
 
@@ -265,7 +266,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             break;
                     }
 
-                    logger.FluentAddBaseValue("CloudEnvironmentNewState", newState);
+                    childLogger.FluentAddBaseValue("CloudEnvironmentNewState", newState);
 
                     // Update the new state before returning.
                     if (originalState != newState)

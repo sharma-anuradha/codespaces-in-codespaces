@@ -1,0 +1,27 @@
+.create-or-alter function
+with (docstring = 'Last error on the continuation events.', folder='Events/Error')
+getContinuationErrorEvents
+(T:(level: string, 
+    ["time"]: datetime, 
+    WorkspaceId: string, 
+    ErrorDetail: string, 
+    ErrorMessage: string, 
+    ContinuationPayloadTrackingInstanceId: string))
+{
+    T
+        | where level == "error"
+        | where WorkspaceId != "" and ContinuationPayloadTrackingInstanceId != ""
+        | extend EventAtContinuationHasError = 1
+        | extend EventAtContinuationHasError_Time = ["time"]
+        | extend EventAtContinuationHasError_WorkspaceId = WorkspaceId
+        | extend EventAtContinuationHasError_ContinuationPayloadTrackingInstanceId = ContinuationPayloadTrackingInstanceId
+        | extend EventAtContinuationHasError_ErrorDetail = ErrorDetail
+        | extend EventAtContinuationHasError_ErrorMessage = ErrorMessage
+        | project EventAtContinuationHasError, 
+                EventAtContinuationHasError_Time, 
+                EventAtContinuationHasError_WorkspaceId,
+                EventAtContinuationHasError_ContinuationPayloadTrackingInstanceId,
+                EventAtContinuationHasError_ErrorDetail,
+                EventAtContinuationHasError_ErrorMessage
+        | summarize arg_min(EventAtContinuationHasError_Time, *) by EventAtContinuationHasError_ContinuationPayloadTrackingInstanceId, EventAtContinuationHasError_WorkspaceId
+}

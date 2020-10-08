@@ -7,6 +7,8 @@ getStateTransitionEvents
     CloudEnvironmentOldState: string, 
     CloudEnvironmentNewState: string, 
     WorkspaceId: string, 
+    ErrorDetail: string,
+    ErrorMessage: string,
     CloudEnvironmentId: string, 
     CloudEnvironmentFailedStateReason: string, 
     HttpRequestMethod: string, 
@@ -19,6 +21,6 @@ getStateTransitionEvents
     T
         | where msg == "environmentstatemanager_setenvironmentstateasync"
         | where CloudEnvironmentOldState == fromState and CloudEnvironmentNewState == toState
-        | project CloudEnvironmentOldState, CloudEnvironmentNewState, ['time'], WorkspaceId, CloudEnvironmentFailedStateReason, HttpRequestMethod, HttpRequestUri, CorrelationId, CloudEnvironmentId, CloudEnvironmentNewUpdatedTrigger, ComputeResourceId
+        | project CloudEnvironmentOldState, CloudEnvironmentNewState, ['time'], WorkspaceId, ErrorMessage, ErrorDetail, CloudEnvironmentFailedStateReason, HttpRequestMethod, HttpRequestUri, CorrelationId, CloudEnvironmentId, CloudEnvironmentNewUpdatedTrigger, ComputeResourceId
         | summarize arg_max(['time'], *) by CloudEnvironmentOldState, CloudEnvironmentNewState, WorkspaceId, CorrelationId, CloudEnvironmentId
 }
