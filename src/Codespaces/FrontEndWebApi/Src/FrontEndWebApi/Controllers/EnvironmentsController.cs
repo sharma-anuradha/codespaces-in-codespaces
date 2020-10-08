@@ -472,7 +472,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 }
             }            
             else if (Request.Headers.TryGetValue(GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader, out var headerValue)
-                && headerValue.All(x => string.IsNullOrEmpty(x)))
+                && headerValue.Any(x => !string.IsNullOrEmpty(x)))
             {
                 // HOTFIX for release 10/5 weekly release - disable GitHub API forking
                 // To remove: delete this whole `else if` block
