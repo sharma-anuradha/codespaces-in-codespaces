@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -43,12 +44,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnvironmentSuspendAction environmentSuspendAction,
             IEnvironmentForceSuspendAction environmentForceSuspendAction,
             IEnvironmentFailAction environmentFailAction,
+            VsoSuperuserClaimsIdentity superuserIdentity,
+            ICurrentIdentityProvider currentIdentityProvider,
             EnvironmentMonitorSettings environmentMonitorSettings)
             : base(environmentRepository, latestHeartbeatMonitor, serviceProvider, environmentMonitorSettings)
         {
             EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
             EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(environmentForceSuspendAction));
             EnvironmentFailAction = Requires.NotNull(environmentFailAction, nameof(EnvironmentFailAction));
+            SuperuserIdentity = Requires.NotNull(superuserIdentity, nameof(superuserIdentity));
+            CurrentIdentityProvider = Requires.NotNull(currentIdentityProvider, nameof(currentIdentityProvider));
         }
 
         /// <inheritdoc/>
@@ -62,6 +67,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
 
         private IEnvironmentFailAction EnvironmentFailAction { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
+
+        private ICurrentIdentityProvider CurrentIdentityProvider { get; }
 
         /// <inheritdoc/>
         protected override ContinuationResult CreateContinuationResult(EnvironmentStateTransitionInput operationInput, IDiagnosticsLogger logger)
@@ -95,8 +104,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (environment.State == input.CurrentState)
             {
-                // the environment is still in the original state, so handle the timeout
-                return await HandleTimeoutAsync(input, environment, logger);
+                // the recovery actions require the super user identity
+                using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
+                {
+                    // the environment is still in the original state, so handle the timeout
+                    return await HandleTimeoutAsync(input, environment, logger);
+                }
             }
 
             // the state is neither the original nor target state, so stop monitoring

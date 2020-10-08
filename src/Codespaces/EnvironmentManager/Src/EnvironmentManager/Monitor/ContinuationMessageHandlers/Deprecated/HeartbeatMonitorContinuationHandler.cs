@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuatio
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers
 {
@@ -59,24 +60,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             ILatestHeartbeatMonitor latestHeartbeatMonitor,
             IServiceProvider serviceProvider,
             IEnvironmentSuspendAction environmentSuspendAction,
-            IEnvironmentForceSuspendAction environmentForceSuspendAction,
             IEnvironmentUnavailableAction environmentUnavailableAction,
+            VsoSuperuserClaimsIdentity superuserIdentity,
+            ICurrentIdentityProvider currentIdentityProvider,
             EnvironmentMonitorSettings environmentMonitorSettings)
             : base(environmentRepository, latestHeartbeatMonitor, serviceProvider, environmentMonitorSettings)
         {
             HeartbeatRepository = Requires.NotNull(heartbeatRepository, nameof(heartbeatRepository));
             EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
-            EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(EnvironmentForceSuspendAction));
             EnvironmentUnavailableAction = Requires.NotNull(environmentUnavailableAction, nameof(EnvironmentUnavailableAction));
+            SuperuserIdentity = Requires.NotNull(superuserIdentity, nameof(superuserIdentity));
+            CurrentIdentityProvider = Requires.NotNull(currentIdentityProvider, nameof(currentIdentityProvider));
         }
 
         private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
 
         private IEnvironmentSuspendAction EnvironmentSuspendAction { get; }
 
-        private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
-
         private IEnvironmentUnavailableAction EnvironmentUnavailableAction { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
+
+        private ICurrentIdentityProvider CurrentIdentityProvider { get; }
 
         /// <inheritdoc/>
         protected override string LogBaseName => DefaultQueueTarget;
@@ -131,43 +136,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
 
             logger.FluentAddBaseValue(nameof(lastUpdatedByHeartBeat), lastUpdatedByHeartBeat);
 
-            if (environment.Type != EnvironmentType.StaticEnvironment)
+            using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
             {
-                if (environment.State == CloudEnvironmentState.Unavailable)
+                if (environment.Type != EnvironmentType.StaticEnvironment)
                 {
-                    var unavailableTimeout = await EnvironmentMonitorSettings.UnavailableEnvironmentTimeout(logger);
-
-                    if (environment.LastStateUpdated + unavailableTimeout < DateTime.UtcNow)
+                    if (environment.State == CloudEnvironmentState.Unavailable)
                     {
-                        // environment has been stuck in unavailable (for more than an hour by default)
-                        if (await EnvironmentMonitorSettings.EnableUnavailableEnvironmentHeartbeatMonitoring(logger))
-                        {
-                            await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
+                        var unavailableTimeout = await EnvironmentMonitorSettings.UnavailableEnvironmentTimeout(logger);
 
-                            return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.UnhealthyUnavailableHeartbeatReason);
+                        if (environment.LastStateUpdated + unavailableTimeout < DateTime.UtcNow)
+                        {
+                            // environment has been stuck in unavailable (for more than an hour by default)
+                            if (await EnvironmentMonitorSettings.EnableUnavailableEnvironmentHeartbeatMonitoring(logger))
+                            {
+                                await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
+
+                                return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.UnhealthyUnavailableHeartbeatReason);
+                            }
                         }
                     }
-                }
 
-                if (StateToProcess.Contains(environment.State) && hasHeartbeatTimeExpired)
-                {
-                    await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
-                    return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatReason);
+                    if (StateToProcess.Contains(environment.State) && hasHeartbeatTimeExpired)
+                    {
+                        await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
+                        return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatReason);
+                    }
                 }
-            }
-            else
-            {
-                if (environment.State == CloudEnvironmentState.Available && hasHeartbeatTimeExpired)
+                else
                 {
-                    await EnvironmentUnavailableAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentUnavailableReason, logger.NewChildLogger());
+                    if (environment.State == CloudEnvironmentState.Available && hasHeartbeatTimeExpired)
+                    {
+                        await EnvironmentUnavailableAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentUnavailableReason, logger.NewChildLogger());
 
-                    await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
-                    return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatMarkingUnavailableReason);
-                }
-                else if (environment.State == CloudEnvironmentState.Unavailable && hasHeartbeatTimeExpired)
-                {
-                    await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
-                    return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatForUnavailableEnvironmentReason);
+                        await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
+                        return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatMarkingUnavailableReason);
+                    }
+                    else if (environment.State == CloudEnvironmentState.Unavailable && hasHeartbeatTimeExpired)
+                    {
+                        await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
+                        return CreateFinalResult(OperationState.Failed, EnvironmentMonitorConstants.NoHeartbeatForUnavailableEnvironmentReason);
+                    }
                 }
             }
 
