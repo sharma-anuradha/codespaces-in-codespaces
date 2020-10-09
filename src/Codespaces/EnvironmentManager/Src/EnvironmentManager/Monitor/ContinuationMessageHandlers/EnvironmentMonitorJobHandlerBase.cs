@@ -86,7 +86,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         private static void LogFinalResult(IDiagnosticsLogger logger, OperationState state, string reason)
         {
             logger.FluentAddBaseValue("OperationState", state)
-               .FluentAddBaseValue("ErrorReason", reason);
+               .FluentAddBaseValue("ErrorReason", reason)
+               .LogInfo("environment_monitor_job_handler_final_result");
         }
 
         /// <inheritdoc/>
