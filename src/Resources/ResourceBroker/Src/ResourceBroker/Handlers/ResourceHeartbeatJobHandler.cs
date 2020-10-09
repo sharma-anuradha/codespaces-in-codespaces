@@ -76,6 +76,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         throw new InvalidOperationException(message);
                     }
 
+                    // Resource deleted.
+                    if (resourceRecord.IsDeleted)
+                    {
+                        throw new OperationCanceledException("ResourceDeleted");
+                    }
+
                     // Resource is ready and last heartbeat was received less than a minute ago, then cancel heartbeat processing.
                     if (resourceRecord.IsReady && resourceRecord.HeartBeatSummary?.LastSeen >= (payload.HeartBeatData.TimeStamp - TimeSpan.FromSeconds(60)))
                     {
