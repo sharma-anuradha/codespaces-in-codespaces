@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Hosting;
@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         public async Task AuthAsync_401()
         {
             var controller = CreateController(isAuthenticated: false);
-            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(workspaceInfo, logger));
+            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(skipFetchingCodespace: false, workspaceInfo, logger));
 
             Assert.Equal(401, result.StatusCode);
         }
@@ -59,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             };
 
             var controller = CreateController(headers);
-            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(workspaceInfo, logger));
+            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(skipFetchingCodespace: false, workspaceInfo, logger));
 
             Assert.Equal(200, result.StatusCode);
         }
@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             };
 
             var controller = CreateController(headers, useAuthCookie: true);
-            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(workspaceInfo, logger));
+            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(skipFetchingCodespace: false, workspaceInfo, logger));
 
             Assert.Equal(200, result.StatusCode);
         }
@@ -91,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                 useAuthCookie: true,
                 environmentId: "92617f60-2f2c-4986-85a0-ce95ceb3a658",
                 connectionSessionId: "a68c43fa9e015e45e046c85d502ec5e4b774");
-            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(workspaceInfo, logger));
+            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(skipFetchingCodespace: false, workspaceInfo, logger));
 
             Assert.Equal(200, result.StatusCode);
         }
@@ -109,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                 useAuthCookie: true,
                 environmentId: "92617f60-2f2c-4986-85a0-ce95ceb3a658",
                 connectionSessionId: "a68c43fa9e015e45e046c85d502ec5e4b774");
-            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(workspaceInfo, logger));
+            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(skipFetchingCodespace: false, workspaceInfo, logger));
 
             Assert.Equal(401, result.StatusCode);
         }
@@ -128,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                 useAuthCookie: true,
                 environmentId: "92617f60-2f2c-4986-85a0-ce95ceb3a658",
                 connectionSessionId: "A68C43FA9E015E45E046C85D502EC5E4B774");
-            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(workspaceInfo, logger));
+            var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(await controller.AuthAsync(skipFetchingCodespace: false, workspaceInfo, logger));
 
             Assert.Equal(200, result.StatusCode);
 

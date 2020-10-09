@@ -440,7 +440,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
             var annotations = new Dictionary<string, string>
             {
                 ["kubernetes.io/ingress.class"] = "nginx",
-                ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth",
+                ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth?skip_fetch_codespace=true",
                 ["nginx.ingress.kubernetes.io/auth-signin"] = "/signin?cid=$request_id",
                 ["nginx.ingress.kubernetes.io/auth-cache-key"] = "$remote_addr$http_x_vsonline_authentication$cookie_vso_pf",
                 ["nginx.ingress.kubernetes.io/auth-cache-duration"] = "200 10m",

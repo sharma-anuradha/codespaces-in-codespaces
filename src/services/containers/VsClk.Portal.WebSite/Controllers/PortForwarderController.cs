@@ -20,6 +20,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 
@@ -100,7 +101,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 (cascadeToken, _) = GetAuthToken(logger);
                 try
                 {
-                    (sessionId, environmentId, _) = await GetPortForwardingSessionDetailsAsync(logger) switch
+                    (sessionId, environmentId, _) = await GetPortForwardingSessionDetailsAsync(skipFetchingCodespace: false, logger) switch
                     {
                         EnvironmentSessionDetails details => (details.WorkspaceId, details.EnvironmentId, details.Port),
                         WorkspaceSessionDetails s => (s.WorkspaceId, default, s.Port),
@@ -171,6 +172,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [HttpGet("~/auth")]
         [HttpOperationalScope("pf_auth")]
         public async Task<IActionResult> AuthAsync(
+            [FromQuery(Name = "skip_fetch_codespace")] bool skipFetchingCodespace,
             [FromServices] IWorkspaceInfo workspaceInfo,
             [FromServices] IDiagnosticsLogger logger)
         {
@@ -185,7 +187,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             int port;
             try
             {
-                (sessionId, codespaceId, port) = await GetPortForwardingSessionDetailsAsync(logger) switch
+                (sessionId, codespaceId, port) = await GetPortForwardingSessionDetailsAsync(skipFetchingCodespace, logger) switch
                 {
                     EnvironmentSessionDetails details => (details.WorkspaceId, details.EnvironmentId, details.Port),
                     WorkspaceSessionDetails s => (s.WorkspaceId, default, s.Port),
@@ -394,7 +396,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return true;
         }
 
-        private async Task<PortForwardingSessionDetails> GetPortForwardingSessionDetailsAsync(IDiagnosticsLogger logger)
+        private async Task<PortForwardingSessionDetails> GetPortForwardingSessionDetailsAsync(bool skipFetchingCodespace, IDiagnosticsLogger logger)
         {
             if (!HostUtils.TryGetPortForwardingSessionDetails(Request, out var sessionDetails))
             {
@@ -412,14 +414,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             // TODO: Add support for environment id connection through headers?
-            if (sessionDetails is PartialEnvironmentSessionDetails envDetails)
+            if (!(sessionDetails is EnvironmentSessionDetails) && sessionDetails is PartialEnvironmentSessionDetails envDetails)
             {
                 if (TryGetCookiePayload(logger, out var cookiePayload) &&
                     string.Equals(cookiePayload.EnvironmentId, envDetails.EnvironmentId, StringComparison.InvariantCultureIgnoreCase))
                 {
                     // We only want to check whether workspace id changed since the cookie has been minted if we are allowed to.
                     // In VSCS Portal we use tokens that don't allow us to call Codespaces API. GitHub tokens do allow us to check.
-                    if (IsAuthorizedToAccessCodespace(envDetails.EnvironmentId, cookiePayload.CascadeToken))
+                    if (!skipFetchingCodespace && IsAuthorizedToAccessCodespace(envDetails.EnvironmentId, cookiePayload.CascadeToken))
                     {
                         var codespace = await CodespacesApiClient.WithAuthToken(cookiePayload.CascadeToken).GetCodespaceAsync(envDetails.EnvironmentId, logger);
                         if (codespace == default)
@@ -444,10 +446,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                     // Since we don't get the WorkspaceId from the host, we'll take it from the cookie.
                     sessionDetails = new EnvironmentSessionDetails(cookiePayload.ConnectionSessionId, envDetails.EnvironmentId, envDetails.Port);
                 }
-                else if (Request.Headers.TryGetValue(PortForwardingHeaders.Authentication, out var tokenValues))
+                else if (!skipFetchingCodespace && Request.Headers.TryGetValue(PortForwardingHeaders.Authentication, out var tokenValues))
                 {
-                    var codespace = await CodespacesApiClient.WithAuthToken(tokenValues.Single()).GetCodespaceAsync(envDetails.EnvironmentId, logger);
-                    if (codespace == default)
+                    var maybeCascadeToken = tokenValues.SingleOrDefault();
+
+                    if (maybeCascadeToken == default)
                     {
                         logger.AddValue("reason", "cannot_get_codespace");
                         logger.LogInfo("portforwarding_get_session_details_failed");
@@ -455,6 +458,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                         throw new InvalidOperationException("Couldn't acquire codespace record.");
                     }
 
+                    CloudEnvironmentResult codespace = default;
+                    if (!skipFetchingCodespace && IsAuthorizedToAccessCodespace(envDetails.EnvironmentId, maybeCascadeToken))
+                    {
+                        codespace = await CodespacesApiClient.WithAuthToken(maybeCascadeToken).GetCodespaceAsync(envDetails.EnvironmentId, logger);
+                    }
+
+                    if (codespace == default)
+                    {
+                        logger.AddValue("reason", "cannot_get_codespace");
+                        logger.LogInfo("portforwarding_get_session_details_failed");
+
+                        throw new InvalidOperationException("Couldn't acquire codespace record.");
+                    }
                     sessionDetails = new EnvironmentSessionDetails(codespace.Connection.ConnectionSessionId, envDetails.EnvironmentId, envDetails.Port);
                 }
                 else
