@@ -6,21 +6,12 @@ image:
 ingress:
   hosts:
     - canary.online.visualstudio.com
-    - "*.workspaces.github.com"
-    - "*.codespaces.github.com"
     - "*.github.dev"
-    - "*.builder.code.com"
     - "*.builder.code.com"
   tls:
     - hosts:
         - canary.online.visualstudio.com
       secretName: ssl-cert
-    - hosts:
-        - "*.workspaces.github.com"
-      secretName: ssl-cert-github-ws
-    - hosts:
-        - "*.codespaces.github.com"
-      secretName: ssl-cert-github-cs
     - hosts:
         - "*.github.dev"
       secretName: ssl-cert-github-dot-dev
@@ -30,12 +21,8 @@ ingress:
 
 githubAuthEndpoint:
   hosts:
-    - "auth.apps.workspaces.githubusercontent.com"
     - "auth.apps.codespaces.githubusercontent.com"
   tls:
-    - hosts:
-        - "*.apps.workspaces.githubusercontent.com"
-      secretName: ssl-cert-github-pf
     - hosts:
         - "*.apps.codespaces.githubusercontent.com"
       secretName: ssl-cert-github-cs-pf
@@ -43,15 +30,11 @@ githubAuthEndpoint:
 pfingress:
   hosts:
     - "*.app.canary.online.visualstudio.com"
-    - "*.apps.workspaces.githubusercontent.com"
     - "*.apps.codespaces.githubusercontent.com"
   tls:
     - hosts:
         - "*.app.canary.online.visualstudio.com"
       secretName: ssl-cert
-    - hosts:
-        - "*.apps.workspaces.githubusercontent.com"
-      secretName: ssl-cert-github-pf
     - hosts:
         - "*.apps.codespaces.githubusercontent.com"
       secretName: ssl-cert-github-cs-pf
@@ -60,9 +43,6 @@ portForwardingHosts:
   - hosts:
       - "{0}.app.canary.online.visualstudio.com"
     certificateSecretName: ssl-cert
-  - hosts:
-      - "{0}.apps.canary.workspaces.githubusercontent.com"
-    certificateSecretName: ssl-cert-github-pf
   - hosts:
       - "{0}.apps.canary.codespaces.githubusercontent.com"
     certificateSecretName: ssl-cert-github-cs-pf

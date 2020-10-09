@@ -270,7 +270,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
 
             var headers = new Dictionary<string, string>
             {
-                [PortForwardingHeaders.OriginalUrl] = "https://environmentId-8080.apps.test.workspaces.githubusercontent.com/",
+                [PortForwardingHeaders.OriginalUrl] = "https://environmentId-8080.apps.test.codespaces.githubusercontent.com/",
             };
 
             var controller = CreateController(client.Object, host: "portal-vsclk-portal-website.default.svc.cluster.local", headers: headers);
@@ -285,7 +285,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     query: "and=query",
                     logger: logger));
 
-            Assert.Equal("https://environmentid-1234.apps.test.workspaces.githubusercontent.com/some?and=query", result.Url);
+            Assert.Equal("https://environmentid-1234.apps.test.codespaces.githubusercontent.com/some?and=query", result.Url);
         }
 
         [Fact]
@@ -374,7 +374,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
 
             var formDetails = Assert.IsType<AuthenticateWorkspaceFormDetails>(result.Model);
 
-            Assert.Equal("https://environmentid-1234.apps.test.workspaces.githubusercontent.com/authenticate-codespace/environmentId?path=abc&port=1234&query=def", formDetails.Action);
+            Assert.Equal("https://environmentid-1234.apps.test.codespaces.githubusercontent.com/authenticate-codespace/environmentId?path=abc&port=1234&query=def", formDetails.Action);
             Assert.Equal("cascadeToken", formDetails.CascadeToken);
             Assert.Equal("featureFlags", formDetails.FeatureFlags);
         }

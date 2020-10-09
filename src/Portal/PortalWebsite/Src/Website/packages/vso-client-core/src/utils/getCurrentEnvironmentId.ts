@@ -13,8 +13,6 @@ export const setCurrentCodespaceId = (id: string) => {
 /**
  * https://online.dev.core.vsengsaas.visualstudio.com/workspace/{id}
  * https://online.dev.core.vsengsaas.visualstudio.com/environment/{id}
- * https://{:id}.workspaces-dev.github.com/environment/{:id}
- * https://{:id}.workspaces-dev.github.com
  */
 export const getCurrentEnvironmentId = () => {
     if (staticCodespaceId) {

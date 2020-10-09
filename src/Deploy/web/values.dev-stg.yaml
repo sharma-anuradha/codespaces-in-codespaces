@@ -8,30 +8,22 @@ port-forwarding-web-api:
   ingress:
     hosts:
       - '*.app.online-stg.dev.core.vsengsaas.visualstudio.com'
-      - '*.apps.dev.workspaces.githubusercontent.com'
       - '*.apps.dev.codespaces.githubusercontent.com'
     tls:
       - hosts:
           - '*.app.online-stg.dev.core.vsengsaas.visualstudio.com'
         secretName: ssl-cert
       - hosts:
-          - '*.apps.dev.workspaces.githubusercontent.com'
-        secretName: ssl-cert-github-pf
-      - hosts:
           - '*.apps.dev.codespaces.githubusercontent.com'
         secretName: ssl-cert-github-cs-pf
   managementIngress:
     hosts:
       - 'management.app.online-stg.dev.core.vsengsaas.visualstudio.com'
-      - 'management.apps.dev.workspaces.githubusercontent.com'
       - 'management.apps.dev.codespaces.githubusercontent.com'
     tls:
       - hosts:
           - '*.app.online-stg.dev.core.vsengsaas.visualstudio.com'
         secretName: ssl-cert
-      - hosts:
-          - '*.apps.dev.workspaces.githubusercontent.com'
-        secretName: ssl-cert-github-pf
       - hosts:
           - '*.apps.dev.codespaces.githubusercontent.com'
         secretName: ssl-cert-github-cs-pf

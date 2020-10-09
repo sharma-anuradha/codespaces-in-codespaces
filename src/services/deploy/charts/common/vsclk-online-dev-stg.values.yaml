@@ -6,8 +6,6 @@ image:
 ingress:
   hosts:
     - online-stg.dev.core.vsengsaas.visualstudio.com
-    - "*.workspaces-dev.github.com"
-    - "*.codespaces-dev.github.com"
     - "*.dev.github.dev"
     - "*.dev.builder.code.com"
     - vsclk-online-dev-stg-tm.trafficmanager.net
@@ -15,12 +13,6 @@ ingress:
     - hosts:
         - online-stg.dev.core.vsengsaas.visualstudio.com
       secretName: ssl-cert
-    - hosts:
-        - "*.workspaces-dev.github.com"
-      secretName: ssl-cert-github-ws
-    - hosts:
-        - "*.codespaces-dev.github.com"
-      secretName: ssl-cert-github-cs
     - hosts:
         - "*.dev.github.dev"
       secretName: ssl-cert-github-dot-dev
@@ -30,12 +22,8 @@ ingress:
 
 githubAuthEndpoint:
   hosts:
-    - "auth.apps.dev.workspaces.githubusercontent.com"
     - "auth.apps.dev.codespaces.githubusercontent.com"
   tls:
-    - hosts:
-        - "*.apps.dev.workspaces.githubusercontent.com"
-      secretName: ssl-cert-github-pf
     - hosts:
         - "*.apps.dev.codespaces.githubusercontent.com"
       secretName: ssl-cert-github-cs-pf
@@ -43,15 +31,11 @@ githubAuthEndpoint:
 pfingress:
   hosts:
     - "*.app.online-stg.dev.core.vsengsaas.visualstudio.com"
-    - "*.apps.dev.workspaces.githubusercontent.com"
     - "*.apps.dev.codespaces.githubusercontent.com"
   tls:
     - hosts:
         - "*.app.online-stg.dev.core.vsengsaas.visualstudio.com"
       secretName: ssl-cert
-    - hosts:
-        - "*.apps.dev.workspaces.githubusercontent.com"
-      secretName: ssl-cert-github-pf
     - hosts:
         - "*.apps.dev.codespaces.githubusercontent.com"
       secretName: ssl-cert-github-cs-pf
@@ -60,9 +44,6 @@ portForwardingHosts:
   - hosts:
       - "{0}.app.online-stg.dev.core.vsengsaas.visualstudio.com"
     certificateSecretName: ssl-cert
-  - hosts:
-      - "{0}.apps.dev.workspaces.githubusercontent.com"
-    certificateSecretName: ssl-cert-github-pf
   - hosts:
       - "{0}.apps.dev.codespaces.githubusercontent.com"
     certificateSecretName: ssl-cert-github-cs-pf

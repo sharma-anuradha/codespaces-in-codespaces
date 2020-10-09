@@ -31,7 +31,7 @@ describe('externalUriProvider', () => {
 
         it('github port forwarding domain', async () => {
             const uriProvider = new PortForwardingExternalUriProvider(
-                '{0}.apps.workspaces.githubusercontent.com',
+                '{0}.apps.codespaces.githubusercontent.com',
                 'envId'
             );
 
@@ -41,7 +41,7 @@ describe('externalUriProvider', () => {
             } as URI);
 
             expect(externalUri).toMatchObject({
-                authority: 'envid-1234.apps.workspaces.githubusercontent.com',
+                authority: 'envid-1234.apps.codespaces.githubusercontent.com',
             });
         });
 

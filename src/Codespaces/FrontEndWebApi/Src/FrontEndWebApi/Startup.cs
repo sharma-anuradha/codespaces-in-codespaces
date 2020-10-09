@@ -170,18 +170,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     currentOrigins.Add("https://*.review-lab.github.com");
                     currentOrigins.Add("https://*.local.builder.code.com");
 
-                    // workspaces.github.com
-                    currentOrigins.Add("https://*.workspaces.github.com");
-                    currentOrigins.Add("https://*.workspaces-ppe.github.com");
-                    currentOrigins.Add("https://*.workspaces-dev.github.com");
-
-                    // codespaces.github.com
-                    currentOrigins.Add("https://*.codespaces.github.com");
-                    currentOrigins.Add("https://*.codespaces-ppe.github.com");
-                    currentOrigins.Add("https://*.codespaces-dev.github.com");
-                    currentOrigins.Add("https://portal.azure.com");
-                    currentOrigins.Add("https://df.onecloud.azure-test.net");
-
                     // github.dev
                     currentOrigins.Add("https://*.github.dev");
                     currentOrigins.Add("https://*.ppe.github.dev");

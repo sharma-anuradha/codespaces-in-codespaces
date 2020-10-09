@@ -5,8 +5,6 @@ const { outputFile } = require('fs-extra');
 
 const {
     devCert,
-    githubDevCert,
-    githubPFDevCert,
     githubPFCodespacesDevCert,
     githubDotDevCert,
 } = require('./constants');
@@ -30,7 +28,5 @@ const getCert = async (certName, certOutputPath) => {
 };
 
 getCert('dev-core-vsengsaas-visualstudio-com-ssl', devCert);
-getCert('dev-core-workspaces-githubusercontent-com-ssl', githubPFDevCert);
 getCert('dev-codespaces-githubusercontent-com-ssl', githubPFCodespacesDevCert);
-getCert('workspaces-dev-github-com-ssl', githubDevCert);
 getCert('dev-github-dev-ssl', githubDotDevCert);

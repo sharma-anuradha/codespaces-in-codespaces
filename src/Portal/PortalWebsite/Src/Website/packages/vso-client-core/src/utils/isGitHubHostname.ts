@@ -3,14 +3,6 @@ const KNOWN_GITHUB_HOSTNAMES = [
     'dev.github.dev',
     'ppe.github.dev',
     'github.dev',
-
-    'workspaces-dev.github.com',
-    'workspaces-ppe.github.com',
-    'workspaces.github.com',
-
-    'codespaces-dev.github.com',
-    'codespaces-ppe.github.com',
-    'codespaces.github.com'
 ];
 
 export const isGitHubHostname = (urlString: string) => {

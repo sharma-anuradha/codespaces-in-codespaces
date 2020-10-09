@@ -29,10 +29,7 @@ variables:
   - name: sslCertSecrets
     value: "\
       ssl-cert:${{ variables.sslCertSecretNameCoreProd }},\
-      ssl-cert-github-pf:${{ format(variables.sslCertGitHubPfSecretNameFormat, variables.serviceEnv) }},\
-      ssl-cert-github-ws:${{ format(variables.sslCertGitHubWorkspacesSecretNameFormat, variables.githubWorkspacesSecretFormatValue) }},\
       ssl-cert-github-cs-pf:${{ format(variables.sslCertGitHubCodespacesPfSecretNameFormat, variables.githubCodespacesSecretFormatValue) }},\
-      ssl-cert-github-cs:${{ format(variables.sslCertGitHubCodespacesSecretNameFormat, variables.githubCodespacesSecretFormatValue) }},\
       ssl-cert-github-dot-dev:${{ format(variables.sslCertGitHubDotDevSecretNameFormat, variables.githubDotDevSecretFormatValue) }},\
     "
   - name: clusterVersion

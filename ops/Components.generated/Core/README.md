@@ -39,10 +39,6 @@ Certificate vsclk-core-dev-monitoring --> ops key vault!
 Certificate vsls-dev-monitoring --> ops key vault!
 Certificate azureportalextension-cert --> codespaces?
 Certificate azureportalextension-ev2cert --> codespaces?
-Certificate codespaces-dev-github-com-ssl --> codespaces
 Certificate dev-codespaces-githubusercontent-com-ssl --> codespaces
 Certificate dev-core-vsengsaas-visualstudio-com-ssl --> codespaces
-Certificate dev-core-workspaces-githubusercontent-com-ssl --> codespaces
 Certificate dev-github-dev-ssl --> codespaces
-Certificate local-code-github-com-ssl --> codespaces
-Certificate workspaces-dev-github-com-ssl --> codespaces

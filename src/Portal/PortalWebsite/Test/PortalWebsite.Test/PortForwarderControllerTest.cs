@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var headers = new Dictionary<string, string>
             {
-                [PortForwardingHeaders.OriginalUrl] = "https://a68c43fa9e015e45e046c85d502ec5e4b774-8080.apps.test.workspaces.githubusercontent.com/stuff",
+                [PortForwardingHeaders.OriginalUrl] = "https://a68c43fa9e015e45e046c85d502ec5e4b774-8080.apps.test.codespaces.githubusercontent.com/stuff",
             };
 
             var controller = CreateController(headers);
@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var headers = new Dictionary<string, string>
             {
-                [PortForwardingHeaders.OriginalUrl] = "https://a68c43fa9e015e45e046c85d502ec5e4b774-8080.apps.test.workspaces.githubusercontent.com/stuff",
+                [PortForwardingHeaders.OriginalUrl] = "https://a68c43fa9e015e45e046c85d502ec5e4b774-8080.apps.test.codespaces.githubusercontent.com/stuff",
             };
 
             var controller = CreateController(headers, useAuthCookie: true);
@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var headers = new Dictionary<string, string>
             {
-                [PortForwardingHeaders.OriginalUrl] = "https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.workspaces.githubusercontent.com/stuff",
+                [PortForwardingHeaders.OriginalUrl] = "https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.codespaces.githubusercontent.com/stuff",
             };
 
             var controller = CreateController(
@@ -101,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var headers = new Dictionary<string, string>
             {
-                [PortForwardingHeaders.OriginalUrl] = "https://d8b8515e-0f5d-4766-8310-4846c61990a5-8080.apps.test.workspaces.githubusercontent.com/stuff",
+                [PortForwardingHeaders.OriginalUrl] = "https://d8b8515e-0f5d-4766-8310-4846c61990a5-8080.apps.test.codespaces.githubusercontent.com/stuff",
             };
 
             var controller = CreateController(
@@ -120,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var headers = new Dictionary<string, string>
             {
-                [PortForwardingHeaders.OriginalUrl] = "https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.workspaces.githubusercontent.com/stuff",
+                [PortForwardingHeaders.OriginalUrl] = "https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.codespaces.githubusercontent.com/stuff",
             };
 
             var controller = CreateController(
@@ -153,7 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
 
-            var returnUrl = new Uri("https://4a048223cc254c1aeeba1c1e8078a6b3d761-8080.apps.test.workspaces.githubusercontent.com/");
+            var returnUrl = new Uri("https://4a048223cc254c1aeeba1c1e8078a6b3d761-8080.apps.test.codespaces.githubusercontent.com/");
             var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
 
             Assert.Equal("https://github.com/404", result.Url);
@@ -164,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
 
-            var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.workspaces.githubusercontent.com/");
+            var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.codespaces.githubusercontent.com/");
             var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
             var redirectUri = new Uri(result.Url);
 
@@ -183,7 +183,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
 
-            var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.workspaces.githubusercontent.com/stuff");
+            var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.codespaces.githubusercontent.com/stuff");
             var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
             var redirectUri = new Uri(result.Url);
 
@@ -221,7 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
 
-            var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.workspaces.githubusercontent.com/stuff?search=42");
+            var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.codespaces.githubusercontent.com/stuff?search=42");
             var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
             var redirectUri = new Uri(result.Url);
 

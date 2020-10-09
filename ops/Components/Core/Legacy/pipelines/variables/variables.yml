@@ -30,10 +30,7 @@ variables:
   sslCertSecretNameCoreProd: online-visualstudio-com-ssl
   sslCertSecretNameCoreProdCan: canary-online-visualstudio-com-ssl
 
-  sslCertGitHubPfSecretNameFormat: "{0}-core-workspaces-githubusercontent-com-ssl"
-  sslCertGitHubWorkspacesSecretNameFormat: "workspaces{0}-github-com-ssl"
   sslCertGitHubCodespacesPfSecretNameFormat: "{0}codespaces-githubusercontent-com-ssl"
-  sslCertGitHubCodespacesSecretNameFormat: "codespaces-{0}github-com-ssl"
   sslCertGitHubDotDevSecretNameFormat: "{0}github-dev-ssl"
 
   # Kubernetes

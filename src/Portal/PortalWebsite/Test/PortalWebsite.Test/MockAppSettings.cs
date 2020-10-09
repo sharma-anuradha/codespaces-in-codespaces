@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     AesKey = "00000000000000000000000000000000",
                     PortalEndpoint = "https://fake.portal.dev",
                     PortForwardingDomainTemplate = "{0}.app.online.visualstudio.com",
-                    GitHubPortForwardingDomainTemplate = "{0}.apps.test.workspaces.githubusercontent.com",
+                    GitHubPortForwardingDomainTemplate = "{0}.apps.test.codespaces.githubusercontent.com",
                     PortForwardingHostsConfigs = new[]
                     {
                         new HostsConfig
@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                         {
                             Hosts = new[]
                             {
-                                "{0}.apps.test.workspaces.githubusercontent.com",
+                                "{0}.apps.test.codespaces.githubusercontent.com",
                             },
                         },
                     },

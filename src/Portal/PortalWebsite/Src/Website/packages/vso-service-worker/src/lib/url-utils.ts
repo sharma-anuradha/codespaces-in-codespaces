@@ -89,7 +89,7 @@ function tryCreatePortForwardingRoutingDetails(
 
     // Port forwarding domains are in form of:
     // https://<sessionId>-<targetPort>.app.online.visualstudio.com/<user content path>
-    // https://<sessionId>-<targetPort>.apps.workspaces.githubusercontent.com/<user content path>
+    // https://<sessionId>-<targetPort>.apps.codespaces.githubusercontent.com/<user content path>
     const appPrefixes = ['app', 'apps'];
     if (!appPrefixes.includes(app)) {
         return undefined;
@@ -132,7 +132,7 @@ function createEnvironmentRoutingStrategy(
 
         // Port forwarding domains for environments are in form of:
         // https://<environmentId>-<targetPort>.app.online.visualstudio.com/<user content path>
-        // https://<environmentId>-<targetPort>.apps.workspaces.githubusercontent.com/<user content path>
+        // https://<environmentId>-<targetPort>.apps.codespaces.githubusercontent.com/<user content path>
         const appPrefixes = ['app', 'apps'];
         if (!appPrefixes.includes(app)) {
             return undefined;

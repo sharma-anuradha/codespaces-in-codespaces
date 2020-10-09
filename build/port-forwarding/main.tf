@@ -258,10 +258,7 @@ resource "tls_self_signed_cert" "ssl_cert" {
   dns_names = [
     "online.dev.core.vsengsaas.visualstudio.com",
     "*.app.online.dev.core.vsengsaas.visualstudio.com",
-    "*.apps.dev.workspaces.githubusercontent.com",
     "*.apps.dev.codespaces.githubusercontent.com",
-    "*.workspaces-dev.github.com",
-    "*.codespaces-dev.github.com",
     "*.dev.github.dev",
   ]
 
@@ -284,48 +281,9 @@ resource "kubernetes_secret" "ssl_cert" {
   type = "kubernetes.io/tls"
 }
 
-resource "kubernetes_secret" "ssl_cert_github_pf" {
-  metadata {
-    name = "ssl-cert-github-pf"
-  }
-
-  data = {
-    "tls.crt" = tls_self_signed_cert.ssl_cert.cert_pem
-    "tls.key" = tls_private_key.ssl_cert.private_key_pem
-  }
-
-  type = "kubernetes.io/tls"
-}
-
 resource "kubernetes_secret" "ssl_cert_github_cs_pf" {
   metadata {
     name = "ssl-cert-github-cs-pf"
-  }
-
-  data = {
-    "tls.crt" = tls_self_signed_cert.ssl_cert.cert_pem
-    "tls.key" = tls_private_key.ssl_cert.private_key_pem
-  }
-
-  type = "kubernetes.io/tls"
-}
-
-resource "kubernetes_secret" "ssl_cert_github_ws" {
-  metadata {
-    name = "ssl-cert-github-ws"
-  }
-
-  data = {
-    "tls.crt" = tls_self_signed_cert.ssl_cert.cert_pem
-    "tls.key" = tls_private_key.ssl_cert.private_key_pem
-  }
-
-  type = "kubernetes.io/tls"
-}
-
-resource "kubernetes_secret" "ssl_cert_github_cs" {
-  metadata {
-    name = "ssl-cert-github-cs"
   }
 
   data = {

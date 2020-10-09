@@ -26,8 +26,6 @@ const amdConfigPath = path.join(root, 'public', 'amdconfig.js');
 const appSecretsPath = path.resolve(dotnetPortalRoot, 'appsettings.secrets.json');
 
 const devCert = path.resolve(nginxPath, 'dev-cert.pfx');
-const githubDevCert = path.resolve(nginxPath, 'dev-github-cert.pfx');
-const githubPFDevCert = path.resolve(nginxPath, 'dev-github-pf-cert.pfx');
 const githubPFCodespacesDevCert = path.resolve(nginxPath, 'dev-github-codespaces-pf-cert.pfx');
 const githubDotDevCert = path.resolve(nginxPath, 'local-github-dev.pfx');
 module.exports = {
@@ -39,8 +37,6 @@ module.exports = {
     amdConfigPath,
     appSecretsPath,
     devCert,
-    githubDevCert,
-    githubPFDevCert,
     githubPFCodespacesDevCert,
     githubDotDevCert,
 };

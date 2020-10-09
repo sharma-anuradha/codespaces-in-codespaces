@@ -147,9 +147,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [Consumes("application/x-www-form-urlencoded")]
         [Routing.AllowReferer(
             // GitHub
-            "https://auth.apps.dev.workspaces.githubusercontent.com",
-            "https://auth.apps.ppe.workspaces.githubusercontent.com",
-            "https://auth.apps.workspaces.githubusercontent.com",
             "https://auth.apps.dev.codespaces.githubusercontent.com",
             "https://auth.apps.ppe.codespaces.githubusercontent.com",
             "https://auth.apps.codespaces.githubusercontent.com",
