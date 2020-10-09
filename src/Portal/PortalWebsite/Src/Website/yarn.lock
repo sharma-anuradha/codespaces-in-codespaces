@@ -1140,10 +1140,10 @@
     diffie-hellman "^5.0.3"
     vscode-jsonrpc "^4.0.0"
 
-"@vs/vso-splash-screen@^1.0.3000":
-  version "1.0.3000"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vso-splash-screen/-/vso-splash-screen-1.0.3000.tgz#e190ff420e009f8bdf468f69430903bfffb272eb"
-  integrity sha1-4ZD/Qg4An4vfRo9pQwkDv/+ycus=
+"@vs/vso-splash-screen@^1.0.3013":
+  version "1.0.3013"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vso-splash-screen/-/vso-splash-screen-1.0.3013.tgz#c8fc46d262acbad57e52a618e6643e03dff8c957"
+  integrity sha1-yPxG0mKsutV+UqYY5mQ+A9/4yVc=
   dependencies:
     "@types/classnames" "^2.2.9"
     "@types/react" "^16.9.19"

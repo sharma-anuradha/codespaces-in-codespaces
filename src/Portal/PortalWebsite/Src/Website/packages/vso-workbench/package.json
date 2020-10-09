@@ -50,7 +50,7 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "@vs/vso-splash-screen": "^1.0.3000",
+    "@vs/vso-splash-screen": "^1.0.3013",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0",
     "react": "^16.13.1",
