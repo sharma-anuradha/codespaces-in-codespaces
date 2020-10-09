@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         public async Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
-               "client_versiondata_handler_process",
+               "client_version_update_data_handler_process",
                async (childLogger) =>
                {
                    if (!CanProcess(data))
@@ -101,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        if (environmentTransition.Value.State == CloudEnvironmentState.Updating)
                        {
                            // If update is done, shutdown environment
-                           await EnvironmentManager.SuspendAsync(Guid.Parse(environmentTransition.Value.Id), logger.NewChildLogger());
+                           await EnvironmentManager.ForceSuspendAsync(Guid.Parse(environmentTransition.Value.Id), logger.NewChildLogger());
 
                            // Reset environment record and transition
                            environmentTransition.ReplaceAndResetTransition(default);

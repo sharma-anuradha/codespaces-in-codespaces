@@ -221,6 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var input = new EnvironmentStateTransitionInput()
             {
                 EnvironmentId = environmentId,
+                ComputeResourceId = computeId,
                 CurrentState = CloudEnvironmentState.Updating,
                 TargetState = CloudEnvironmentState.Shutdown,
                 TransitionTimeout = await EnvironmentMonitorSettings.UpdateEnvironmentTimeout(logger.NewChildLogger()),

@@ -164,10 +164,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 record.Value.State == CloudEnvironmentState.Provisioning ||
                 record.Value.State == CloudEnvironmentState.Deleted ||
                 record.Value.State == CloudEnvironmentState.Queued ||
+                record.Value.State == CloudEnvironmentState.Updating ||
                 (record.Value.Compute.ResourceId == default && input.AllocatedComputeResourceId == default))
             {
                 // If the allocated compute is missing for the environment or the environment is otherwise unrecoverable,
                 // force clean the environment details to put it in a recoverable state.
+                // Also, force suspend when doing admin tasks, like updating.
                 return await EnvironmentForceSuspendAction.RunAsync(input, logger.NewChildLogger());
             }
             else

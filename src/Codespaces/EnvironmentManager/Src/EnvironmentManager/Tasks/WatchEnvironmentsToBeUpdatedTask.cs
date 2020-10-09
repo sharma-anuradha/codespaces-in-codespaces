@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -140,16 +141,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             }
         }
 
-        private bool NeedsUpdate(CloudEnvironment environment, IDiagnosticsLogger logger)
+        private AzureLocation GetResourceLocation(CloudEnvironment environment)
         {
+            if (environment.Compute != default)
+            {
+                return environment.Compute.Location;
+            }
+            else if (environment.OSDisk != default)
+            {
+                return environment.OSDisk.Location;
+            }
+            else if (environment.Storage != default)
+            {
+                return environment.Storage.Location;
+            }
+            else if (environment.OSDiskSnapshot != default)
+            {
+                return environment.OSDiskSnapshot.Location;
+            }
+
+            // If we can't find a location, something's wrong with the record?
+            return AzureLocation.WestUs2;
+        }
+
+        private bool ShouldUpdate(CloudEnvironment environment, IDiagnosticsLogger logger)
+        {
+            if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(environment.SkuName, out var sku))
+            {
+                // We don't know about this SKU, so ignore update
+                return false;
+            }
+
+            // Check time for the location the environment is in
+            var resourceLocation = GetResourceLocation(environment);
+            var currentTimeInLocation = resourceLocation.GetTimeInLocation(DateTime.UtcNow);
+
+            logger.FluentAddBaseValue("LocalTime", currentTimeInLocation.ToString())
+                .FluentAddBaseValue("Location", resourceLocation);
+
+            if (currentTimeInLocation.Hour > 6 || currentTimeInLocation.Hour < 2)
+            {
+                // Only attempt updating VMs between 2AM and 6AM on their location.
+                // Special care has to be taken on the up and low limits, as 2AM in
+                // SouthEastAsia could be -3 (or more) in other Asia regions.
+                return false;
+            }
+
             if (environment.SystemStatusInfo != default && environment.SystemStatusInfo.VsVersion != default)
             {
-                if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(environment.SkuName, out var sku))
-                {
-                    // We don't know about this SKU, so ignore update
-                    return false;
-                }
-
                 if (Version.TryParse(sku.ComputeImage.VsVersion, out var skuVersion))
                 {
                     return skuVersion > environment.SystemStatusInfo.VsVersion;
@@ -169,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         .FluentAddBaseValue("SkuName", environment.SkuName)
                         .FluentAddBaseValue("UpdateAttemptCount", environment.Transitions.Updating.AttemptCount);
 
-                    if (NeedsUpdate(environment, logger))
+                    if (ShouldUpdate(environment, logger))
                     {
                         var cloudEnvironmentParams = GetCloudEnvironmentParameters(environment);
 
