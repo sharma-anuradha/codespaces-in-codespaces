@@ -21,6 +21,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
     /// </summary>
     public class BatchArchiveFileShareJobProvider : BatchJobProvider<BatchArchiveFileShareJobInput>, IBatchArchiveFileShareJobProvider
     {
+        private const int TaskTimeoutMin = 90;
+
         private const string TaskDisplayName = TaskConstants.ArchiveTaskDisplayName;
 
         /// <summary>
@@ -121,11 +123,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             // Clear out any old images just incase something got missed in cleanup
             taskCopyCommand.Add("echo ----- FIND OLD FILES -----");
-            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +60");
+            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +{TaskTimeoutMin}");
 
             // Clear out any old images just incase something got missed in cleanup
             taskCopyCommand.Add("echo ----- DELETE OLD FILES -----");
-            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +60 -delete || true");
+            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +{TaskTimeoutMin} -delete || true");
 
             // Copy target share to local disk
             taskCopyCommand.Add("echo ----- COPY DOWN BLOB -----");
@@ -152,7 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var task = new CloudTask(taskId, taskCommandLine)
             {
-                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromHours(1), retentionTime: TimeSpan.FromDays(7)),
+                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromMinutes(TaskTimeoutMin), retentionTime: TimeSpan.FromDays(7)),
                 UserIdentity = new UserIdentity(new AutoUserSpecification(elevationLevel: ElevationLevel.Admin)),
             };
 

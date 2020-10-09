@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly string azureSkuName = "Premium_LRS";
         private static readonly string azureStandardSkuName = "Standard_LRS";
         private static readonly string azureSubscriptionName = "ignorethis";
-        private static readonly int PREPARE_TIMEOUT_MINS = 60;
+        private static readonly int ARCHIVE_TIMEOUT_MINS = 90;
         private static readonly int STORAGE_SIZE_IN_GB = 64;
         private static readonly int NUM_STORAGE_TO_CREATE = 1;
 
@@ -128,10 +128,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
                                 return result == BatchTaskStatus.Succeeded;
                             },
-                            TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS),
+                            TimeSpan.FromMinutes(ARCHIVE_TIMEOUT_MINS),
                             TimeSpan.FromSeconds(10),
                             childLogger,
-                            () => throw new Exception($"Failed to complete all file share preparations in given time of {PREPARE_TIMEOUT_MINS} minutes."));
+                            () => throw new Exception($"Failed to complete all file share preparations in given time of {ARCHIVE_TIMEOUT_MINS} minutes."));
                         var runPrepareTime = (DateTime.Now - startPrepareTime).TotalSeconds;
 
                         // Start batch upload job
@@ -155,10 +155,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
                                 return result == BatchTaskStatus.Succeeded;
                             },
-                            TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS),
+                            TimeSpan.FromMinutes(ARCHIVE_TIMEOUT_MINS),
                             TimeSpan.FromSeconds(10),
                             childLogger,
-                            () => throw new Exception($"Failed to complete all file share preparations in given time of {PREPARE_TIMEOUT_MINS} minutes."));
+                            () => throw new Exception($"Failed to complete all file share preparations in given time of {ARCHIVE_TIMEOUT_MINS} minutes."));
                         var runArchiveTime = (DateTime.Now - startArchiveTime).TotalSeconds;
 
                     },
