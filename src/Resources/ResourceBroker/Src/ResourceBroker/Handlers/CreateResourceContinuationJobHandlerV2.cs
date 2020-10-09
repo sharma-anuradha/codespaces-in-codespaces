@@ -285,6 +285,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             /// <summary>
             /// Gets or sets resource creation options.
             /// </summary>
+            [JsonConverter(typeof(CreateResourceContinuationInputOptionsConverter))]
             public CreateResourceContinuationInputOptions Options { get; set; }
 
             /// <summary>
