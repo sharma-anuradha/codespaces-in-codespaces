@@ -4,6 +4,36 @@
   "AppSettings": {
     "dataPlaneSettings": {
       "subscriptions": {
+        "vscs-codesp-prod-data-compute-ap-se-001": {
+          "subscriptionId": "298dbdff-51e6-4469-b28e-deffbcd5d2e8"
+        },
+        "vscs-codesp-prod-data-compute-ap-se-002": {
+          "subscriptionId": "57f27a99-a03d-4a6a-acd9-405bb9a85a12"
+        },
+        "vscs-codesp-prod-data-compute-eu-w-001": {
+          "subscriptionId": "46cdf8ad-6c60-44e5-9095-5e8cda0b672e"
+        },
+        "vscs-codesp-prod-data-compute-eu-w-002": {
+          "subscriptionId": "26b0a666-2fec-4a9c-83fc-6f9b47c5ef1c"
+        },
+        "vscs-codesp-prod-data-compute-us-e-001": {
+          "subscriptionId": "44ae3970-dc20-4366-b8ed-b075521d10dc"
+        },
+        "vscs-codesp-prod-data-compute-us-e-002": {
+          "subscriptionId": "1e5e373f-27e1-45cb-bd11-84a8eb015b2d"
+        },
+        "vscs-codesp-prod-data-compute-us-e2c-001": {
+          "subscriptionId": "ff8f1b2a-b2b1-4437-ad0e-09e104c35a41"
+        },
+        "vscs-codesp-prod-data-compute-us-w2-001": {
+          "subscriptionId": "6be71a6e-27d7-41ae-81ea-ea147c4f8802"
+        },
+        "vscs-codesp-prod-data-compute-us-w2-002": {
+          "subscriptionId": "ed5e3298-7b29-4ed4-b9c5-6cdb98ebdd6e"
+        },
+        "vscs-codesp-prod-data-compute-us-w2-003": {
+          "subscriptionId": "9c331a3a-2fa1-4d82-b77c-17e7ae89a245"
+        },
         "vscs-codesp-prod-data-keyvault-ap-se-001": {
           "subscriptionId": "5013dd79-5a04-40a5-b8e8-aa4ac342981f",
           "enabled": false,
@@ -43,6 +73,45 @@
             "westus2"
           ],
           "serviceType": "keyvault"
+        },
+        "vscs-codesp-prod-data-legacy-global-001": {
+          "subscriptionId": "7f4e3558-29c6-4377-8270-8f0212dbddc2"
+        },
+        "vscs-codesp-prod-data-legacy-global-002": {
+          "subscriptionId": "6d0a7086-3524-47c7-916f-9bafcdad1b81"
+        },
+        "vscs-codesp-prod-data-legacy-global-003": {
+          "subscriptionId": "a81f2b0c-8b33-411d-8ebc-233e103ffb15"
+        },
+        "vscs-codesp-prod-data-legacy-global-004": {
+          "subscriptionId": "9e87f0e3-c941-47a1-8749-08070817da63"
+        },
+        "vscs-codesp-prod-data-network-001": {
+          "subscriptionId": "b8b14211-f868-4311-bba6-6d148187b226"
+        },
+        "vscs-codesp-prod-data-network-ap-se-001": {
+          "subscriptionId": "a909a4fc-a6ff-4669-955b-c8723fe8ee78"
+        },
+        "vscs-codesp-prod-data-network-ap-se-002": {
+          "subscriptionId": "c48e1b7f-e7b2-4bea-96d1-dd06c7b72dc5"
+        },
+        "vscs-codesp-prod-data-network-ap-se-003": {
+          "subscriptionId": "69a5bce5-3034-4c3a-b277-41cf411fe162"
+        },
+        "vscs-codesp-prod-data-network-ap-se-004": {
+          "subscriptionId": "aed45f15-0980-468f-b3e4-b4e2b375d5aa"
+        },
+        "vscs-codesp-prod-data-network-ap-se-005": {
+          "subscriptionId": "44cf333e-92ef-4f80-8d03-e31ef90833df"
+        },
+        "vscs-codesp-prod-data-network-ap-se-006": {
+          "subscriptionId": "b13acfb9-89f6-4551-a721-28f584b55a77"
+        },
+        "vscs-codesp-prod-data-network-ap-se-007": {
+          "subscriptionId": "b4d9dbfd-383d-4e95-92aa-9288f870a389"
+        },
+        "vscs-codesp-prod-data-network-ap-se-008": {
+          "subscriptionId": "492ab927-fbc8-4d5d-8839-f64d6f137df4"
         },
         "vscs-codesp-prod-data-network-ap-se-010": {
           "subscriptionId": "069611b7-14f8-436e-aa5f-4e8d5a2abef6",
@@ -188,6 +257,42 @@
           ],
           "serviceType": "network"
         },
+        "vscs-codesp-prod-data-network-eu-w-001": {
+          "subscriptionId": "cb974ee6-ab77-4604-b4c2-144290c0055a"
+        },
+        "vscs-codesp-prod-data-network-eu-w-002": {
+          "subscriptionId": "bba1f707-266e-44e2-8e23-01c8a89cf1dd"
+        },
+        "vscs-codesp-prod-data-network-eu-w-003": {
+          "subscriptionId": "813f47ae-a5f8-43b0-a230-8ae3131d05d0"
+        },
+        "vscs-codesp-prod-data-network-eu-w-004": {
+          "subscriptionId": "5d3f8f41-08bd-41ef-acee-863c985cf298"
+        },
+        "vscs-codesp-prod-data-network-eu-w-005": {
+          "subscriptionId": "205ab7a1-3f0c-4ef2-97fe-a8e0f52da462"
+        },
+        "vscs-codesp-prod-data-network-eu-w-006": {
+          "subscriptionId": "fd6ff98b-f757-4f9e-8f91-cc4011065187"
+        },
+        "vscs-codesp-prod-data-network-eu-w-007": {
+          "subscriptionId": "81068cd0-7c4f-4f8d-a417-bf2df33dd819"
+        },
+        "vscs-codesp-prod-data-network-eu-w-008": {
+          "subscriptionId": "a474a831-2093-4aad-9103-b04a2837229d"
+        },
+        "vscs-codesp-prod-data-network-eu-w-009": {
+          "subscriptionId": "e7083301-3a4a-4a83-98fe-c2e1eb3cf2f5"
+        },
+        "vscs-codesp-prod-data-network-eu-w-010": {
+          "subscriptionId": "849194e6-77dc-4d03-aaab-68dbf95cd6ed"
+        },
+        "vscs-codesp-prod-data-network-eu-w-011": {
+          "subscriptionId": "6c289174-6c2d-40a3-aee2-39168bf411c0"
+        },
+        "vscs-codesp-prod-data-network-eu-w-012": {
+          "subscriptionId": "5c239914-d45f-41d8-9b6c-427a9b62065b"
+        },
         "vscs-codesp-prod-data-network-eu-w-013": {
           "subscriptionId": "87197dfd-0f45-4974-aa79-af8c8e152286",
           "enabled": false,
@@ -283,6 +388,45 @@
             "westeurope"
           ],
           "serviceType": "network"
+        },
+        "vscs-codesp-prod-data-network-us-e-001": {
+          "subscriptionId": "94190981-2bfd-44f4-ab5a-06ef390b313b"
+        },
+        "vscs-codesp-prod-data-network-us-e-002": {
+          "subscriptionId": "2d7d8ddc-c538-475d-a203-c0e815876e05"
+        },
+        "vscs-codesp-prod-data-network-us-e-003": {
+          "subscriptionId": "fcbd5424-2a5c-4997-a694-40dfeb615c1c"
+        },
+        "vscs-codesp-prod-data-network-us-e-004": {
+          "subscriptionId": "a77c92a3-935a-41bb-8607-05a71035915e"
+        },
+        "vscs-codesp-prod-data-network-us-e-005": {
+          "subscriptionId": "cdb4cc5f-b42d-48b9-9ac1-87f402134df8"
+        },
+        "vscs-codesp-prod-data-network-us-e-006": {
+          "subscriptionId": "9c7b40d0-125e-459d-9f57-f26e7ab5dbda"
+        },
+        "vscs-codesp-prod-data-network-us-e-007": {
+          "subscriptionId": "48e05739-4aa5-4b23-b7f8-e6d323d5eac0"
+        },
+        "vscs-codesp-prod-data-network-us-e-008": {
+          "subscriptionId": "3839c308-8d23-4403-baa2-43c63a17f16d"
+        },
+        "vscs-codesp-prod-data-network-us-e-009": {
+          "subscriptionId": "a6855511-a107-4152-bb0c-0074cdf2cbec"
+        },
+        "vscs-codesp-prod-data-network-us-e-010": {
+          "subscriptionId": "d8bba7c7-ed35-4b30-aabc-2d85f4dc786a"
+        },
+        "vscs-codesp-prod-data-network-us-e-011": {
+          "subscriptionId": "4eb5bfbf-9a49-4f72-b707-0e45e9016e98"
+        },
+        "vscs-codesp-prod-data-network-us-e-012": {
+          "subscriptionId": "cb299af9-5f46-4b56-9398-119e9b102562"
+        },
+        "vscs-codesp-prod-data-network-us-e-013": {
+          "subscriptionId": "8c8f9cc9-e40d-499a-80b3-1c1a0ecda9c5"
         },
         "vscs-codesp-prod-data-network-us-e-014": {
           "subscriptionId": "30be792e-6314-4250-91e5-3786e1350b27",
@@ -387,6 +531,18 @@
             "eastus2euap"
           ],
           "serviceType": "network"
+        },
+        "vscs-codesp-prod-data-network-us-w2-002": {
+          "subscriptionId": "e95e3a02-b04f-4693-abdb-b2623e9178f8"
+        },
+        "vscs-codesp-prod-data-network-us-w2-003": {
+          "subscriptionId": "40a185a3-1816-4e04-9862-8b0e6366d42f"
+        },
+        "vscs-codesp-prod-data-network-us-w2-004": {
+          "subscriptionId": "583a0519-4c74-4996-b0ee-fa6f5bb6e816"
+        },
+        "vscs-codesp-prod-data-network-us-w2-005": {
+          "subscriptionId": "0054c1d3-8a22-4943-bce5-3d0141f84c5d"
         },
         "vscs-codesp-prod-data-network-us-w2-006": {
           "subscriptionId": "8d243f3c-e918-4e86-8f7b-457e77b1232b",
@@ -1387,162 +1543,6 @@
             "westus2"
           ],
           "serviceType": "storage"
-        },
-        "vso-prod-data-001-00": {
-          "subscriptionId": "7f4e3558-29c6-4377-8270-8f0212dbddc2"
-        },
-        "vso-prod-data-001-01": {
-          "subscriptionId": "44ae3970-dc20-4366-b8ed-b075521d10dc"
-        },
-        "vso-prod-data-001-02": {
-          "subscriptionId": "cb974ee6-ab77-4604-b4c2-144290c0055a"
-        },
-        "vso-prod-data-001-03": {
-          "subscriptionId": "6be71a6e-27d7-41ae-81ea-ea147c4f8802"
-        },
-        "vso-prod-data-002-00": {
-          "subscriptionId": "6d0a7086-3524-47c7-916f-9bafcdad1b81"
-        },
-        "vso-prod-data-002-01": {
-          "subscriptionId": "bba1f707-266e-44e2-8e23-01c8a89cf1dd"
-        },
-        "vso-prod-data-002-02": {
-          "subscriptionId": "46cdf8ad-6c60-44e5-9095-5e8cda0b672e"
-        },
-        "vso-prod-data-002-03": {
-          "subscriptionId": "813f47ae-a5f8-43b0-a230-8ae3131d05d0"
-        },
-        "vso-prod-data-003-00": {
-          "subscriptionId": "a81f2b0c-8b33-411d-8ebc-233e103ffb15"
-        },
-        "vso-prod-data-003-01": {
-          "subscriptionId": "298dbdff-51e6-4469-b28e-deffbcd5d2e8"
-        },
-        "vso-prod-data-003-02": {
-          "subscriptionId": "5d3f8f41-08bd-41ef-acee-863c985cf298"
-        },
-        "vso-prod-data-003-03": {
-          "subscriptionId": "94190981-2bfd-44f4-ab5a-06ef390b313b"
-        },
-        "vso-prod-data-004-00": {
-          "subscriptionId": "9e87f0e3-c941-47a1-8749-08070817da63"
-        },
-        "vso-prod-data-004-01": {
-          "subscriptionId": "2d7d8ddc-c538-475d-a203-c0e815876e05"
-        },
-        "vso-prod-data-004-02": {
-          "subscriptionId": "fcbd5424-2a5c-4997-a694-40dfeb615c1c"
-        },
-        "vso-prod-data-004-03": {
-          "subscriptionId": "a77c92a3-935a-41bb-8607-05a71035915e"
-        },
-        "vso-prod-data-005-00": {
-          "subscriptionId": "cdb4cc5f-b42d-48b9-9ac1-87f402134df8"
-        },
-        "vso-prod-data-005-01": {
-          "subscriptionId": "9c7b40d0-125e-459d-9f57-f26e7ab5dbda"
-        },
-        "vso-prod-data-005-02": {
-          "subscriptionId": "48e05739-4aa5-4b23-b7f8-e6d323d5eac0"
-        },
-        "vso-prod-data-005-03": {
-          "subscriptionId": "3839c308-8d23-4403-baa2-43c63a17f16d"
-        },
-        "vso-prod-data-006-00": {
-          "subscriptionId": "a6855511-a107-4152-bb0c-0074cdf2cbec"
-        },
-        "vso-prod-data-006-01": {
-          "subscriptionId": "d8bba7c7-ed35-4b30-aabc-2d85f4dc786a"
-        },
-        "vso-prod-data-006-02": {
-          "subscriptionId": "4eb5bfbf-9a49-4f72-b707-0e45e9016e98"
-        },
-        "vso-prod-data-006-03": {
-          "subscriptionId": "cb299af9-5f46-4b56-9398-119e9b102562"
-        },
-        "vso-prod-data-007-00": {
-          "subscriptionId": "8c8f9cc9-e40d-499a-80b3-1c1a0ecda9c5"
-        },
-        "vso-prod-data-007-01": {
-          "subscriptionId": "ff8f1b2a-b2b1-4437-ad0e-09e104c35a41"
-        },
-        "vso-prod-data-007-02": {
-          "subscriptionId": "9c331a3a-2fa1-4d82-b77c-17e7ae89a245"
-        },
-        "vso-prod-data-007-03": {
-          "subscriptionId": "0054c1d3-8a22-4943-bce5-3d0141f84c5d"
-        },
-        "vso-prod-data-008-00": {
-          "subscriptionId": "ed5e3298-7b29-4ed4-b9c5-6cdb98ebdd6e"
-        },
-        "vso-prod-data-008-01": {
-          "subscriptionId": "57f27a99-a03d-4a6a-acd9-405bb9a85a12"
-        },
-        "vso-prod-data-008-02": {
-          "subscriptionId": "26b0a666-2fec-4a9c-83fc-6f9b47c5ef1c"
-        },
-        "vso-prod-data-008-03": {
-          "subscriptionId": "1e5e373f-27e1-45cb-bd11-84a8eb015b2d"
-        },
-        "vso-prod-data-009-00": {
-          "subscriptionId": "b8b14211-f868-4311-bba6-6d148187b226"
-        },
-        "vso-prod-data-009-01": {
-          "subscriptionId": "e95e3a02-b04f-4693-abdb-b2623e9178f8"
-        },
-        "vso-prod-data-009-02": {
-          "subscriptionId": "40a185a3-1816-4e04-9862-8b0e6366d42f"
-        },
-        "vso-prod-data-009-03": {
-          "subscriptionId": "583a0519-4c74-4996-b0ee-fa6f5bb6e816"
-        },
-        "vso-prod-data-100-01": {
-          "subscriptionId": "205ab7a1-3f0c-4ef2-97fe-a8e0f52da462"
-        },
-        "vso-prod-data-100-02": {
-          "subscriptionId": "fd6ff98b-f757-4f9e-8f91-cc4011065187"
-        },
-        "vso-prod-data-100-03": {
-          "subscriptionId": "81068cd0-7c4f-4f8d-a417-bf2df33dd819"
-        },
-        "vso-prod-data-100-04": {
-          "subscriptionId": "a474a831-2093-4aad-9103-b04a2837229d"
-        },
-        "vso-prod-data-100-05": {
-          "subscriptionId": "e7083301-3a4a-4a83-98fe-c2e1eb3cf2f5"
-        },
-        "vso-prod-data-100-06": {
-          "subscriptionId": "849194e6-77dc-4d03-aaab-68dbf95cd6ed"
-        },
-        "vso-prod-data-100-07": {
-          "subscriptionId": "6c289174-6c2d-40a3-aee2-39168bf411c0"
-        },
-        "vso-prod-data-100-08": {
-          "subscriptionId": "5c239914-d45f-41d8-9b6c-427a9b62065b"
-        },
-        "vso-prod-data-100-09": {
-          "subscriptionId": "a909a4fc-a6ff-4669-955b-c8723fe8ee78"
-        },
-        "vso-prod-data-100-10": {
-          "subscriptionId": "c48e1b7f-e7b2-4bea-96d1-dd06c7b72dc5"
-        },
-        "vso-prod-data-100-11": {
-          "subscriptionId": "69a5bce5-3034-4c3a-b277-41cf411fe162"
-        },
-        "vso-prod-data-100-12": {
-          "subscriptionId": "aed45f15-0980-468f-b3e4-b4e2b375d5aa"
-        },
-        "vso-prod-data-100-13": {
-          "subscriptionId": "44cf333e-92ef-4f80-8d03-e31ef90833df"
-        },
-        "vso-prod-data-100-14": {
-          "subscriptionId": "b13acfb9-89f6-4551-a721-28f584b55a77"
-        },
-        "vso-prod-data-100-15": {
-          "subscriptionId": "b4d9dbfd-383d-4e95-92aa-9288f870a389"
-        },
-        "vso-prod-data-100-16": {
-          "subscriptionId": "492ab927-fbc8-4d5d-8839-f64d6f137df4"
         }
       }
     }

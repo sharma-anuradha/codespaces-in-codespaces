@@ -413,7 +413,7 @@ function Get-Subscriptions {
 
     if ($Canary) {
         $subscriptions = $subscriptions | Where-Object {
-            $_.ordinal -eq 1
+            $_.region -eq "us-e2c" -or $_.region -eq "global"
         }
      }
 
@@ -845,7 +845,7 @@ function Build-AppSettings {
         # The AzureSubscriptionCatalog can get confused if it contains
         # conflicting info about the same subscription (legacy/enabled according
         # to prod-rel but network/disabled according to prod-can, for example).
-        if ($Canary -and ($subscription.subscriptionName -ne "vso-prod-data-001-00")) {
+        if ($Canary -and ($subscription.subscriptionOldName -ne "vso-prod-data-001-00")) {
             return
         }
 

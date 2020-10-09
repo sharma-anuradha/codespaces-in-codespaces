@@ -34,6 +34,18 @@
           ],
           "serviceType": "keyvault"
         },
+        "vscs-codesp-ppe-data-legacy-global-001": {
+          "subscriptionId": "637c1a9c-ba08-4653-8a7e-921a07cbf19a"
+        },
+        "vscs-codesp-ppe-data-legacy-global-002": {
+          "subscriptionId": "3b9f3d0e-d120-4375-af32-58156f1d6f54"
+        },
+        "vscs-codesp-ppe-data-legacy-global-003": {
+          "subscriptionId": "e859fec8-3e18-4979-a299-211812aeb75b"
+        },
+        "vscs-codesp-ppe-data-legacy-global-004": {
+          "subscriptionId": "38b943e5-50a4-49e8-8601-57d2a62aabe3"
+        },
         "vscs-codesp-ppe-data-network-ap-se-001": {
           "subscriptionId": "69f8fa94-9d26-4d1b-9db5-600299c7c0aa",
           "locations": [
@@ -91,18 +103,6 @@
             "westus2"
           ],
           "serviceType": "storage"
-        },
-        "vso-ppe-data-001-00": {
-          "subscriptionId": "637c1a9c-ba08-4653-8a7e-921a07cbf19a"
-        },
-        "vso-ppe-data-001-01": {
-          "subscriptionId": "3b9f3d0e-d120-4375-af32-58156f1d6f54"
-        },
-        "vso-ppe-data-001-02": {
-          "subscriptionId": "e859fec8-3e18-4979-a299-211812aeb75b"
-        },
-        "vso-ppe-data-001-03": {
-          "subscriptionId": "38b943e5-50a4-49e8-8601-57d2a62aabe3"
         }
       }
     }

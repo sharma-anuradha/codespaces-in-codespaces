@@ -4,7 +4,7 @@
   "AppSettings": {
     "dataPlaneSettings": {
       "subscriptions": {
-        "vso-prod-data-001-00": {
+        "vscs-codesp-prod-data-legacy-global-001": {
           "subscriptionId": "7f4e3558-29c6-4377-8270-8f0212dbddc2"
         }
       }
