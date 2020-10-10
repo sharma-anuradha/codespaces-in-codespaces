@@ -214,7 +214,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                             nowUtc > job.Created.Add(expireTimeout.Value))
                         {
                             await CompleteJobAsync(jobInstance, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.Expired, null);
-                            childLogger.FluentAddValue(JobQueueLoggerConst.JobDidExpired, true);
+                            childLogger.FluentAddValue(JobQueueLoggerConst.JobDidExpired, true)
+                                .FluentAddValue(JobQueueLoggerConst.JobHandlerStatus, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.Expired);
                             expired = true;
                         }
                         else
@@ -248,6 +249,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                         status |= JobCompletedStatus.Removed;
                                     }
 
+                                    childLogger.FluentAddValue(JobQueueLoggerConst.JobHandlerStatus, status);
                                     await CompleteJobAsync(jobInstance, status, null);
                                 }
                             }
@@ -324,7 +326,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                 }
                             }
 
-                            // in all scenarios we woould need to complete the job.
+                            logger.FluentAddValue(JobQueueLoggerConst.JobHandlerStatus, status);
+
+                            // in all scenarios we would need to complete the job.
                             await CompleteJobAsync(jobInstance, status, err);
                         }
                         catch

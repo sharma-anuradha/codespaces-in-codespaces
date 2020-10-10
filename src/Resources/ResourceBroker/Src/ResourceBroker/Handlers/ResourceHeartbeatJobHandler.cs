@@ -11,6 +11,7 @@ using AutoMapper;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
@@ -20,6 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
+    [JobHandlerErrorCallback(typeof(DocumentClientJobHandlerError))]
     public class ResourceHeartbeatJobHandler : JobHandlerPayloadBase<ResourceHeartbeatJobHandler.Payload>, IJobHandlerTarget
     {
         /// <summary>

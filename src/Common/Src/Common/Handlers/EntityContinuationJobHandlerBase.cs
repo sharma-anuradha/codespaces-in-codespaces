@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Handlers
 {
+    [JobHandlerErrorCallback(typeof(DocumentClientJobHandlerError))]
     public abstract class EntityContinuationJobHandlerBase<TRecord, TOperation, TPayload, TState, TResult> : ContinuationJobHandlerBase<TPayload, TState, TResult>, IJobHandlerTarget, IJobHandlerRegisterCallback
        where TPayload : EntityContinuationJobPayloadBase<TState>
        where TState : struct, System.Enum

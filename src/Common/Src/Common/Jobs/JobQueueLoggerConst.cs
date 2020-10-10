@@ -143,5 +143,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// Keep invisible count.
         /// </summary>
         public const string JobKeepInvisibleCount = "JobKeepInvisibleCount";
+
+        /// <summary>
+        /// Job error handler status
+        /// </summary>
+        public const string JobHandlerStatus = "JobHandlerStatus";
     }
 }

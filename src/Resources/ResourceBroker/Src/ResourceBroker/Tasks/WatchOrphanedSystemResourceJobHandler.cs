@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts.Payloads;
@@ -26,6 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <remarks>
     /// When making changes in this class take a look at \src\Codespaces\EnvironmentManager\Src\EnvironmentManager\Tasks\WatchOrphanedSystemEnvironmentsTask.cs.
     /// </remarks>
+    [JobHandlerErrorCallback(typeof(DocumentClientJobHandlerError))]
     public class WatchOrphanedSystemResourceJobHandler : JobHandlerPayloadBase<GuidShardJobProducer.GuidShardPayload<WatchOrphanedSystemResourceJobHandler>>, IGuidShardJobScheduleDetails
     {
         public string EnabledFeatureFlagName => "WatchOrphanedSystemResourceJobs";

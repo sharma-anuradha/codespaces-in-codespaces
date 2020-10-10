@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
@@ -15,6 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// Base class for all data plane resource group job handlers
     /// </summary>
     /// <typeparam name="TJobHandlerType">Type of the job handler type.</typeparam>
+    [JobHandlerErrorCallback(typeof(DocumentClientJobHandlerError))]
     public abstract class BaseDataPlaneResourceGroupJobHandler<TJobHandlerType> : JobHandlerPayloadBase<BaseDataPlaneResourceGroupJobProducer.ResourceGroupPayload<TJobHandlerType>>
        where TJobHandlerType : class
     {

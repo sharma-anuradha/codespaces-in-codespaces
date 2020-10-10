@@ -18,6 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// Base class for all our watch pool job handlers.
     /// </summary>
     /// <typeparam name="TJobHandlerType">Type of the job handler type.</typeparam>
+    [JobHandlerErrorCallback(typeof(DocumentClientJobHandlerError))]
     public abstract class WatchPoolJobHandlerBase<TJobHandlerType> : JobHandlerPayloadBase<WatchPoolPayloadFactory.ResourcePoolPayload<TJobHandlerType>>
         where TJobHandlerType : class
     {
