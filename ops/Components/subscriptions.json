@@ -556,7 +556,7 @@
     "maxResourceGroupCount": null,
     "ordinal": 1,
     "plane": "data",
-    "premiumFilesInternalSettings": "done",
+    "premiumFilesInternalSettings": "",
     "region": "ap-se",
     "serviceType": "Network",
     "storagePartitionedDnsFlag": "",
