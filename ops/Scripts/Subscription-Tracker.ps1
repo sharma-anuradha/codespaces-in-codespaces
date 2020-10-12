@@ -863,7 +863,7 @@ function Build-AppSettings {
             if ($subscription.location) {
                 $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "locations" -Value @($subscription.location)
             }
-            if ($subscription.serviceType) {
+            if ($null -ne $subscription.serviceType) {
                 $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "serviceType" -Value ([string]$subscription.serviceType).ToLowerInvariant()
             }
             if ($null -ne $subscription.maxResourceGroupCount) {
