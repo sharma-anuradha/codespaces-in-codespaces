@@ -165,6 +165,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 return AuthenticateResult.Fail("Missing id claim.");
             }
 
+            // Verify the token with GitHub
+            if (!await gateway.VerifyTokenIsValidAsync(username, logger))
+            {
+                return AuthenticateResult.Fail("GitHub Token is invalid or the app it was issued to is not trusted.");
+            }
+
             bool isMicrosoftInternalUser = await gateway.IsMemberOfMicrosoftOrganisationAsync(username, logger);
            
             var delegatedIdentity = new DelegateIdentity()

@@ -191,6 +191,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
                 swallowException: false);
         }
 
+        public async Task<bool> VerifyTokenIsValidAsync(
+            string username,
+            IDiagnosticsLogger logger)
+        {
+            var list = new List<CloudEnvironmentResult>();
+            return await logger.OperationScopeAsync(
+                "github_apigateway_validate_token",
+                async (logger) =>
+                {
+                    // While this code hits the same endpoint as <see cref="GetCodespacesAsync"/>
+                    // it does not continue to fetch each individual codespace in the results. We
+                    // only use this to validate the token (GitHub will reject tokens that aren't
+                    // issued for an app we trust.)
+                    var request = NewRequest(HttpMethod.Get, $"vscs_internal/user/{username}/codespaces");
+                    var response = await httpClient.SendAsync(request);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var responseText = await response.Content.ReadAsStringAsync();
+                        logger.AddValue("GitHubApiStatusCode", response.StatusCode.ToString());
+                        logger.AddErrorDetail(responseText)
+                              .LogWarning("github_invalid_token_used");
+
+                        return false;
+                    }
+
+                    return true;
+                });
+        }
+
         public async Task<IEnumerable<CloudEnvironmentResult>> GetCodespacesAsync(
             string username,
             IDiagnosticsLogger logger)
@@ -212,7 +241,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
                     {
                         var responseText = await response.Content.ReadAsStringAsync();
                         logger.AddErrorDetail(responseText);
-                        logger.LogError("github_creation_failed.");
+                        logger.LogError("github_list_codespaces_failed");
                         return list;
                     }
 
