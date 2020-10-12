@@ -23,6 +23,7 @@ import { getProductConfiguration } from './getProductConfiguration';
 import { getDefaultSettings } from './getDefaultSettings';
 import { codespaceInitializationTracker } from '../../utils/CodespaceInitializationTracker/CodespaceInitializationTracker';
 import { TunnelProvider } from '../providers/tunnelProvider';
+import { portForwardingManagementApi } from '../../api/portForwardingManagementApi';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -43,7 +44,7 @@ export class Workbench {
         environmentInfo: IEnvironment,
         vscodeConfig: IVSCodeConfig,
         token: string,
-        options: IDefaultWorkbenchOptions,
+        options: IDefaultWorkbenchOptions
     ) {
         return async (connector: EnvConnector) => {
             const workspaceProvider = new WorkspaceProvider(
@@ -90,11 +91,7 @@ export class Workbench {
 
             const defaultLayout = getWorkbenchDefaultLayout(environmentInfo);
 
-            const [
-                homeIndicator,
-                productConfiguration,
-                configurationDefaults,
-            ] = await Promise.all([
+            const [homeIndicator, productConfiguration, configurationDefaults] = await Promise.all([
                 getHomeIndicator(),
                 getProductConfiguration(),
                 getDefaultSettings(),
@@ -106,11 +103,13 @@ export class Workbench {
                 urlCallbackProvider,
                 resourceUriProvider,
                 resolveExternalUri,
-                tunnelProvider: new TunnelProvider(),
+                tunnelProvider: new TunnelProvider(({ remoteAddress: { port } }) =>
+                    portForwardingManagementApi.warmupConnection(environmentInfo.id, port, token)
+                ),
                 resolveCommonTelemetryProperties,
                 enableSyncByDefault: true,
                 configurationDefaults,
-                homeIndicator: homeIndicator,
+                homeIndicator,
                 productConfiguration,
                 defaultLayout,
                 commands,
@@ -141,7 +140,7 @@ export class Workbench {
                 environmentInfo,
                 vscodeConfig,
                 token,
-                this.options,
+                this.options
             );
 
             this.workbench = new VSCodeWorkbench({
@@ -157,9 +156,7 @@ export class Workbench {
 
             await Promise.all([
                 registerServiceWorker({
-                    passthroughUrls: [
-                        `${location.origin}/csp-report`,
-                    ],
+                    passthroughUrls: [`${location.origin}/csp-report`],
                     liveShareEndpoint,
                     features: {
                         useSharedConnection: true,

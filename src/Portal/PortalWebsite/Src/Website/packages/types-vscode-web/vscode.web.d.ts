@@ -348,7 +348,7 @@ declare module 'vscode-web' {
         label?: string;
     }
 
-    export interface ITunnel extends IDisposable {
+    export interface ITunnel extends vscodeTypes.Disposable {
         remoteAddress: { port: number; host: string };
 
         /**
@@ -359,7 +359,7 @@ declare module 'vscode-web' {
         /**
          * Implementers of Tunnel should fire onDidDispose when dispose is called.
          */
-        onDidDispose: Event<void>;
+        onDidDispose: vscodeTypes.Event<void>;
     }
 
     export enum LogLevel {
@@ -605,42 +605,48 @@ declare module 'vscode-web' {
 
     interface IDefaultSideBarLayout {
         visible?: boolean;
-        containers?: ({
-            id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
-            active: true;
-            order?: number;
-            views?: {
-                id: string;
-                order?: number;
-                visible?: boolean;
-                collapsed?: boolean;
-            }[];
-        } | {
-            id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
-            active?: false;
-            order?: number;
-            visible?: boolean;
-            views?: {
-                id: string;
-                order?: number;
-                visible?: boolean;
-                collapsed?: boolean;
-            }[];
-        })[];
+        containers?: (
+            | {
+                  id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+                  active: true;
+                  order?: number;
+                  views?: {
+                      id: string;
+                      order?: number;
+                      visible?: boolean;
+                      collapsed?: boolean;
+                  }[];
+              }
+            | {
+                  id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+                  active?: false;
+                  order?: number;
+                  visible?: boolean;
+                  views?: {
+                      id: string;
+                      order?: number;
+                      visible?: boolean;
+                      collapsed?: boolean;
+                  }[];
+              }
+        )[];
     }
 
     interface IDefaultPanelLayout {
         visible?: boolean;
-        containers?: ({
-            id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
-            order?: number;
-            active: true;
-        } | {
-            id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
-            order?: number;
-            active?: false;
-            visible?: boolean;
-        })[];
+        containers?: (
+            | {
+                  id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+                  order?: number;
+                  active: true;
+              }
+            | {
+                  id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+                  order?: number;
+                  active?: false;
+                  visible?: boolean;
+              }
+        )[];
     }
 
     interface IDefaultView {
@@ -663,7 +669,6 @@ declare module 'vscode-web' {
     }
 
     export interface IProductQualityChangeHandler {
-
         /**
          * Handler is being called when the user wants to switch between
          * `insider` or `stable` product qualities.

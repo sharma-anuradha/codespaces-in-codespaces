@@ -96,6 +96,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
                 // local dev
                 currentOrigins.Add("https://github.localhost");
                 currentOrigins.Add("http://github.localhost");
+                currentOrigins.Add("https://*.github.localhost");
+                currentOrigins.Add("http://*.github.localhost");
                 currentOrigins.Add("https://garage.github.com");
                 currentOrigins.Add("https://*.review-lab.github.com");
 

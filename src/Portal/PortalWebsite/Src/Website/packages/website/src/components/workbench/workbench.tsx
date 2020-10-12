@@ -86,6 +86,7 @@ import {
 import './workbench.css';
 import { telemetryMarks } from 'vso-workbench/src/telemetry/telemetryMarks';
 import { withTranslation, WithTranslation } from 'react-i18next';
+import { createPortForwardingConnection } from '../../actions/createPortForwardingServiceConnection';
 
 export interface IWorkbenchState {
     connectError: string | null;
@@ -487,7 +488,9 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             urlCallbackProvider: new UrlCallbackProvider(),
             resourceUriProvider,
             resolveExternalUri,
-            tunnelProvider: new TunnelProvider(),
+            tunnelProvider: new TunnelProvider(({ remoteAddress: { port } }) =>
+                createPortForwardingConnection(environmentInfo.id, port)
+            ),
             resolveCommonTelemetryProperties,
             homeIndicator,
             commands,
