@@ -1,0 +1,55 @@
+#function("Gets the max hotpool resource usage per Azure quota type.")
+(
+    ['data']:
+    (
+        msg:string,
+        t:datetime,
+        PoolIsEnabled:string,
+        PoolReadyUnassignedCount:string,
+        PoolLocation:string,
+        PoolSkuName:string,
+        PoolDefinition:string,
+        PoolResourceType:string,
+        ServiceInstance:string
+    ),
+    binSize:timespan
+)
+{
+    let tiers=getSkuTiers();
+    let hotpoolUsageBase=data
+    | where msg == "watch_pool_state_task_run_unit_check_complete"
+    | where tobool(PoolIsEnabled) == true
+    | extend  t=bin(t, binSize), cnt=tolong(PoolReadyUnassignedCount), location=PoolLocation, skuName=PoolSkuName, resourceType=PoolResourceType, pool=PoolDefinition, instance=ServiceInstance
+    | summarize cnt=max(cnt) by t, location, skuName, resourceType, pool, instance
+    | summarize cnt=sum(cnt) by t, location, skuName, resourceType;
+    let hotpoolUsageByQuota=union 
+    (
+        hotpoolUsageBase
+        | where resourceType == 'ComputeVM'
+        | lookup tiers on $left.skuName == $right.vmSkuName
+        | project t, location, cnt=cnt, quota='virtualMachines'
+    ),
+    (
+        hotpoolUsageBase
+        | where resourceType == 'ComputeVM'
+        | lookup tiers on $left.skuName == $right.vmSkuName
+        | project t, location, cnt=cnt, quota=strcat('virtualMachines_', skuName)
+    ),
+    (
+        hotpoolUsageBase
+        | where resourceType == 'ComputeVM'
+        | lookup tiers on $left.skuName == $right.vmSkuName
+        | project t, location, cnt=cnt * vmCores, quota=vmSkuFamily
+    ),
+    (
+        hotpoolUsageBase
+        | where resourceType == 'StorageFileShare'
+        | project t, location, cnt=cnt, quota='StorageAccounts'
+    ),
+    (
+        hotpoolUsageBase
+        | where resourceType == 'ComputeVM'
+        | project t, location, cnt=cnt, quota='PremiumDiskCount' // OS Disk, assume this as it is the only type used currently
+    );
+    hotpoolUsageByQuota | summarize cnt=sum(cnt) by t, location, quota;
+} 

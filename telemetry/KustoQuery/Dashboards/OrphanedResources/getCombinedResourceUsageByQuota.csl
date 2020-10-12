@@ -1,0 +1,25 @@
+.create-or-alter function
+with (docstring = 'Gets the max resource usage per Azure quota type across all components.', folder='Dashboards/OrphanedResources')
+getCombinedResourceUsageByQuota
+(
+    data: (
+        // Common
+        msg:string, ['time']:datetime,BatchId:string,ServiceInstance:string,ServiceEnvironment:string,
+        // getActualAzureResourceUsageByQuota
+        ['limit']:string,subscriptionName:string,['location']:string,['quota']:string,currentValue:string,SubscriptionType:string,
+        // getCodespaceResourceUsageByQuota
+        EnvironmentSku:string,EnvironmentState:string,EnvironmentRegion:string,EnvironmentCount:string,EnvironmentPartner:string,EnvironmentCountryCode:string,EnvironmentAzureGeography:string,
+        // getHotpoolResourceUsageByQuota
+        PoolIsEnabled:string,PoolReadyUnassignedCount:string,PoolLocation:string,PoolSkuName:string,PoolDefinition:string,PoolResourceType:string,
+        // getBackendResourceUsageByQuota
+        ResourceType:string,ResourceSkuName:string,ResourceLocation:string,ResourceCount:string,ResourceIsReady:string,ResourceIsAssigned:string,ResourceIsComponent:string,ResourceSubscriptionId:string
+    ), 
+    binSize:timespan
+) {
+    let input=data | extend t=['time'];
+    getActualAzureResourceUsageByQuota(input, binSize)
+    | join kind=leftouter getCodespaceResourceUsageByQuota(input, binSize) on quota, location, t
+    | join kind=leftouter getHotpoolResourceUsageByQuota(input, binSize) on quota, location, t
+    | join kind=leftouter getBackendResourceUsageByQuota(input, binSize) on quota, location, t
+    | project t, location, quota, lim, actual=use, codespaces=coalesce(cnt, 0), hotpool=coalesce(cnt1, 0), backend=coalesce(cnt2, 0)
+}

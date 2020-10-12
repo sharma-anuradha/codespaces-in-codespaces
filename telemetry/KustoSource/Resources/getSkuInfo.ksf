@@ -1,0 +1,25 @@
+#function("Gets the list of all resource sku infos - these map to AppSettings.SkuCatalogSettings.CloudEnvironmentSkuSettings")
+()
+{
+    let skus=datatable (skuName:string, tier:string)
+    [
+        'basicLinux',                          'Basic',
+        'standardLinux',                       'Standard',
+        'premiumLinux',                        'Premium',
+
+        'basicLinux32gb',                      'Basic32gb',
+        'standardLinux32gb',                   'Standard32gb',
+        'premiumLinux32gb',                    'Premium32gb',
+
+        'premiumWindows',                      'Premium',
+        'internalWindows',                     'Premium',
+        'premiumWindowsStaging',               'Premium',
+        'premiumWindowsInternalStaging',       'Premium',
+        'premiumWindowsServerInternalStaging', 'Premium',
+        'internal32Server',                    'Premium',
+        'internal64Server',                    'Premium',
+        'internalDailyWindows',                'Premium',
+        'staticEnvironment',                   'Static',
+    ];
+    getSkuTiers() | join kind=inner skus on $left.tierName == $right.tier;
+}

@@ -10,11 +10,15 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Utils
         public static List<T> TopologicalSort<T>(Dictionary<string, T> nameMap) where T : KustoQueryBase
         {
             List<Tuple<T, T>> edges = new List<Tuple<T, T>>();
-            foreach (var item in nameMap.Values)
+            foreach (var (name, item) in nameMap)
             {
                 foreach (var dep in item.DependentFunction)
                 {
-                    var target = nameMap[dep];
+                    if (!nameMap.TryGetValue(dep, out var target))
+                    {
+                        throw new MissingMethodException($"The function {dep} referenced by {name} was not found");
+                    }
+
                     edges.Add(new Tuple<T, T>(item, target));
                 }
             }

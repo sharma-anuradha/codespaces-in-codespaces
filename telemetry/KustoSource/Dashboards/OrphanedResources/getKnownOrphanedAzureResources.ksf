@@ -1,0 +1,67 @@
+#function("Gets the list of known orphaned Azure resources and their info.")
+(
+    ['data']:
+    (
+        msg:string,
+        TaskItemRunId:string,
+        ['time']:datetime,
+        Duration:string,
+        SubscriptionId:string,
+        ResourceGroup:string,
+        AzureResourceType:string,
+        ResourceLocation:string,
+        ResourceDeleteAttempted:string,
+        AzureResourceId:string,
+        AzureResourceTags:string,
+        ResourceId:string,
+        ErrorDetail:string
+    )
+)
+{
+    let Base=data
+    | where msg startswith 'watch_orphaned_azure_resource_task_'
+    | project TaskItemRunId, t=['time'], msg, Duration, SubscriptionId, ResourceGroup, AzureResourceType, ResourceLocation, ResourceDeleteAttempted=tobool(ResourceDeleteAttempted), AzureResourceId, AzureResourceTags, ResourceId, ErrorDetail
+    | summarize 
+        (t, Duration, ResourceDeleteAttempted, AzureResourceTags, ErrorDetail)=any(t, Duration, ResourceDeleteAttempted, AzureResourceTags, ErrorDetail) 
+        by TaskItemRunId, msg, AzureResourceId, SubscriptionId, ResourceGroup, AzureResourceType, ResourceLocation, ResourceId;
+    let ResourceInfo=Base
+    | where msg startswith 'watch_orphaned_azure_resource_task_run_delete_orphan'
+    | extend Result=iff(ResourceDeleteAttempted, iff(msg endswith 'complete', "Success", "Failed"), "Not Attempted")
+    | summarize 
+            TotalEntries=count(),
+            DeleteAttempts=countif(ResourceDeleteAttempted), 
+            FirstSeenAt=min(t),
+            (LatestEntry, LatestAttemptResult, LatestDeleteAttempted, AzureResourceTags, LatestErrorDetail)=arg_max(t, Result, ResourceDeleteAttempted, AzureResourceTags, ErrorDetail)
+        by 
+            SubscriptionId, 
+            ResourceGroup, 
+            AzureResourceType, 
+            ResourceLocation, 
+            AzureResourceId, 
+            ResourceId;
+    let ResourceGroups=Base
+    | where msg startswith 'watch_orphaned_azure_resource_task_run_unit_check'
+    | summarize  LatestScanStartTime=max(t - totime(Duration))
+        by SubscriptionId, ResourceGroup;  
+    ResourceInfo
+    | join kind=inner ResourceGroups on SubscriptionId, ResourceGroup
+    | extend IsStillOrphaned=(LatestEntry >= LatestScanStartTime)
+    | where IsStillOrphaned
+    | extend AzureResourceTags=parse_json(AzureResourceTags)
+    | project
+        SubscriptionId,
+        ResourceGroup, 
+        ResourceType=AzureResourceType, 
+        AzureResourceId=AzureResourceId, 
+        Location=ResourceLocation, 
+        DeleteAttempts, 
+        LatestAttemptResult, 
+        IsAttemptingToDelete=LatestDeleteAttempted, 
+        LastSeenAt=LatestEntry, 
+        TotalOrphanedTime=(now() - FirstSeenAt), 
+        PoolImageFamilyName=AzureResourceTags.PoolImageFamilyName, 
+        LatestErrorDetail,
+        SystemResourceId=ResourceId,
+        TotalEntries 
+    | order by DeleteAttempts desc
+}

@@ -1,0 +1,18 @@
+.create-or-alter function
+with (docstring = 'Gets the list of all resource sku tiers - these map to AppSettings.SkuCatalogSettings.SkuTierSettings', folder='Resources')
+getSkuTiers
+()
+{
+    datatable (tierName:string, vmSkuFamily:string, vmSkuName:string, vmCores:int, storageSkuName:string, storageGb:int)
+    [
+        'Basic',        'standardFSv2Family', 'Standard_F2s_v2', 2, 'Premium_LRS',   64,
+        'Standard',     'standardFSv2Family', 'Standard_F4s_v2', 4, 'Premium_LRS',   64,
+        'Premium',      'standardFSv2Family', 'Standard_F8s_v2', 8, 'Premium_LRS',   64,
+        'Basic32gb',    'standardFSv2Family', 'Standard_F2s_v2', 2, 'Premium_LRS',   32,
+        'Standard32gb', 'standardFSv2Family', 'Standard_F4s_v2', 4, 'Premium_LRS',   32,
+        'Premium32gb',  'standardFSv2Family', 'Standard_F8s_v2', 8, 'Premium_LRS',   32,
+        'StandardDSv3', 'standardDSv3Family', 'Standard_D4s_v3', 4, 'Premium_LRS',   64,
+        'PremiumDSv3',  'standardDSv3Family', 'Standard_D8s_v3', 8, 'Premium_LRS',   64,
+        'Static',       'staticCompute',      'staticCompute',   0, 'staticStorage', 0,
+    ]
+}

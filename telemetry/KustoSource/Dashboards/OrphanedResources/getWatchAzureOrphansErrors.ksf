@@ -1,0 +1,35 @@
+#function("Gets the list of errors from the last run of the orphaned azure resource watcher per resource group.")
+(
+    ['data']:
+    (
+        msg:string,
+        TaskItemRunId:string,
+        ['time']:datetime,
+        Duration:string,
+        SubscriptionId:string,
+        ResourceGroup:string,
+        AzureResourceType:string,
+        ResourceLocation:string,
+        AzureResourceId:string,
+        AzureResourceTags:string,
+        ErrorDetail:string
+    )
+)
+{
+    let Errors=data
+    | where msg endswith '_error'
+    | where msg != 'watch_orphaned_azure_resource_task_run_delete_orphan_error' // These are surfaced in getKnownOrphanedAzureResources
+    | project TaskItemRunId, t=['time'], msg, Duration, SubscriptionId, ResourceGroup, AzureResourceType, ResourceLocation, AzureResourceId, AzureResourceTags, ErrorDetail
+    | summarize 
+        (t, AzureResourceTags, ErrorDetail)=argmax(t, AzureResourceTags, ErrorDetail) 
+        by msg, AzureResourceId, SubscriptionId, ResourceGroup, AzureResourceType, ResourceLocation
+    | project msg, SubscriptionId, ResourceGroup, ResourceType=AzureResourceType, ResourceId=AzureResourceId, Location=ResourceLocation, LastSeenTime=t, Tags=AzureResourceTags, ErrorDetail;
+    let ResourceGroups=data
+    | where msg startswith 'watch_orphaned_azure_resource_task_run_unit_check'
+    | summarize LatestScanStartTime=max(['time'] - totime(Duration))
+        by SubscriptionId, ResourceGroup; 
+    Errors
+    | join kind=inner ResourceGroups on SubscriptionId and ResourceGroup
+    | where LastSeenTime >= LatestScanStartTime
+    | project msg, ErrorDetail, SubscriptionId, ResourceGroup, Location, ResourceType, ResourceId, Tags
+}

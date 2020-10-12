@@ -1,0 +1,41 @@
+.create-or-alter function
+with (docstring = 'Gets the max Backend resource usage per Azure quota type.', folder='Resources')
+getBackendResourceUsageByQuota
+(
+    ['data']:(
+        msg:string,
+        t:datetime,
+        ResourceType:string,
+        ResourceSkuName:string,
+        ResourceLocation:string,
+        ResourceCount:string,
+        ResourceIsReady:string,
+        ResourceIsAssigned:string,
+        ResourceIsComponent:string,
+        ResourceSubscriptionId:string,
+        ResourceIsReady:string,
+        BatchId:string
+    ),
+    binSize:timespan
+) {   
+    let vmSkus=getSkuTiers()
+    | distinct vmSkuFamily, vmSkuName, vmCores
+    | project family=vmSkuFamily, name=vmSkuName, cores=vmCores;
+    let resourceUsageRaw=data
+    | where msg == 'system_resource_isready_measure'
+    | project t, type=ResourceType, sku=ResourceSkuName, location=ResourceLocation, isReady=tobool(ResourceIsReady), cnt=toint(ResourceCount), BatchId
+    | where isReady
+    | summarize (cnt, t)=any(cnt, t) by type, sku, location, BatchId
+    | summarize cnt=sum(cnt), t=min(t) by type, sku, location, BatchId
+    | extend t=bin(t, binSize)
+    | summarize cnt=max(cnt) by t, type, sku, location;
+    let resourceUsageByQuota=union
+    (resourceUsageRaw | where type == 'ComputeVM' | lookup vmSkus on $left.sku == $right.name | project t, location, cnt, quota=strcat('virtualMachines_', sku)),
+    (resourceUsageRaw | where type == 'ComputeVM' | lookup vmSkus on $left.sku == $right.name | project t, location, cnt, quota='virtualMachines'),
+    (resourceUsageRaw | where type == 'ComputeVM' | lookup vmSkus on $left.sku == $right.name | project t, location, cnt=cnt * cores, quota=family),
+    (resourceUsageRaw | where type == 'OSDisk' | project t, location, cnt, quota='PremiumDiskCount'), // OS Disk, assume this as it is the only type used currently
+    (resourceUsageRaw | where type == 'StorageFileShare' | project t, location, cnt, quota='StorageAccounts'),
+    (resourceUsageRaw | where type in ('VirtualNetwork', 'NetworkInterface', 'NetworkSecurityGroup') | project t, location, cnt, quota=sku),
+    (resourceUsageRaw | where type in ('KeyVault') | project t, location, cnt, quota=type);
+    resourceUsageByQuota | summarize cnt=sum(cnt) by t, location, quota;
+} 

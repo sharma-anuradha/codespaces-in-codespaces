@@ -1,0 +1,32 @@
+#function("Gets the list of Azure resources which the orphaned azure resource watcher has seen but can't handle.")
+(
+    ['data']:
+    (
+        msg:string,
+        TaskItemRunId:string,
+        ['time']:datetime,
+        Duration:string,
+        SubscriptionId:string,
+        ResourceGroup:string,
+        AzureResourceType:string,
+        ResourceLocation:string,
+        AzureResourceId:string,
+        AzureResourceTags:string
+    )
+)
+{
+    let UnknownResources=data
+    | where msg == 'watch_orphaned_azure_resource_task_unknown_resource'
+    | project TaskItemRunId, t=['time'], msg, Duration, SubscriptionId, ResourceGroup, AzureResourceType, ResourceLocation, AzureResourceId, AzureResourceTags
+    | summarize (t, AzureResourceTags)=argmax(t, AzureResourceTags) 
+        by AzureResourceId, SubscriptionId, ResourceGroup, AzureResourceType, ResourceLocation
+    | project SubscriptionId, ResourceGroup, ResourceType=AzureResourceType, ResourceId=AzureResourceId, Location=ResourceLocation, LastSeenTime=t, Tags=AzureResourceTags;
+    let ResourceGroups=data
+    | where msg startswith 'watch_orphaned_azure_resource_task_run_unit_check'
+    | summarize LatestScanStartTime=max(['time'] - totime(Duration))
+        by SubscriptionId, ResourceGroup; 
+    UnknownResources
+    | join kind=inner ResourceGroups on SubscriptionId and ResourceGroup
+    | where LastSeenTime >= LatestScanStartTime
+    | project SubscriptionId, ResourceGroup, ResourceType, ResourceId, Location, LastSeenTime, Tags
+}

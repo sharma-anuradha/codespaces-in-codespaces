@@ -1,0 +1,47 @@
+#function("Gets the max Codespace resource usage per Azure quota type.")
+(
+    ['data']:
+    (
+        msg:string,
+        t:datetime,
+        EnvironmentSku:string,
+        EnvironmentState:string,
+        EnvironmentRegion:string,
+        EnvironmentCount:string,
+        BatchId:string,
+        EnvironmentPartner:string,
+        EnvironmentCountryCode:string,
+        EnvironmentAzureGeography:string
+    ),
+    binSize:timespan
+)
+{
+    let isUsingCompute=(state:string) {
+        state in ('Available', 'Starting') // Awaiting?
+    };
+    let isUsingStorage=(state:string, sku: string) {
+        not(state in ('Archived')) and // Archive goes into infra subscription which is not counted right now
+        indexof(sku, 'indows') == -1 // Windows uses OS disk which is not counted right now
+    };
+    let isUsingNetwork=(state:string) {
+        state in ('Available', 'Starting') // Awaiting?
+    };
+    let codespaceUsageRaw=data
+    | where msg == 'cloud_environment_individual_measure'
+    | project t, sku=EnvironmentSku, state=EnvironmentState, location=EnvironmentRegion, cnt=toint(EnvironmentCount), BatchId, EnvironmentPartner, EnvironmentCountryCode, EnvironmentAzureGeography
+    | summarize (cnt, t)=any(cnt, t) by sku, location, state, BatchId, EnvironmentPartner, EnvironmentCountryCode, EnvironmentAzureGeography // For some reason some runs get completely duplicate metrics, dedupe these first
+    | where sku != 'staticEnvironment'
+    | where state != 'None'
+    | summarize cnt=sum(cnt), t=min(t) by sku, location, state, BatchId // Jobs runs more than once an hour, merge individual runs before merging into hours
+    | extend t=bin(t, binSize)
+    | summarize cnt=max(cnt) by t, sku, location, state
+    | lookup getSkuInfo() on $left.sku == $right.skuName;
+    let codespaceUsageByQuota=union
+    (codespaceUsageRaw | project t, location, c=iff(isUsingCompute(state), cnt, 0), quota=strcat('virtualMachines_', vmSkuName)),
+    (codespaceUsageRaw | project t, location, c=iff(isUsingCompute(state), cnt, 0), quota='virtualMachines'),
+    (codespaceUsageRaw | project t, location, c=iff(isUsingCompute(state), cnt * vmCores, 0), quota=vmSkuFamily),
+    (codespaceUsageRaw | project t, location, c=iff(isUsingCompute(state), cnt, 0), quota='PremiumDiskCount'), // OS Disk, assume this as it is the only type used currently
+    (codespaceUsageRaw | project t, location, c=iff(isUsingStorage(state, sku), cnt, 0), quota='StorageAccounts'),
+    (codespaceUsageRaw | project t, location, c=iff(isUsingNetwork(state), cnt, 0), quota='VirtualNetworks');
+    codespaceUsageByQuota | summarize cnt=sum(c) by t, location, quota;
+} 

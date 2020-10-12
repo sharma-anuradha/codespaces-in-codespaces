@@ -1,0 +1,24 @@
+.create-or-alter function
+with (docstring = 'Gets the max Azure resource usage per Azure quota type.', folder='Resources')
+getActualAzureResourceUsageByQuota
+(
+    ['data']:
+    (
+        msg:string,
+        t:datetime,
+        ['limit']:string,
+        subscriptionName:string,
+        ['location']:string,
+        ['quota']:string,
+        currentValue:string,
+        SubscriptionType:string
+    ),
+    binSize:timespan
+)
+{
+    data
+    | where msg == 'monitor_capacity_info'
+    | project t, subscriptionName, location, quota, lim=toint(['limit']), currentValue=toint(currentValue), SubscriptionType
+    | where subscriptionName == 'aggregate'
+    | summarize lim=min(lim), use=max(currentValue) by bin(t, binSize), location, quota
+} 
