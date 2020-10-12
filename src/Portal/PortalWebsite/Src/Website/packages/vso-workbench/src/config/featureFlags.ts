@@ -1,22 +1,38 @@
+import { VSCodespacesPlatformInfoGeneral } from 'vs-codespaces-authorization';
 import { authService } from '../auth/authService';
 
-class FeatureFlagsAccessor {
-    public async isEnabled(flagName: FeatureFlags, defaultValue?: boolean): Promise<boolean> {
-        const partnerInfo = await authService.getPartnerInfo();
+type TFeatureFlagsPayload = Record<string, FeatureFlags | unknown> | undefined;
 
-        if (!partnerInfo || !('featureFlags' in partnerInfo)) {
+class FeatureFlagsAccessor {
+    public async isEnabled(flagName: FeatureFlags, defaultValue: boolean = false): Promise<boolean> {
+        const partnerInfo = await authService.getPartnerInfo() as VSCodespacesPlatformInfoGeneral;
+
+        if (!partnerInfo) {
             return false;
         }
 
-        const { featureFlags = {} as Record<FeatureFlags, boolean | undefined> } = partnerInfo;
+        return this.isEnabledInPayload(partnerInfo.featureFlags, flagName, defaultValue);
+    }
 
-        const value = (flagName in featureFlags) ? featureFlags[flagName] : defaultValue;
+    public isEnabledInPayload(
+        featureFlags: TFeatureFlagsPayload,
+        flagName: FeatureFlags,
+        defaultValue: boolean = false
+    ): boolean {
+        if (!featureFlags) {
+            return false;
+        }
 
-        return !!value;
+        const value = (flagName in featureFlags)
+            ? featureFlags[flagName]
+            : defaultValue;
+
+        return `${value}` === 'true';
     }
 }
 
 export enum FeatureFlags {
+    Developer = 'developer',
     PortForwardingService = 'portForwardingServiceEnabled',
     ServerlessEnabled = 'serverlessEnabled',
 }

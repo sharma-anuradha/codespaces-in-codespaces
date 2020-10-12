@@ -9819,15 +9819,10 @@ void-elements@^2.0.1:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/void-elements/-/void-elements-2.0.1.tgz#c066afb582bb1cb4128d60ea92392e94d5e9dbec"
   integrity sha1-wGavtYK7HLQSjWDqkjkulNXp2+w=
 
-vs-codespaces-authorization@^0.1.16:
-  version "0.1.16"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vs-codespaces-authorization/-/vs-codespaces-authorization-0.1.16.tgz#f7d9658d2180574cff12fc493375e6d995f9abcd"
-  integrity sha1-99lljSGAV0z/EvxJM3Xm2ZX5q80=
-
-vs-codespaces-authorization@^0.1.18:
-  version "0.1.18"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vs-codespaces-authorization/-/vs-codespaces-authorization-0.1.18.tgz#4ee716a7658166e68aca3a80bc2dbae950d3ad71"
-  integrity sha1-TucWp2WBZuaKyjqAvC266VDTrXE=
+vs-codespaces-authorization@^0.1.19:
+  version "0.1.19"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vs-codespaces-authorization/-/vs-codespaces-authorization-0.1.19.tgz#f7c01c06cb8d5aa13a78db9dff1bf86b0b0748eb"
+  integrity sha1-98AcBsuNWqE6eNud/xv4awsHSOs=
 
 vscode-jsonrpc@^4.0.0:
   version "4.0.0"

@@ -10,8 +10,8 @@ import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 import { removeDefaultSplashScreen } from './utils/removeDefaultSplashScreen';
 import { credentialsProvider } from '../../../vscode/providers/credentialsProvider/credentialsProvider';
 import { ServerlessSplashscreen } from '../ServerlessSplashscreen/ServerlessSplashscreen';
-import { featureFlags, FeatureFlags } from 'vso-workbench/src/config/featureFlags';
-import { authService } from 'vso-workbench/src/auth/authService';
+import { featureFlags, FeatureFlags } from '../../../config/featureFlags';
+import { authService } from '../../../auth/authService';
 
 export interface IWorkbenchPageRenderProps {
     className?: string;

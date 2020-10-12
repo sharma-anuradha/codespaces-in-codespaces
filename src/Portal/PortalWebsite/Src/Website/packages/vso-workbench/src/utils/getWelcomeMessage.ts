@@ -1,6 +1,8 @@
 import { TEnvironment } from '../config/config';
 
 const CAPTION = ' * VS Codespaces * ';
+// we need to use the array constructor here
+// tslint:disable-next-line
 const SEPARATOR_MIDDLE = new Array(CAPTION.length)
     .fill('-')
     .join('');

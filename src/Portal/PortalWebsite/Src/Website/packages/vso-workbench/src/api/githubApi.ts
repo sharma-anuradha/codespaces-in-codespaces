@@ -14,7 +14,7 @@ export class GitHubApi {
         }
         const fetchParams: RequestInit = {
             method: 'GET',
-            headers: headers,
+            headers,
         };
 
         const githubApiEndpoint = await getGitHubApiEndpoint(`/repos/${org}/${repository}/pulls/${pullNumber}`);

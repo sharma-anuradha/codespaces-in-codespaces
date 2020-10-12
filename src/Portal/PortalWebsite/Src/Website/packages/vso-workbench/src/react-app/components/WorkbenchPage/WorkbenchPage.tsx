@@ -29,6 +29,7 @@ import { LOADING_ENVIRONMENT_STAGE } from './DevPanelHeader';
 import { assertValidSubdomain } from '../../../utils/assertValidSubdomain';
 
 import './WorkbenchPage.css';
+import { FeatureFlags, featureFlags } from '../../../config/featureFlags';
 
 const trace = createTrace('workbench');
 
@@ -230,21 +231,23 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
         }
     }
 
-    private isDevPanel = (codespaceInfo: IPartnerInfo | VSCodespacesPlatformInfo | null) => {
-        if (codespaceInfo && 'featureFlags' in codespaceInfo) {
-            const { featureFlags } = codespaceInfo;
-            const { clientDevMode } = featureFlags || ({} as any);
-
-            if (`${clientDevMode}` === 'true') {
-                return true;
-            }
-        }
-
+    private isDevPanel = (
+        codespaceInfo: IPartnerInfo | VSCodespacesPlatformInfo | null
+    ): boolean => {
         if (!config.isFetched) {
             return false;
         }
 
-        return config.environment !== 'production';
+        const isNonProd = config.environment !== 'production';
+        if (!codespaceInfo) {
+            return isNonProd;
+        }
+
+        return featureFlags.isEnabledInPayload(
+            (codespaceInfo as VSCodespacesPlatformInfo).featureFlags,
+            FeatureFlags.Developer,
+            isNonProd,
+        );
     };
 
     public render() {
@@ -272,7 +275,9 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
             'is-dev-panel': isDevPanel,
         });
 
-        const environment = config.isFetched ? config.environment : LOADING_ENVIRONMENT_STAGE;
+        const environment = config.isFetched
+            ? config.environment
+            : LOADING_ENVIRONMENT_STAGE;
 
         return (
             <div className={className}>

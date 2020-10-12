@@ -9,7 +9,7 @@
     "test": "jest",
     "test:watch": "yarn test --watch",
     "test:update-snapshots": "yarn test --updateSnapshot",
-    "lint": "tslint -c ../tslint.json src/**/*.{ts,tsx} --project tsconfig.json"
+    "lint": "tslint -c ../../tslint.json src/**/*.{ts,tsx} --project tsconfig.json"
   },
   "vscodeCommit": {
     "insider": "f5d3ba4d61146b78f0c75c82f3f85232d3409bc1",
@@ -55,7 +55,6 @@
     "jwt-decode": "^2.2.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "vs-codespaces-authorization": "^0.1.18",
     "vso-client-core": "1.0.0-local",
     "vso-service-worker": "1.0.0-local",
     "vso-service-worker-client": "1.0.0-local",
