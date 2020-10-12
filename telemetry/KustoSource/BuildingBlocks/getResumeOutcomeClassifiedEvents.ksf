@@ -49,6 +49,7 @@
         | extend ResumeOutcome = iff(EventAtResumeRequestStop_ResponseCode != 200, "Non-success response", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToAvailable == 1, "Available", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToFailed == 1 and EventAtMountFailure == 1, strcat("Infrastructure: Failure - ", EventAtMountFailure_Message), ResumeOutcome)
+        | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToFailed == 1 and EventAtResumeActionError == 1, strcat("Infrastructure: Failure - ", EventAtResumeActionError_ErrorMessage), ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToFailed == 1 and EventAtStartingToFailed_UserAttributed == 1, "User: Failed", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToFailed == 1 and EventAtStartingToFailed_UserAttributed != 1, "Infrastructure: Failure", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToDeleted == 1 and EventAtStartingToDeleted_UserInitated == 1 , "User: Delete", ResumeOutcome)
