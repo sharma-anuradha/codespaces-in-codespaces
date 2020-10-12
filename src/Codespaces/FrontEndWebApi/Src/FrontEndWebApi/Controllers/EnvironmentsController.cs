@@ -183,19 +183,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return new ForbidResult();
                 }
 
-                var gateway = GitHubApiGatewayProvider.New();
-                var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
-
-                if (element != null)
+                var gateway = await GitHubApiGatewayProvider.NewAsync(logger);
+                if (gateway != null)
                 {
-                    var getResult = await gateway.GetCodespaceAsync(username, element.FriendlyName, logger.NewChildLogger());
-                    if (getResult != null)
-                    {
-                        return Ok(getResult);
-                    }
+                    var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
 
-                    // there was an error, so we should try calling it as an ADO repo and
-                    // see what happens
+                    if (element != null)
+                    {
+                        var getResult = await gateway.GetCodespaceAsync(username, element.FriendlyName, logger.NewChildLogger());
+                        if (getResult != null)
+                        {
+                            return Ok(getResult);
+                        }
+
+                        // there was an error, so we should try calling it as an ADO repo and
+                        // see what happens
+                    }
                 }
             }
 
@@ -244,8 +247,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return new ForbidResult();
                     }
 
-                    var client = GitHubApiGatewayProvider.New();
-                    gitHubListTask = client.GetCodespacesAsync(username, logger);
+                    var client = await GitHubApiGatewayProvider.NewAsync(logger);
+                    if (client != null)
+                    {
+                        gitHubListTask = client.GetCodespacesAsync(username, logger);
+                    }
                 }
             }
             catch (Exception e)
@@ -323,19 +329,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return new ForbidResult();
                 }
 
-                var gateway = GitHubApiGatewayProvider.New();
-                var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
-
-                if (element != null)
+                var gateway = await GitHubApiGatewayProvider.NewAsync(logger);
+                if (gateway != null)
                 {
-                    var resumeResult = await gateway.ResumeCodespaceAsync(environmentId, logger);
-                    if (resumeResult != null)
-                    {
-                        return Ok(resumeResult);
-                    }
+                    var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
 
-                    // there was an error, so we should try calling it as an ADO repo and
-                    // see what happens
+                    if (element != null)
+                    {
+                        var resumeResult = await gateway.ResumeCodespaceAsync(environmentId, logger);
+                        if (resumeResult != null)
+                        {
+                            return Ok(resumeResult);
+                        }
+
+                        // there was an error, so we should try calling it as an ADO repo and
+                        // see what happens
+                    }
                 }
             }
 
@@ -452,7 +461,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             // check if this is a GitHub repo, and if so, forward the request there
             if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _))
             {
-                if (GitHubApiGateway.IsGitHubRepository(createEnvironmentInput?.Seed?.SeedMoniker, out string repository))
+                // NOTE: this is one of the few places we check if the gateway is enabled
+                // and not the return value, because otherwise, this would require additional
+                // checks and ifs. 
+                if (GitHubApiGateway.IsGitHubRepository(createEnvironmentInput?.Seed?.SeedMoniker, out string repository)
+                    && await GitHubApiGatewayProvider.IsGitHubApiGatewayEnabled(logger))
                 {
                     return await DoGitHubCreateAsync(
                                 repository,
@@ -471,22 +484,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     createEnvironmentInput.PlanId = plan.Plan.ResourceId;
                 }
             }            
-            else if (Request.Headers.TryGetValue(GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader, out var headerValue)
-                && headerValue.Any(x => !string.IsNullOrEmpty(x)))
-            {
-                // HOTFIX for release 10/5 weekly release - disable GitHub API forking
-                // To remove: delete this whole `else if` block
-
-                // get the plan, fix it, and let the rest of the code do its thing
-                var plan = GitHubFixedPlansMapper.GetPlanToUse();
-                if (plan == null)
-                {
-                    return Forbid();
-                }
-
-                createEnvironmentInput.PlanId = plan.Plan.ResourceId;
-            }
-
+            
             var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);
             logger.AddSkuName(environmentCreateDetails.SkuName);
 
@@ -530,7 +528,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return new ForbidResult();
             }
 
-            var client = GitHubApiGatewayProvider.New();
+            var client = await GitHubApiGatewayProvider.NewAsync(logger);
+            if (client == null)
+            {
+                return null;
+            }
+
             var result = await client.CreateCodespace(
                 username,
                 repository,
@@ -607,15 +610,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return new ForbidResult();
                 }
 
-                var gateway = GitHubApiGatewayProvider.New();
-                var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
-
-                if (element != null)
+                var gateway = await GitHubApiGatewayProvider.NewAsync(logger);
+                if (gateway != null)
                 {
-                    return await gateway.DeleteCodespaceAsync(
-                    username,
-                    element.FriendlyName,
-                    logger.NewChildLogger());
+                    var element = await gateway.GetCloudEnvironmentResultById(username, environmentId, logger);
+
+                    if (element != null)
+                    {
+                        return await gateway.DeleteCodespaceAsync(
+                        username,
+                        element.FriendlyName,
+                        logger.NewChildLogger());
+                    }
                 }
             }
 

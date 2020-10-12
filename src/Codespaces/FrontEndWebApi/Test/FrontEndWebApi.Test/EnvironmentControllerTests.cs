@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
@@ -850,6 +851,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         It.IsAny<bool>()))
                     .Returns(Task.FromResult(false));
 
+            var mockConfigurationReader = new Mock<IConfigurationReader>();
+            mockConfigurationReader.Setup(x => x.ReadFeatureFlagAsync<bool>(
+                    It.Is<string>(s => s == "github-gateway-enabled"),
+                    It.IsAny<IDiagnosticsLogger>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<ConfigurationContext>()))
+                .Returns(Task.FromResult(true));
+
             environmentSettings.Init(mockSystemConfiguration.Object);
 
             var settings = new FrontEndAppSettings
@@ -862,6 +871,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var gitHubFixedPlansMapper = new GitHubFixedPlansMapper(currentLocationProvider, settings);
             var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
             var hostEnvironment = new Mock<IHostEnvironment>();
+            var logger = new Mock<IDiagnosticsLogger>().Object;
 
             var environmentController = new EnvironmentsController(
                 environmentManager,
@@ -881,8 +891,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 environmentAccessManager,
                 environmentStateManager,
                 gitHubFixedPlansMapper,
-                new Providers.GitHubApiGatewayProvider(httpContextAccessorMock.Object, currentLocationProvider, hostEnvironment.Object));
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+                new Providers.GitHubApiGatewayProvider(httpContextAccessorMock.Object, currentLocationProvider, hostEnvironment.Object, mockConfigurationReader.Object));
 
             httpContext ??= MockHttpContext.Create();
             httpContext.SetLogger(logger);
