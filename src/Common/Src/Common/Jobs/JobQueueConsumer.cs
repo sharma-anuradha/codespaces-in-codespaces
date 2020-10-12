@@ -331,8 +331,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                             // in all scenarios we would need to complete the job.
                             await CompleteJobAsync(jobInstance, status, err);
                         }
-                        catch
+                        catch (Exception e)
                         {
+                            var childLogger = logger.NewChildLogger();
+                            childLogger.LogException("job_queue_consumer_error_callback_error", e);
                         }
                     },
                     swallowException: true);

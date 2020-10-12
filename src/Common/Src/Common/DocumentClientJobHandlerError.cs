@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         protected override bool DidRetryException(Exception error, out TimeSpan retryTimeout)
         {
             var documentClientException = ToException<DocumentClientException>(error);
-            if ((int)documentClientException?.StatusCode == TooManyRequests)
+            if (documentClientException != null && (int?)documentClientException.StatusCode == TooManyRequests)
             {
                 retryTimeout = documentClientException.RetryAfter;
                 return true;
