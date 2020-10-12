@@ -13,6 +13,7 @@
     CloudEnvironmentFailedStateReason: string, 
     CloudEnvironmentNewUpdatedTrigger: string,
     Service: string,
+    SessionId: string,
     CommitId: string,
     ServiceEnvironment: string,
     ServiceInstance: string,
@@ -22,13 +23,17 @@
     ErrorException: string,
     ErrorMessage: string,
     ErrorDetail: string,
+    MountLogs: string,
     level: string,
     ComputeResourceId: string,
     ComputeId: string,
     JobCollectedData: string,
-    ContinuationPayloadTrackingInstanceId: string))
+    ContinuationPayloadTrackingInstanceId: string,
+    NewWorkspaceId: string,
+    NewSessionId: string))
 {
     getResumeOutcomeEvents(T)
+        | extend ResumeOutcome = "unknown"
         | extend ResponseOutcome = "unknown"
         | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 200, "Success", ResponseOutcome)
         | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 307, "Redirect", ResponseOutcome)
@@ -41,10 +46,11 @@
         | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 500, "Infrastructure: Unknown failure 500", ResponseOutcome)
         | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 503, "Infrastructure: Out of capacity 503", ResponseOutcome)
         | extend ResponseOutcome = iff(ResponseOutcome == "unknown", "Bug: unclassified response", ResponseOutcome)
-        | extend ResumeOutcome = iff(EventAtResumeRequestStop_ResponseCode != 200, "Non-success response", "unknown")
+        | extend ResumeOutcome = iff(EventAtResumeRequestStop_ResponseCode != 200, "Non-success response", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToAvailable == 1, "Available", ResumeOutcome)
+        | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToFailed == 1 and EventAtMountFailure == 1, strcat("Infrastructure: Failure - ", EventAtMountFailure_Message), ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToFailed == 1 and EventAtStartingToFailed_UserAttributed == 1, "User: Failed", ResumeOutcome)
-        | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToFailed == 1 and EventAtStartingToFailed_UserAttributed != 1, "Infrastructure: Failed", ResumeOutcome)
+        | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToFailed == 1 and EventAtStartingToFailed_UserAttributed != 1, "Infrastructure: Failure", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToDeleted == 1 and EventAtStartingToDeleted_UserInitated == 1 , "User: Delete", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToDeleted == 1 and EventAtStartingToDeleted_UserInitated != 1 , "Infrastructure: Delete", ResumeOutcome)
         | extend ResumeOutcome = iff(ResumeOutcome == "unknown" and EventAtStartingToShutdown == 1 and EventAtStartingToShutdown_UserInitiated  == 1 , "User: Shutdown", ResumeOutcome)

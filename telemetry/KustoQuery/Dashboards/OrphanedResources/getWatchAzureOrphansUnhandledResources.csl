@@ -1,5 +1,5 @@
 .create-or-alter function
-with (docstring = 'Gets the list of Azure resources which the orphaned azure resource watcher has seen but can't handle.', folder='Dashboards/OrphanedResources')
+with (docstring = 'Gets the list of Azure resources which the orphaned azure resource watcher has seen but cant handle.', folder='Dashboards/OrphanedResources')
 getWatchAzureOrphansUnhandledResources
 (
     ['data']:

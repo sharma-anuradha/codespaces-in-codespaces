@@ -29,6 +29,7 @@
 {
     getCreateOutcomeEvents(T)
     | extend ResponseOutcome = "unknown"
+    | extend CreateOutcome = "unknown"
     | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 201, "Success", ResponseOutcome)
     | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 307, "Redirect", ResponseOutcome)
     | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 400, "User: Failed 400", ResponseOutcome)
@@ -38,7 +39,7 @@
     | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 500, "Infrastructure: Unknown failure 500", ResponseOutcome)
     | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 503, "Infrastructure: Out of capacity 503", ResponseOutcome)
     | extend ResponseOutcome = iff(ResponseOutcome == "unknown", "Bug: unclassified response", ResponseOutcome)
-    | extend CreateOutcome = iff(EventAtCreateRequestStop_ResponseCode != 201, "Non-success response", "unknown")
+    | extend CreateOutcome = iff(EventAtCreateRequestStop_ResponseCode != 201, "Non-success response", CreateOutcome)
     | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToAvailable == 1, "Available", CreateOutcome) 
     | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToFailedTask == 1, strcat("Infrastructure: Failure - ", EventAtProvisioningToFailedTask_ErrorMessage), CreateOutcome)
     | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtCreateActionError == 1, strcat("Infrastructure: Failure - ", EventAtCreateActionError_ErrorMessage), CreateOutcome)

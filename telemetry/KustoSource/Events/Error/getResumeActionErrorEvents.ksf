@@ -1,5 +1,5 @@
 #function("Last error on the resume action events.")
-(T:(msg: string, ["time"]: datetime, CorrelationId: string, ErrorException: string, ErrorMessage: string, ErrorDetail:string, level: string))
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, ErrorException: string, ErrorMessage: string, ErrorDetail: string, level: string))
 {
     T
         | where level == "error"

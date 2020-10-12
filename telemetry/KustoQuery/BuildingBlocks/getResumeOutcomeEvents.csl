@@ -16,6 +16,7 @@ getResumeOutcomeEvents
     CloudEnvironmentNewUpdatedTrigger: string,
     Service: string,
     CommitId: string,
+    SessionId: string,
     ServiceEnvironment: string,
     ServiceInstance: string,
     ServiceStamp: string,
@@ -24,6 +25,7 @@ getResumeOutcomeEvents
     ErrorException: string,
     ErrorMessage: string,
     ErrorDetail: string,
+    MountLogs: string,
     level: string,
     ComputeResourceId: string,
     ComputeId: string,
@@ -46,6 +48,7 @@ getResumeOutcomeEvents
     let AgentCollectedErrorDataOnJobEvents = getAgentCollectedErrorDataOnJobEvents(T);
     let ComputeResourceForResumeEvents =  getResumeEnvironmentComputeResourceEvents(T);
     let AllWorkspaceCreationEvents = getAllWorkspaceCreationEvents(T);
+    let MountFailureEvents = getSelectedMountFailureEvents(T);
     ResumeEnvironmentRequestStartEvents
         | join kind=leftouter (ResumeEnvironmentRequestStopEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeRequestStop_CorrelationId
         | join kind=leftouter (ResumeActionErrorEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeActionError_CorrelationId
@@ -59,6 +62,7 @@ getResumeOutcomeEvents
         | join kind=leftouter (StartingToArchivedEvents) on $left.WorkspaceId == $right.EventAtStartingToArchived_WorkspaceId
         | join kind=leftouter (BugExcludeDupeStartingEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.PreviousCorrelationId
         | join kind=leftouter (AgentCollectedErrorDataOnJobEvents) on $left.EventAtStartingToShutdown_CorrelationId == $right.EventAtAgentCollectedError_CorrelationId
+        | join kind=leftouter (MountFailureEvents) on $left.EventAtWorkspaceCreation_NewSessionId == $right.EventAtMountFailure_SessionId
         | extend SkuName = EventAtResumeSkuResolve_SkuName
         | extend CodespaceId = EventAtResumeSkuResolve_CloudEnvironmentId
         | extend TimeStamp = EventAtResumeRequestStart_Time

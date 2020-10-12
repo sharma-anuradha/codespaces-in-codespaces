@@ -24,9 +24,7 @@ The Kusto Compiler tool, pre-processes .ksf files into .kql files. It can take a
 ```
 
 Executes .csl files so that they are updated in the table. 
-Note: 
-1) Functions can be built using other functions. If the dependency is not satisfied, it will break.
-2) Functions are used directly in dashoards, if you break the functions it will reflect in the dashboards. To revert, you can just sync to master and re-run the tool.
+
 ```
 kc.exe runFunctionUpdate -i c:\mywork\vsclk-core\telemetry\KustoQuery
 ```
@@ -34,3 +32,18 @@ kc.exe runFunctionUpdate -i c:\mywork\vsclk-core\telemetry\KustoQuery
 ## Using Generated KQL files in Lens/PowerBI/AzureDataExplorer Dashboards
 
 Generated queries are scoped to a hardcoded date range and ring. When using the same query on Dashboard, you can copy paste the query, but have to make manual adjustment on defining the filter.
+
+## Notes: 
+1) Please try running the kc commands in developer command prompt, if its not recognized in windows command prompt.
+2) Functions can be built using other functions. If the dependency is not satisfied, it will break.
+3) Functions are used directly in dashboards, if you break the functions it will reflect in the dashboards. To revert, you can just sync to master and re-run the tool.
+4) Please dont change the header of the functions. As .ksf files are kusto source files. If they are functions they have to begin with "#function(..)"
+5) You can test the kusto functions in kusto explorer for testing purpose.
+6) Dont change the csl files directly, csl files are expected to be auto-generated from ksf files after kc compile command.
+7) It is recommended to use the following command for your development of queries. This prevents breaking dashboard during development phase.
+    
+    ```
+    kc.exe printInline -i  getAvailableToShuttingDownEvents.ksf 
+    ```
+
+

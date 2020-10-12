@@ -9,7 +9,6 @@ getBackendResourceUsageByQuota
         ResourceSkuName:string,
         ResourceLocation:string,
         ResourceCount:string,
-        ResourceIsReady:string,
         ResourceIsAssigned:string,
         ResourceIsComponent:string,
         ResourceSubscriptionId:string,

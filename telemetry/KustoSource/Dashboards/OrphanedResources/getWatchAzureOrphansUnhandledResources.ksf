@@ -1,4 +1,4 @@
-#function("Gets the list of Azure resources which the orphaned azure resource watcher has seen but can't handle.")
+#function("Gets the list of Azure resources which the orphaned azure resource watcher has seen but cannot handle.")
 (
     ['data']:
     (

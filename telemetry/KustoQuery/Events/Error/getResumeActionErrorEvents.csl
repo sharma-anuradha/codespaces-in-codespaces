@@ -1,7 +1,7 @@
 .create-or-alter function
 with (docstring = 'Last error on the resume action events.', folder='Events/Error')
 getResumeActionErrorEvents
-(T:(msg: string, ["time"]: datetime, CorrelationId: string, ErrorException: string, ErrorMessage: string, ErrorDetail:string, level: string))
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, ErrorException: string, ErrorMessage: string, ErrorDetail: string, level: string))
 {
     T
         | where level == "error"

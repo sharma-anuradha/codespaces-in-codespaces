@@ -1,0 +1,36 @@
+.create-or-alter function
+with (docstring = 'Gets last mount error from the agent.', folder='Events/Agent')
+getSelectedMountFailureEvents
+(T:(msg: string, 
+["time"]: datetime, 
+MountLogs: string, 
+Service: string, 
+level: string, 
+CorrelationId: string, 
+CloudEnvironmentId: string, 
+SessionId: string,
+ErrorDetail: string,
+ComputeId: string))
+{
+    T
+        | where MountLogs != ""
+        | where Service == "VsoAgent"
+        | where level == "error"
+        | extend EventAtMountFailure = 1
+        | extend EventAtMountFailure_Time = ["time"]
+        | extend EventAtMountFailure_CorrelationId = CorrelationId
+        | extend EventAtMountFailure_ComputeId = ComputeId
+        | extend EventAtMountFailure_CloudEnvironmentId = CloudEnvironmentId
+        | extend EventAtMountFailure_SessionId = SessionId
+        | extend EventAtMountFailure_Message = msg
+        | extend EventAtMountFailure_ErrorDetail = ErrorDetail
+        | project EventAtMountFailure, 
+            EventAtMountFailure_Time, 
+            EventAtMountFailure_CorrelationId,
+            EventAtMountFailure_ComputeId,
+            EventAtMountFailure_CloudEnvironmentId,
+            EventAtMountFailure_SessionId,
+            EventAtMountFailure_Message,
+            EventAtMountFailure_ErrorDetail
+        | summarize arg_max(EventAtMountFailure_Time, *) by EventAtMountFailure_CorrelationId
+}
