@@ -3,7 +3,7 @@
 {
     T
         | where ['time']  > ago(7d)
-        | where msg == "environment_manager_update_complete"
+        | where msg == "environment_state_manager_set_complete"
         | where isnotempty(SkuName)
         | project SkuName, msg
         | distinct SkuName
