@@ -28,6 +28,7 @@ using Moq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
@@ -205,6 +206,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 heartbeatRepository
                 );
 
+            var mockConfigurationReader = new Mock<IConfigurationReader>();
+
             var environmentCreateAction = new EnvironmentCreateAction(
                 planManager,
                 MockUtil.MockSkuCatalog(),
@@ -228,7 +231,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentDeleteAction,
                 mapper,
                 environmentActionValidator,
-                mockSystemConfiguration.Object);
+                mockConfigurationReader.Object);
 
             var environmentGetAction = new EnvironmentGetAction(
                 environmentStateManager,

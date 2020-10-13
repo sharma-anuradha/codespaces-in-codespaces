@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
@@ -25,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     {
         private const string LogBaseName = "resource_request_manager";
         private const string QueueResourceRequestEnabled = "QueueResourceRequestEnabled";
-        private const string FeatureFlagKey = "featureflag:queue-resource-request-enabled";
+        private const string FeatureFlagName = "queue-resource-request";
         private const bool FeatureFlagDefault = true;
 
         /// <summary>
@@ -33,18 +34,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="resourceRequestQueueProvider">Resource request queue provider.</param>
         /// <param name="resourceRepository">Resource Repository.</param>
-        /// <param name="systemConfiguration">System configuration settings.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public ResourceRequestManager(
             IResourceRequestQueueProvider resourceRequestQueueProvider,
             IResourceRepository resourceRepository,
-            ISystemConfiguration systemConfiguration)
+            IConfigurationReader configurationReader)
         {
             ResourceRequestQueueProvider = Requires.NotNull(resourceRequestQueueProvider, nameof(resourceRequestQueueProvider));
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
-            SystemConfiguration = Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+            ConfigurationReader = Requires.NotNull(configurationReader, nameof(configurationReader));
         }
 
-        private ISystemConfiguration SystemConfiguration { get; }
+        private IConfigurationReader ConfigurationReader { get; }
 
         private IResourceRequestQueueProvider ResourceRequestQueueProvider { get; }
 
@@ -57,8 +58,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                $"{LogBaseName}_enqueue_request",
                async (childLogger) =>
                {
-                   var queueResourceRequest = await SystemConfiguration.GetValueAsync(FeatureFlagKey, childLogger.NewChildLogger(), FeatureFlagDefault);
-
+                   var queueResourceRequest = await ConfigurationReader.ReadFeatureFlagAsync(FeatureFlagName, childLogger.NewChildLogger(), FeatureFlagDefault);
+                   
                    childLogger.FluentAddBaseValues(loggingProperties)
                        .FluentAddBaseValue(nameof(resourcePool.Details.SkuName), resourcePool.Details.SkuName)
                        .FluentAddBaseValue(QueueResourceRequestEnabled, queueResourceRequest);
@@ -93,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                $"{LogBaseName}_try_assign",
                async (childLogger) =>
                {
-                   var queueResourceRequest = await SystemConfiguration.GetValueAsync(FeatureFlagKey, childLogger.NewChildLogger(), FeatureFlagDefault);
+                   var queueResourceRequest = await ConfigurationReader.ReadFeatureFlagAsync(FeatureFlagName, childLogger.NewChildLogger(), FeatureFlagDefault);
 
                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, resource.SkuName)
                        .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolLocation, resource.Location)

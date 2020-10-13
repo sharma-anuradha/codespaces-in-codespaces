@@ -36,19 +36,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="activator">Target activator.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
-        /// <param name="systemConfiguration">System configuration settings.</param>
         /// <param name="jobQueueProducerFactory">Job Queue producer factory instance.</param>
         /// <param name="configurationReader">Configuration reader.</param>
         public ResourceContinuationOperations(
             IContinuationTaskActivator activator,
             IResourceRepository resourceRepository,
-            ISystemConfiguration systemConfiguration,
             IJobQueueProducerFactory jobQueueProducerFactory,
             IConfigurationReader configurationReader)
         {
             Activator = activator;
             ResourceRepository = resourceRepository;
-            SystemConfiguration = systemConfiguration;
             JobQueueProducerFactory = jobQueueProducerFactory;
             ConfigurationReader = configurationReader;
         }
@@ -56,8 +53,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IContinuationTaskActivator Activator { get; }
 
         private IResourceRepository ResourceRepository { get; }
-
-        private ISystemConfiguration SystemConfiguration { get; }
 
         private IJobQueueProducerFactory JobQueueProducerFactory { get; }
 
@@ -78,8 +73,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             if (type == ResourceType.ComputeVM)
             {
-                var separateNetworkAndComputeSubscriptions = await SystemConfiguration.GetValueAsync("featureflag:separate-network-and-compute-subscriptions", logger, false);
-
+                var separateNetworkAndComputeSubscriptions = await ConfigurationReader.ReadFeatureFlagAsync("separate-network-and-compute-subscriptions", logger.NewChildLogger(), true);
+                
                 var createOSDiskRecord = details is ResourcePoolComputeDetails computeDetails && computeDetails.OS == ComputeOS.Windows;
 
                 options = new CreateComputeContinuationInputOptions()

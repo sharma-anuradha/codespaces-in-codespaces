@@ -10,6 +10,7 @@ using AutoMapper;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -28,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// </summary>
     public class EnvironmentCreateAction : EnvironmentItemAction<EnvironmentCreateActionInput, EnvironmentCreateTransientState>, IEnvironmentCreateAction
     {
-        private const string QueueResourceAllocationFeatureFlagKey = "featureflag:queue-resource-request-windows-enabled";
+        private const string QueueResourceAllocationFeatureName = "queue-resource-request-windows";
        
         private const bool QueueResourceAllocationDefault = true;
         
@@ -59,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="environmentDeleteAction">Target environment delete action.</param>
         /// <param name="mapper">The auto mapper.</param>
         /// <param name="environmentActionValidator">Environment action validator.</param>
-        /// <param name="systemConfiguration">System configuration settings.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public EnvironmentCreateAction(
             IPlanManager planManager,
             ISkuCatalog skuCatalog,
@@ -83,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IEnvironmentHardDeleteAction environmentDeleteAction,
             IMapper mapper,
             IEnvironmentActionValidator environmentActionValidator,
-            ISystemConfiguration systemConfiguration)
+            IConfigurationReader configurationReader)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -99,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             EnvironmentDeleteAction = Requires.NotNull(environmentDeleteAction, nameof(environmentDeleteAction));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
             EnvironmentActionValidator = Requires.NotNull(environmentActionValidator, nameof(environmentActionValidator));
-            SystemConfiguration = Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+            ConfigurationReader = Requires.NotNull(configurationReader, nameof(configurationReader));
             HeartbeatRepository = Requires.NotNull(heartbeatRepository, nameof(heartbeatRepository));
         }
 
@@ -132,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
         private IEnvironmentActionValidator EnvironmentActionValidator { get; }
 
-        private ISystemConfiguration SystemConfiguration { get; }
+        private IConfigurationReader ConfigurationReader { get; }
 
         public ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
 
@@ -210,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             // Build options
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
-            var queueResourceRequestFlag = await SystemConfiguration.GetValueAsync(QueueResourceAllocationFeatureFlagKey, logger.NewChildLogger(), QueueResourceAllocationDefault);
+            var queueResourceRequestFlag = await ConfigurationReader.ReadFeatureFlagAsync(QueueResourceAllocationFeatureName, logger.NewChildLogger(), QueueResourceAllocationDefault);
             var queueResourceRequestForWindows = queueResourceRequestFlag && sku.ComputeOS == ComputeOS.Windows;
             var environmentOptions = new CloudEnvironmentOptions();
             var experimentalFeatures = input.Details.ExperimentalFeatures;
