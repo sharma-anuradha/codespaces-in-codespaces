@@ -1,16 +1,20 @@
-﻿using System;
+using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Resources;
+using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.TokenService.Authentication;
+using Microsoft.VsSaaS.Services.TokenService.Scopes;
 using Microsoft.VsSaaS.Tokens;
 using Xunit;
 using Xunit.Extensions.AssemblyFixture;
@@ -26,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
 
         public const string TestIssuer1 = nameof(TestIssuer1);
         public const string TestIssuer2 = nameof(TestIssuer2);
+        public const string TestIssuer3 = nameof(TestIssuer3);
 
         public const string TestAudience1 = nameof(TestAudience1);
         public const string TestAudience2 = nameof(TestAudience2);
@@ -36,6 +41,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         public static readonly SigningCredentials TestValidatingCredentials1 =
             new X509SigningCredentials(GetTestCert("TestIssuer", isPrivate: false));
         public static readonly SigningCredentials TestSigningCredentials2 =
+            new SigningCredentials(CreateSymmetricKey(), SecurityAlgorithms.HmacSha256);
+        public static readonly SigningCredentials TestSigningCredentials3 =
             new SigningCredentials(CreateSymmetricKey(), SecurityAlgorithms.HmacSha256);
         public static readonly EncryptingCredentials TestEncryptingCredentials1 =
             new X509EncryptingCredentials(GetTestCert("TestAudience", isPrivate: false));
@@ -150,15 +157,44 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
 
                 tokenWriter.AddIssuer(TestIssuer1, TestSigningCredentials1);
                 tokenWriter.AddIssuer(TestIssuer2, TestSigningCredentials2);
+                tokenWriter.AddIssuer(TestIssuer3, TestSigningCredentials3);
 
                 tokenWriter.AddAudience(TestAudience1);
                 tokenWriter.AddAudience(TestAudience2, TestEncryptingCredentials1);
 
                 tokenReader.AddIssuer(TestIssuer1, new[] { TestValidatingCredentials1 });
                 tokenReader.AddIssuer(TestIssuer2, new[] { TestSigningCredentials2 });
+                tokenReader.AddIssuer(TestIssuer3, new[] { TestSigningCredentials3 });
 
                 tokenReader.AddAudience(TestAudience1);
                 tokenReader.AddAudience(TestAudience2, new[] { TestDecryptingCredentials1 });
+
+                services.AddSingleton<ITokenScopeHandler, TestTokenScopeHandler>();
+            }
+
+            private class TestTokenScopeHandler : ITokenScopeHandler
+            {
+                public Task<bool> TransformPayloadForScopeAsync(
+                    ClaimsIdentity identity,
+                    JwtPayload payload,
+                    string scope,
+                    IDiagnosticsLogger logger)
+                {
+                    Assert.NotNull(identity);
+                    Assert.NotNull(payload);
+                    Assert.NotNull(scope);
+                    Assert.NotEmpty(scope);
+                    Assert.NotNull(logger);
+
+                    if (scope != "test")
+                    {
+                        return Task.FromResult(false);
+                    }
+
+                    // The test handler simply propagates the test scope.
+                    payload.AddClaim(new Claim(CustomClaims.Scope, scope));
+                    return Task.FromResult(true);
+                }
             }
         }
     }

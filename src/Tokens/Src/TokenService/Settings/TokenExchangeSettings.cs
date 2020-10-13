@@ -1,4 +1,4 @@
-﻿// <copyright file="TokenExchangeSettings.cs" company="Microsoft">
+// <copyright file="TokenExchangeSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

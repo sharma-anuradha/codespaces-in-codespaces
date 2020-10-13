@@ -24,6 +24,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.TokenService.Authentication;
 using Microsoft.VsSaaS.Services.TokenService.Contracts;
+using Microsoft.VsSaaS.Services.TokenService.Scopes;
 using Microsoft.VsSaaS.Services.TokenService.Settings;
 using Microsoft.VsSaaS.Tokens;
 using static Microsoft.VsSaaS.Services.TokenService.Authentication.JwtBearerUtility;
@@ -43,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         private readonly IJwtWriter jwtWriter;
         private readonly IJwtReader jwtReader;
         private readonly IAuthenticationSchemeProvider authSchemeProvider;
+        private readonly IEnumerable<ITokenScopeHandler> tokenScopeHandlers;
         private readonly TokenServiceAppSettings settings;
         private readonly TokenIssuerSettings? exchangeIssuer;
         private readonly TokenIssuerSettings? anonymousIssuer;
@@ -54,17 +56,20 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         /// <param name="jwtWriter">JWT writer.</param>
         /// <param name="jwtReader">JWT reader.</param>
         /// <param name="authSchemeProvider">Authentication scheme provider.</param>
+        /// <param name="tokenScopeHandlers">Scope-specific handlers for token exchange.</param>
         /// <param name="settings">Token service app settings.</param>
         public TokensController(
             IJwtWriter jwtWriter,
             IJwtReader jwtReader,
             IAuthenticationSchemeProvider authSchemeProvider,
+            IEnumerable<ITokenScopeHandler> tokenScopeHandlers,
             TokenServiceAppSettings settings)
         {
             this.jwtWriter = Requires.NotNull(jwtWriter, nameof(jwtWriter));
             this.jwtReader = Requires.NotNull(jwtReader, nameof(jwtReader));
             this.authSchemeProvider = Requires.NotNull(
                 authSchemeProvider, nameof(authSchemeProvider));
+            this.tokenScopeHandlers = tokenScopeHandlers;
             this.settings = Requires.NotNull(settings, nameof(settings));
 
             if (!string.IsNullOrEmpty(settings.ExchangeSettings?.Issuer))
@@ -324,6 +329,16 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 return claimsError;
             }
 
+            var scopeError = await HandleExchangeScopesAsync(
+                identity,
+                payload,
+                parameters?.Scopes ?? Array.Empty<string>(),
+                logger);
+            if (scopeError != null)
+            {
+                return scopeError;
+            }
+
             string token;
             try
             {
@@ -565,6 +580,48 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             }
 
             return validAudience.AudienceUri;
+        }
+
+        private async Task<IActionResult?> HandleExchangeScopesAsync(
+            ClaimsIdentity identity,
+            JwtPayload payload,
+            string[] scopes,
+            IDiagnosticsLogger logger)
+        {
+            logger.AddValue("scopes", string.Join(" ", scopes));
+
+            // For each of the requested scopes, call each of the registered scope handlers.
+            foreach (var scope in scopes)
+            {
+                bool handled = false;
+                foreach (var scopeHandler in this.tokenScopeHandlers)
+                {
+                    try
+                    {
+                        handled |= await scopeHandler.TransformPayloadForScopeAsync(
+                            identity, payload, scope, logger);
+                    }
+                    catch (ArgumentException aex)
+                    {
+                        return Problem($"Invalid claims for scope: {scope}", aex.Message);
+                    }
+                    catch (UnauthorizedAccessException uaex)
+                    {
+                        return Problem(
+                            $"Scope not authorized: {scope}",
+                            uaex.Message,
+                            (int)HttpStatusCode.Forbidden);
+                    }
+                }
+
+                if (!handled)
+                {
+                    // None of the handlers was able to handle this requested scope.
+                    return Problem($"Invalid scope: {scope}");
+                }
+            }
+
+            return null;
         }
 
         private IActionResult? CopyIdentityClaims(

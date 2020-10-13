@@ -48,5 +48,11 @@ namespace Microsoft.VsSaaS.Services.TokenService.Contracts
         /// </remarks>
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public TimeSpan? Lifetime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional requested scopes for the resulting token.
+        /// </summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string[]? Scopes { get; set; }
     }
 }

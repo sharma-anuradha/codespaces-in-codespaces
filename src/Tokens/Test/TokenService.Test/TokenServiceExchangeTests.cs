@@ -134,5 +134,43 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             Assert.Equal(name, payload[CustomClaims.DisplayName] as string);
             Assert.Equal(email, payload[CustomClaims.Email] as string);
         }
+
+        [Fact]
+        public async Task ExchangeTokenWithScopeHandler()
+        {
+            string name = "Test User";
+            string email = "user@example.com";
+            var tokenClient = CreateUserAuthenticatedClient(name, email);
+
+            var token = await tokenClient.ExchangeAsync(
+                new ExchangeParameters
+                {
+                    Scopes = new[] { "test" },
+                },
+                CancellationToken.None);
+
+            var payload = DecodeToken(token);
+            var scopeClaim = payload.Claims.FirstOrDefault((c) => c.Type == CustomClaims.Scope);
+            Assert.Equal("test", scopeClaim?.Value);
+        }
+
+        [Fact]
+        public async Task ExchangeTokenWithInvalidScope()
+        {
+            string name = "Test User";
+            string email = "user@example.com";
+            var tokenClient = CreateUserAuthenticatedClient(name, email);
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
+            {
+                await tokenClient.ExchangeAsync(
+                    new ExchangeParameters
+                    {
+                        Scopes = new[] { "invalidscope" },
+                    },
+                    CancellationToken.None);
+            });
+            Assert.Contains("invalidscope", ex.Message);
+        }
     }
 }

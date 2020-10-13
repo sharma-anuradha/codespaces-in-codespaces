@@ -9,16 +9,16 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
+using Microsoft.VsSaaS.Services.TokenService.Contracts;
 using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -128,6 +128,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             try
             {
+                ValidateRequiredClaims((ClaimsIdentity)context.Principal.Identity);
+
                 var validatedPrincipalHandler = context.HttpContext.RequestServices.GetService<IValidatedPrincipalIdentityHandler>();
                 var newPrincipal = await validatedPrincipalHandler.ValidatedPrincipalAsync(context.Principal, context.SecurityToken as JwtSecurityToken, logger.NewChildLogger());
 
@@ -140,6 +142,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             {
                 logger.AddExceptionInfo(ex).LogError("jwt_authentication_error");
                 context.Fail(ex.Message);
+            }
+        }
+
+        private static void ValidateRequiredClaims(ClaimsIdentity identity)
+        {
+            // Note exceptions thrown here will be caught and logged by the caller.
+
+            var provider = identity.FindFirst(CustomClaims.Provider)?.Value;
+            if (provider == ProviderNames.GitHub)
+            {
+                // Cascade tokens for GitHub identities are required to have scope claim(s).
+                // (Cascade tokens for AAD identities are for legacy VS Online support,
+                // and do not include scope claims.)
+                if (identity.FindFirst(CustomClaims.Scope) == null)
+                {
+                    // This may indicate an ordinary Live Share token (from a GitHub identity)
+                    // is being mis-used to try to manage codespaces.
+                    throw new UnauthorizedAccessException("Missing scope claim.");
+                }
             }
         }
 

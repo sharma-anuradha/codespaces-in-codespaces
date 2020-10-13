@@ -216,5 +216,25 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             Assert.Equal(3, testClaims.Count());
             Assert.Equal(ClaimValueTypes.Integer, testClaims.Last().ValueType);
         }
+
+        [Fact]
+        public async Task IssueFarFutureExpiration()
+        {
+            var tokenClient = CreateSPAuthenticatedClient(TestAppId1);
+
+            var expires = DateTime.UtcNow.AddYears(100).Date;
+
+            var payload = new JwtPayload(
+                TestIssuer3,
+                TestAudience2,
+                Enumerable.Empty<Claim>(),
+                notBefore: null,
+                expires);
+
+            var token = await tokenClient.IssueAsync(payload, CancellationToken.None);
+
+            var payload2 = await tokenClient.ValidateAsync(token, CancellationToken.None);
+            Assert.Equal(expires, payload2.ValidTo);
+        }
     }
 }

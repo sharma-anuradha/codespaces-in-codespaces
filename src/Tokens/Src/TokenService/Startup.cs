@@ -22,6 +22,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.TokenService.Authentication;
+using Microsoft.VsSaaS.Services.TokenService.Scopes;
 using Microsoft.VsSaaS.Services.TokenService.Settings;
 using Microsoft.VsSaaS.Tokens;
 using Newtonsoft.Json;

@@ -1,23 +1,15 @@
-﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.TokenService.Authentication;
 using Microsoft.VsSaaS.Services.TokenService.Contracts;
 using Moq;
-using Moq.Protected;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.TokenService.Test
@@ -63,13 +55,15 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         {
             var mockHttpContext = MockHttpContext(
                 new AuthenticationHeaderValue(TestScheme, TestToken));
-            var authHandler = CreateAuthenticationHandler(MockHttpClient(new
-            {
-                id = TestId,
-                name = TestName,
-                login = TestLogin,
-                email = TestEmail,
-            }));
+            var authHandler = CreateAuthenticationHandler(CreateMockHttpClient(
+                new GitHubUser
+                {
+                    id = TestId,
+                    login = TestLogin,
+                    name = TestName,
+                    email = TestEmail,
+                },
+                authorizeApp: true));
             await authHandler.InitializeAsync(
                 MockAuthenticationScheme, mockHttpContext);
             var result = await authHandler.AuthenticateAsync();
@@ -90,11 +84,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         {
             var mockHttpContext = MockHttpContext(
                 new AuthenticationHeaderValue(TestScheme, TestToken));
-            var authHandler = CreateAuthenticationHandler(MockHttpClient(new
-            {
-                name = TestName,
-                login = TestLogin,
-            }));
+            var authHandler = CreateAuthenticationHandler(CreateMockHttpClient(
+                new GitHubUser(), authorizeApp: true));
             await authHandler.InitializeAsync(
                 MockAuthenticationScheme, mockHttpContext);
             var result = await authHandler.AuthenticateAsync();
@@ -104,14 +95,10 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         [Fact]
         public async Task GithubAuthenticationHeaderNoEmail()
         {
-            var mockHttpContext = MockUtil.MockHttpContext(
+            var mockHttpContext = MockHttpContext(
                 new AuthenticationHeaderValue(TestScheme, TestToken));
-            var authHandler = CreateAuthenticationHandler(MockUtil.MockHttpClient(new
-            {
-                id = TestId,
-                name = TestName,
-                login = TestLogin,
-            }));
+            var authHandler = CreateAuthenticationHandler(CreateMockHttpClient(
+                new GitHubUser { id = TestId, login = TestLogin, name = TestName }, authorizeApp: true));
             await authHandler.InitializeAsync(
                 MockAuthenticationScheme, mockHttpContext);
             var result = await authHandler.AuthenticateAsync();
@@ -128,16 +115,29 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         }
 
         [Fact]
-        public async Task GithubAuthenticationHeaderValidationFailed()
+        public async Task GithubAuthenticationHeaderUserValidationFailed()
         {
             var mockHttpContext = MockHttpContext(
                 new AuthenticationHeaderValue(TestScheme, TestToken));
-            var authHandler = CreateAuthenticationHandler(MockHttpClient(
-                (request) => new HttpResponseMessage(HttpStatusCode.Unauthorized)));
+            var authHandler = CreateAuthenticationHandler(
+                CreateMockHttpClient(authorizeUser: null, authorizeApp: true));
             await authHandler.InitializeAsync(
                 MockAuthenticationScheme, mockHttpContext);
             var result = await authHandler.AuthenticateAsync();
-            Assert.NotNull(result.Failure);
+            Assert.Equal("Invalid GitHub user token.", result.Failure?.Message);
+        }
+
+        [Fact]
+        public async Task GithubAuthenticationHeaderAppValidationFailed()
+        {
+            var mockHttpContext = MockHttpContext(
+                new AuthenticationHeaderValue(TestScheme, TestToken));
+            var authHandler = CreateAuthenticationHandler(CreateMockHttpClient(
+                new GitHubUser { id = TestId, login = TestLogin }, authorizeApp: false));
+            await authHandler.InitializeAsync(
+                MockAuthenticationScheme, mockHttpContext);
+            var result = await authHandler.AuthenticateAsync();
+            Assert.Equal("GitHub user token is not authorized for this application.", result.Failure?.Message);
         }
 
         private static GithubAuthenticationHandler CreateAuthenticationHandler(HttpClient httpClient)
@@ -147,8 +147,49 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
                 MockLoggerFactory(),
                 new Mock<UrlEncoder>(MockBehavior.Strict).Object,
                 new Mock<ISystemClock>(MockBehavior.Strict).Object,
-                MockHttpClientProvider<IGithubApiHttpClientProvider>(httpClient),
-                new DefaultLoggerFactory());
+                MockHttpClientProvider<IGithubApiHttpClientProvider>(httpClient));
+        }
+
+        private static HttpClient CreateMockHttpClient(GitHubUser authorizeUser, bool authorizeApp)
+        {
+            string username = authorizeUser?.login ?? string.Empty;
+            return MockHttpClient((request) =>
+            {
+                var requestPath = request.RequestUri.PathAndQuery;
+                if (requestPath.EndsWith("/user"))
+                {
+                    if (authorizeUser != null)
+                    {
+                        var json = JsonSerializer.Serialize(authorizeUser);
+                        return new HttpResponseMessage(HttpStatusCode.OK)
+                        {
+                            Content = new StringContent(json),
+                        };
+                    }
+                    else
+                    {
+                        return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+                    }
+                }
+                else if (requestPath.EndsWith($"{username}/codespaces"))
+                {
+                    return new HttpResponseMessage(
+                        authorizeApp ? HttpStatusCode.OK : HttpStatusCode.Unauthorized);
+                }
+                else
+                {
+                    Assert.True(false, $"Unexpected HTTP request path: {requestPath}");
+                    return new HttpResponseMessage(HttpStatusCode.NotFound);
+                }
+            });
+        }
+
+        private class GitHubUser
+        {
+            public int? id { get; set; }
+            public string login { get; set; }
+            public string name { get; set; }
+            public string email { get; set; }
         }
     }
 }

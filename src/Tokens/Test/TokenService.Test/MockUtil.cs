@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Moq.Protected;
@@ -29,8 +31,20 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             var mockRequest = new Mock<HttpRequest>(MockBehavior.Strict);
             mockRequest.Setup((r) => r.Headers).Returns(headers);
 
+            var mockServiceProvider = new Mock<IServiceProvider>(MockBehavior.Strict);
+            mockServiceProvider.Setup((sp) => sp.GetService(It.IsAny<Type>()))
+                .Returns<Type>((t) =>
+                {
+                    if (t == typeof(IDiagnosticsLogger)) return MockDiagnosticsLogger();
+                    else throw new NotImplementedException();
+                });
+
+            var contextItems = new Dictionary<object, object>();
             var mockContext = new Mock<HttpContext>(MockBehavior.Strict);
             mockContext.Setup((c) => c.Request).Returns(mockRequest.Object);
+            mockContext.Setup((c) => c.RequestServices).Returns(mockServiceProvider.Object);
+            mockContext.Setup((c) => c.Items).Returns(contextItems);
+
             return mockContext.Object;
         }
 
@@ -91,6 +105,13 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
                 .Setup((f) => f.CreateLogger(It.IsAny<string>()))
                 .Returns(new Mock<ILogger>(MockBehavior.Loose).Object);
             return mockLoggerFactory.Object;
+        }
+
+        public static IDiagnosticsLogger MockDiagnosticsLogger()
+        {
+            var logger = new Mock<IDiagnosticsLogger>(MockBehavior.Loose);
+            logger.Setup(l => l.WithValues(It.IsAny<LogValueSet>())).Returns(logger.Object);
+            return logger.Object;
         }
     }
 }
