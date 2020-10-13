@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         {
             var cloudEnvironment = record.Value;
             var environmentMonitor = serviceProvider.GetService<IEnvironmentMonitor>();
-            var targetState = operationInput.ActionState == StartEnvironmentInputActionState.CreateNew ? CloudEnvironmentState.Provisioning : CloudEnvironmentState.Starting;
+            var targetState = GetTargetState(operationInput.ActionState);
 
             // Start Environment Monitoring
             await environmentMonitor.MonitorQueuedStateTransitionAsync(cloudEnvironment.Id, targetState, logger.NewChildLogger());
@@ -375,18 +375,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 }
             }
 
-            // Update state from queued
-            var newState = operationInput.ActionState == StartEnvironmentInputActionState.CreateNew ? CloudEnvironmentState.Provisioning : CloudEnvironmentState.Starting;
             if (record.Value.State != CloudEnvironmentState.Queued)
             {
-                logger.LogErrorWithDetail($"{operationBaseName}_invalid_state_error", $"Found invalid state {record.Value.State} instead of {CloudEnvironmentState.Queued}");
+                logger.AddCloudEnvironmentState(record.Value.State)
+                    .LogErrorWithDetail($"{operationBaseName}_invalid_state_error", $"Found invalid state {record.Value.State} instead of {CloudEnvironmentState.Queued}");
 
-                if (record.Value.State == newState || record.Value.State == CloudEnvironmentState.Available || record.Value.State == CloudEnvironmentState.Unavailable)
-                {
-                    // Return success to cancel this continuation, as another continuation is already operating on this environment.
-                    return new ContinuationResult { Status = OperationState.Succeeded };
-                }
+                // Return success to cancel this continuation, as another continuation is already operating on this environment.
+                return new ContinuationResult { Status = OperationState.Cancelled, ErrorReason = $"InvalidState_{record.Value.State}" };
             }
+
+            // Update state from queued
+            var targetState = GetTargetState(operationInput.ActionState);
 
             var didUpdate = await cloudEnvironmentRepository.UpdateRecordAsync(
                     operationInput.EnvironmentId,
@@ -401,7 +400,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
                         await environmentStateManager.SetEnvironmentStateAsync(
                             environment,
-                            newState,
+                            targetState,
                             CloudEnvironmentStateUpdateTriggers.CreateEnvironment,
                             string.Empty,
                             null,
@@ -574,6 +573,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
             // Delete heartbeat, when Environment is deleted.
             return ContinuationResultHelpers.ReturnSucceeded();
+        }
+
+        private static CloudEnvironmentState GetTargetState(StartEnvironmentInputActionState actionState)
+        {
+            return actionState switch
+            {
+                StartEnvironmentInputActionState.CreateNew => CloudEnvironmentState.Provisioning,
+                StartEnvironmentInputActionState.Export => CloudEnvironmentState.Exporting,
+                StartEnvironmentInputActionState.Update => CloudEnvironmentState.Updating,
+                _ => CloudEnvironmentState.Starting,
+            };
         }
 
         private static async Task<bool> UpdateResourceInfoAsync(

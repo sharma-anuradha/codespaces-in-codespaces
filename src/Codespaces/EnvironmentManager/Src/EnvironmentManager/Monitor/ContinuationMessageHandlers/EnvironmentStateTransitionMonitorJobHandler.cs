@@ -114,6 +114,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             switch (environment.State)
             {
                 case CloudEnvironmentState.Starting:
+                case CloudEnvironmentState.Exporting:
+                case CloudEnvironmentState.Updating:
                     // attempt to gracefully suspend this environment (which will kick off the suspend environment monitor as well)
                     await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger.NewChildLogger());
 
