@@ -125,7 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
                }, swallowException: true);
         }
 
-        private Task UpdateCacheAsync(IEnumerable<SystemConfigurationRecord> records, IDiagnosticsLogger logger)
+        private async Task UpdateCacheAsync(IEnumerable<SystemConfigurationRecord> records, IDiagnosticsLogger logger)
         {
             var oldkeys = new HashSet<string>(Cache.Keys);
             logger.FluentAddValue("TotalOldKeysCount", oldkeys.Count);
@@ -146,15 +146,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
                 oldkeys.Remove(key);
             }
 
-            logger.FluentAddValue("HitCounts", JsonConvert.SerializeObject(keyHitCounts));
+            var subHitCountDicts = SplitHitCountDictionary(keyHitCounts);
+
+            foreach (var dict in subHitCountDicts)
+            {
+                await logger.OperationScopeAsync(
+                $"docdb_{LoggingDocumentName}_hit_count",
+                async (hitCountLogger) =>
+                {
+                    hitCountLogger.FluentAddValue("HitCounts", JsonConvert.SerializeObject(dict));
+                    await Task.FromResult(true);
+                }, swallowException: true);
+            }
+
             logger.FluentAddValue("DeletedKeysCount", oldkeys.Count);
 
             foreach (var key in oldkeys)
             {
                 Cache.TryRemove(key, out var _);
             }
+        }
 
-            return Task.CompletedTask;
+        private IList<IDictionary<string, uint>> SplitHitCountDictionary(IDictionary<string, uint> keyHitCounts, int maxSizePerDictionary = 50)
+        {
+            var list = new List<IDictionary<string, uint>>();
+            var listCount = keyHitCounts.Count() / maxSizePerDictionary;
+
+            if (keyHitCounts.Count % maxSizePerDictionary > 0)
+                listCount++;
+
+            for (var i = 0; i < listCount; i++)
+            {
+                var dict = keyHitCounts.Skip(i * maxSizePerDictionary).Take(maxSizePerDictionary).ToDictionary(c => c.Key, c => c.Value);
+                list.Add(dict);
+            }
+
+            return list;
         }
     }
 }
