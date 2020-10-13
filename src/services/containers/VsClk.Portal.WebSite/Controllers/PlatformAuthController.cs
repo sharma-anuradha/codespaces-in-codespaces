@@ -195,7 +195,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             if (!isValidOrigin && !isValidReferrer)
             {
-                return BadRequest("Unknown request origin.");
+                var message = new string[] {
+                    "Unknown request origin.",
+                    $"Host: {Request.Host.Host}",
+                    $"Referer: {HttpUtils.GetRequestHeader(Request, "Referer")}",
+                    $"Origin: {HttpUtils.GetRequestHeader(Request, "Origin")}",
+                };
+
+                return BadRequest(String.Join("\n", message));
             }
 
             if (string.IsNullOrWhiteSpace(partnerInfo))

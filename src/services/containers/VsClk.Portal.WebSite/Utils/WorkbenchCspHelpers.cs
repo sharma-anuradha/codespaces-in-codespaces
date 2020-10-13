@@ -110,6 +110,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             // primary
             "dev-ci-usw2-private-relay",
             "ppe-rel-usw2-private-relay",
+            "ppe-rel-use-private-relay",
             "ppe-rel-use2-private-relay",
             "ppe-rel-eun-private-relay",
             "ppe-rel-asse-private-relay",
@@ -124,6 +125,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         public static readonly List<string> LiveShareProdRelayEndpoints = new List<string> {
             // primary
             "prod-ins-usw2-private-relay",
+            "prod-ins-use-private-relay",
             "prod-ins-use2-private-relay",
             "prod-ins-eun-private-relay",
             "prod-ins-asse-private-relay",

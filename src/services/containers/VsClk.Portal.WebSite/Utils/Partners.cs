@@ -20,8 +20,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         public readonly static string GitHubOriginTLD = "github.com";
         public readonly static string GitHubReviewLabOriginTLD = "review-lab.github.com";
         public readonly static string GitHubLocalhostTLD = "github.localhost";
-        public readonly static string SalesforceOriginTLD = "force.com";
-        public readonly static string SalesforceProductionOriginTLD = $"codebuilder.lightning.{SalesforceOriginTLD}";
+
+        public readonly static string ForceOriginTLD = "force.com";
+        public readonly static string SalesforceOriginTLD = "salesforce.com";
         public readonly static string SalesforceHostTLD = "builder.code.com";
 
         public static bool isValidGithubAuthRequestOrigin(
@@ -96,30 +97,17 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 
         public static bool isValidSalesforceAuthRequestOrigin(
             string origin,
-            bool isProductionEnvironment,
             IDiagnosticsLogger logger = null
         )
         {
             var originHost = HttpUtils.GetHost(origin);
-            if (isProductionEnvironment)
-            {
-                var doesMatch = (originHost == SalesforceProductionOriginTLD);
-
-                logger?
-                    .FluentAddValue("Status", $"Production Salesforce, matches salesforce origin?: {doesMatch}")
-                    .FluentAddValue("Result", doesMatch)
-                    .LogInfo("platform_authentication_origin_validation_prod_salesforce");
-
-                return doesMatch;
-            }
-
-            var result = originHost.EndsWith($"lightning.{SalesforceOriginTLD}") &&
-                        (originHost != SalesforceProductionOriginTLD);
+            var result = originHost.EndsWith(SalesforceOriginTLD) ||
+                         originHost.EndsWith(ForceOriginTLD);
 
             logger?
-                .FluentAddValue("Status", $"Non-production Salesforce, matches salesforce origin?: {result}")
+                .FluentAddValue("Status", $"Salesforce, matches salesforce origin?: {result}")
                 .FluentAddValue("Result", result)
-                .LogInfo("platform_authentication_origin_validation_nonprod_salesforce");
+                .LogInfo("platform_authentication_origin_validation_salesforce");
 
             return result;
         }
@@ -181,7 +169,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                     .LogInfo("platform_authentication_local_portal");
 
                 if (Partners.IsSalesforceWorkbenchTLD(host, false)) {
-                    return isValidSalesforceAuthRequestOrigin(origin, false);
+                    return isValidSalesforceAuthRequestOrigin(origin);
                 }
 
                 return true;
@@ -203,7 +191,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                     .FluentAddValue("Status", $"Checking Salesforce origin and host.")
                     .LogInfo("platform_authentication_checking_salesforce_request");
 
-                return Partners.isValidSalesforceAuthRequestOrigin(origin, isProduction, logger);
+                return Partners.isValidSalesforceAuthRequestOrigin(origin, logger);
             }
 
             logger?
