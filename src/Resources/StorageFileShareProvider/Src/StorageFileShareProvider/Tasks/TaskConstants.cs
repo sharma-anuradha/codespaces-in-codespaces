@@ -33,5 +33,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// Displayed name for Archive Task
         /// </summary>
         public const string ArchiveTaskDisplayName = "BatchArchiveFileShare";
+
+        /// <summary>
+        /// Timeout of Archive Tasks in Batch Pools
+        /// </summary>
+        public const int ArchiveTaskTimeoutMin = 90;
+
+        /// <summary>
+        /// Timeout of Prepare Tasks in Batch Pools
+        /// </summary>
+        public const int PrepareTaskTimeoutMin = 30;
     }
 }

@@ -23,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
     public class WatchStorageAzureBatchCleanupTask : BaseBackgroundTask, IWatchStorageAzureBatchCleanupTask
     {
         private const string LogBaseName = TaskConstants.WatchStorageAzureBatchCleanupTaskLogBaseName;
+        private int taskTimeout = Math.Max(TaskConstants.ArchiveTaskTimeoutMin, TaskConstants.PrepareTaskTimeoutMin);
         private readonly string taskName = nameof(WatchStorageAzureBatchCleanupTask);
 
         /// <summary>
@@ -113,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             using (var batchClient = await BatchClientFactory.GetBatchClient(location, logger))
             {
-                var createdAfter = DateTime.UtcNow.AddHours(-1);
+                var createdAfter = DateTime.UtcNow.AddMinutes(-1 * taskTimeout);
                 var jobsOdataQuery = new ODATADetailLevel(
                     filterClause: $"executionInfo/poolId eq '{StorageProviderSettings.WorkerBatchPoolId}' and state eq 'active'",
                     selectClause: "id");

@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
     public class BatchPrepareFileShareJobProvider : BatchJobProvider<BatchPrepareFileShareJobInput>, IBatchPrepareFileShareJobProvider
     {
         private const string TaskDisplayName = TaskConstants.PrepareTaskDisplayName;
+        private const int TaskTimeout = TaskConstants.PrepareTaskTimeoutMin;
         private readonly string batchJobMetadataKey = "SourceBlobFilename";
 
         /// <summary>
@@ -148,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var task = new CloudTask(taskId, taskCommandLine)
             {
-                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromMinutes(30), retentionTime: TimeSpan.FromDays(7)),
+                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromMinutes(TaskTimeout), retentionTime: TimeSpan.FromDays(7)),
             };
             return task;
         }

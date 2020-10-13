@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
     /// </summary>
     public class BatchArchiveFileShareJobProvider : BatchJobProvider<BatchArchiveFileShareJobInput>, IBatchArchiveFileShareJobProvider
     {
-        private const int TaskTimeoutMin = 90;
+        private const int TaskTimeoutMin = TaskConstants.ArchiveTaskTimeoutMin;
 
         private const string TaskDisplayName = TaskConstants.ArchiveTaskDisplayName;
 
