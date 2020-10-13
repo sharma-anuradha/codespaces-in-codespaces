@@ -339,7 +339,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             await logger.OperationScopeAsync($"{LoggingBaseName}_queue_environment_for_suspension", async (childLogger) =>
             {
                 childLogger.AddCloudEnvironment(environment);
-                await SuspendEnvironmentJobHandler.ExecuteAsync(JobQueueProducerFactory, environment.Id, environment.Location, logger);
+                await SuspendEnvironmentJobHandler.ExecuteAsync(JobQueueProducerFactory, environment.Id, environment.Location, childLogger.NewChildLogger());
             });
         }
     }

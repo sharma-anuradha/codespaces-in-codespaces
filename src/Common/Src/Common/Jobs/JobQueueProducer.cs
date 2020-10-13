@@ -46,13 +46,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 {
                     UpdateMetrics(tagType, m => ++m.Processed);
                     var json = new JobPayloadInfo(tagType, payloadJson, DateTime.UtcNow) { PayloadOptions = jobPayloadOptions }.ToJson();
-                    var cloudMessage = await this.queueMessage.AddMessageAsync(Encoding.UTF8.GetBytes(json), jobPayloadOptions?.InitialVisibilityDelay, cancellationToken);
+
                     childLogger
-                        .FluentAddValue(JobQueueLoggerConst.JobId, cloudMessage.Id)
                         .FluentAddValue(JobQueueLoggerConst.JobType, tagType)
                         .FluentAddValue(JobQueueLoggerConst.InitialVisibilityDelay, jobPayloadOptions?.InitialVisibilityDelay)
                         .FluentAddValue(JobQueueLoggerConst.ExpireTimeout, jobPayloadOptions?.ExpireTimeout)
+#if DEBUG
+                            .FluentAddValue(JobQueueLoggerConst.JobPayload, payloadJson)
+                            .FluentAddValue(JobQueueLoggerConst.JobRawContent, json)
+#endif
                         .FluentAddBaseValues(job.LoggerProperties);
+
+                    var cloudMessage = await this.queueMessage.AddMessageAsync(Encoding.UTF8.GetBytes(json), jobPayloadOptions?.InitialVisibilityDelay, cancellationToken);
+                    childLogger.FluentAddValue(JobQueueLoggerConst.JobId, cloudMessage.Id);
+                    
                     return cloudMessage;
                 },
                 errCallback: (err, logger) =>

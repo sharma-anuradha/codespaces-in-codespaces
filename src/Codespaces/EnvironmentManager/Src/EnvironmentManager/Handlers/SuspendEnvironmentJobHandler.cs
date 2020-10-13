@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             return jobQueueProducerFactory.GetOrCreate(DefaultQueueId, location).AddJobAsync(
                 new SuspendEnvironmentPayload() { EnvironmentId = environmentId },
                 null,
-                logger,
+                logger.NewChildLogger(),
                 default);
         }
 
@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 {
                     using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
                     {
-                        await EnvironmentManager.SuspendAsync(Guid.Parse(payload.EnvironmentId), logger.NewChildLogger());
+                        await EnvironmentManager.SuspendAsync(Guid.Parse(payload.EnvironmentId), childLogger.NewChildLogger());
                     }
                 }
                 catch (Exception ex)
