@@ -200,10 +200,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         var cloudQueueMessage = QueueMessageAdapter.AsCloudQueueMessage(queueMessage);
                         await queue.UpdateMessageAsync(
                             cloudQueueMessage,
-                            visibilityTimeout,
+                            ToVisibilityTimeout(visibilityTimeout),
                             messageUpdateFields);
                     },
-                    swallowException: true);
+                    swallowException: false);
+            }
+
+            /// <summary>
+            /// Round the visibility timeout to the nearest 1 sec value.
+            /// Note: the underlying REST Api call will be rejected if values othre than a sec are provided.
+            /// </summary>
+            /// <param name="value">The original timeout.</param>
+            /// <returns>Nearest 1 sec round timeout.</returns>
+            private TimeSpan ToVisibilityTimeout(TimeSpan value)
+            {
+                var secs = Math.Min(1, Math.Round(value.TotalSeconds));
+                return TimeSpan.FromSeconds(secs);
             }
         }
 

@@ -58,6 +58,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
         }
 
         [Fact]
+        public Task TestUpdateAsync()
+        {
+            return RunQueueTest(async (queue) =>
+            {
+                var messageContent = CreateMessageContent("message#1");
+                var message = await queue.AddMessageAsync(messageContent, null, default);
+
+                var messages = await queue.GetMessagesAsync(10, TimeSpan.FromMilliseconds(800), TimeSpan.Zero, default);
+                Assert.NotEmpty(messages);
+                Assert.Single(messages);
+                var cloudMessage = messages.First();
+                await queue.UpdateMessageAsync(cloudMessage, false, TimeSpan.FromMilliseconds(10), default);
+                await queue.UpdateMessageAsync(cloudMessage, false, TimeSpan.FromMilliseconds(750), default);
+                await queue.UpdateMessageAsync(cloudMessage, false, TimeSpan.FromMilliseconds(1250), default);
+                await queue.DeleteMessageAsync(cloudMessage, default);
+            });
+
+        }
+
+        [Fact]
         public async Task TestCrossRegionAsync()
         {
             var queueId = Guid.NewGuid().ToString();

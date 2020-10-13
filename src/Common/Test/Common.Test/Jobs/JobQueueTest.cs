@@ -413,6 +413,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 jobPayloadResult = await continuationJobPayloadResult.ReceiveAsync(ReceiveTimeout);
                 Assert.Equal(ContinuationJobPayloadResultState.Succeeded, jobPayloadResult.CompletionState);
                 Assert.Equal(0, continuationJobHandler.Step1Retries);
+
+                continuationJobHandler.JobHandlerOptions = new JobHandlerOptions() { MaxHandlerRetries = 1 };
+                await jobQueueProducerFactory.GetOrCreate(queue.Id, null).AddJobAsync(new ContinuationPayload() { InitValue = -1 }, null, NullLogger, default);
+                jobPayloadResult = await continuationJobPayloadResult.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal(ContinuationJobPayloadResultState.Failed, jobPayloadResult.CompletionState);
             });
         }
 
@@ -672,7 +677,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             protected override Task<ContinuationJobResult<ContinuationState, ContinuationResult>> ContinueAsync(IJob<ContinuationPayload> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
             {
                 var payload = job.Payload;
-                switch(payload.CurrentState)
+
+                if (payload.InitValue == -1)
+                {
+                    return Task.FromResult<ContinuationJobResult<ContinuationState, ContinuationResult>>(null);
+                }
+
+                switch (payload.CurrentState)
                 {
                     case ContinuationState.None:
                         break;
