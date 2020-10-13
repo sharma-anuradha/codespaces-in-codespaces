@@ -17,6 +17,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     {
         private const string TypeProperty = "type";
 
+#pragma warning disable CA2326 // Do not use TypeNameHandling values other than None
+#pragma warning disable CA2327 // Do not use insecure JsonSerializerSettings
+        private static readonly JsonSerializer ObjectSerializer = JsonSerializer.Create(new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Objects });
+#pragma warning restore CA2326 // Do not use TypeNameHandling values other than None
+#pragma warning restore CA2327 // Do not use insecure JsonSerializerSettings
+
         public override bool CanConvert(Type objectType)
         {
             return BaseType.IsAssignableFrom(objectType);
@@ -24,48 +30,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            var eventObject = (JObject)serializer.Deserialize(reader);
-            if (eventObject != null && eventObject.TryGetValue(TypeProperty, out JToken value))
+            var readObject = serializer.Deserialize(reader);
+            if (readObject is JObject jObject)
             {
-                var type = GetType(value.Value<string>());
-                if (type != null)
+                if (jObject.TryGetValue(TypeProperty, out JToken value))
                 {
-                    return eventObject.ToObject(type);
+                    var typeValue = value.Value<string>();
+                    if (SupportedTypes.TryGetValue(typeValue, out var type))
+                    {
+                        return jObject.ToObject(type);
+                    }
+
+                    throw new JsonReaderException($"type:{typeValue} not supported");
+                }
+                else
+                {
+                    throw new JsonReaderException("'type' property is missing from the json content.");
                 }
             }
 
-            return null;
+            // return the object with 'auto' handling
+            return readObject;
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var jObject = JObject.FromObject(value);
             if (value != null)
             {
                 var type = value.GetType();
                 var entry = SupportedTypes.FirstOrDefault(kvp => kvp.Value == type);
                 if (entry.Value != null)
                 {
+                    var jObject = JObject.FromObject(value);
                     jObject.Add(TypeProperty, JToken.FromObject(entry.Key));
+                    serializer.Serialize(writer, jObject);
+                    return;
                 }
             }
 
-            serializer.Serialize(writer, jObject);
+            // use default object serialization
+            ObjectSerializer.Serialize(writer, value);
         }
 
         protected abstract Type BaseType { get; }
 
         protected abstract IDictionary<string, Type> SupportedTypes { get; }
-
-        private Type GetType(string eventType)
-        {
-            Type type;
-            if (SupportedTypes.TryGetValue(eventType, out type))
-            {
-                return type;
-            }
-
-            return null;
-        }
     }
 }

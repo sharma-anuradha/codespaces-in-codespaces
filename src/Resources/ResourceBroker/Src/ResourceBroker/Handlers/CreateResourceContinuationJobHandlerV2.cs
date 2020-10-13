@@ -293,29 +293,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             /// </summary>
             public bool Preserve { get; set; }
 
-            [JsonConverter(typeof(CreateInputConverter))]
+            [JsonConverter(typeof(ContinuationInputConverter))]
             public ContinuationInput CreateInput { get; set; }
-        }
-
-        /// <summary>
-        /// Json converter for CreateInput property
-        /// </summary>
-        public class CreateInputConverter : JsonTypeConverter
-        {
-            private static readonly Dictionary<string, Type> MapTypes
-                    = new Dictionary<string, Type>
-                {
-                    { "computeVM", typeof(VirtualMachineProviderCreateInput) },
-                    { "withComponent", typeof(CreateResourceWithComponentInput) },
-                    { "fileShare", typeof(FileShareProviderCreateInput) },
-                    { "queue", typeof(QueueProviderCreateInput) },
-                    { "keyVault", typeof(KeyVaultProviderCreateInput) },
-                    { "network", typeof(NetworkInterfaceProviderCreateInput) },
-                };
-
-            protected override Type BaseType => typeof(ContinuationInput);
-
-            protected override IDictionary<string, Type> SupportedTypes => MapTypes;
         }
 
         public class CreateResourceContinuationResult : EntityContinuationResult

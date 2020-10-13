@@ -1,9 +1,10 @@
-﻿// <copyright file="ContinuationOperationInput.cs" company="Microsoft">
+// <copyright file="ContinuationOperationInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
@@ -20,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Gets or sets the target input.
         /// </summary>
+        [JsonConverter(typeof(ContinuationInputConverter))]
         public ContinuationInput OperationInput { get; set; }
 
         /// <summary>
