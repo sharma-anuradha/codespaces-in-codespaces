@@ -117,7 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 // Set batchsize for what we need
                 batchSize = Math.Min(batchSize, maxActiveCount - activeCount);
 
-                logger.FluentAddValue("TaskdRequestedItemsAdjuste", batchSize);
+                logger.FluentAddValue("TaskRequestedItemsAdjusted", batchSize);
 
                 // Get environments to be archived
                 var records = await CloudEnvironmentRepository.GetEnvironmentsReadyForArchiveAsync(
