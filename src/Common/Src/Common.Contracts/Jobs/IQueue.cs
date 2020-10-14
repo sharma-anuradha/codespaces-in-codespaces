@@ -51,9 +51,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// </summary>
         /// <param name="queueMessage">The message queue instance.</param>
         /// <param name="updateContent">If update the queue nessage content.</param>
-        /// <param name="visibilityTimeout">The update visibility timeout to be refreshed.</param>
+        /// <param name="visibilityTimeout">An optional update visibility timeout to be refreshed.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Completion task.</returns>
-        Task UpdateMessageAsync(QueueMessage queueMessage, bool updateContent, TimeSpan visibilityTimeout, CancellationToken cancellationToken);
+        Task UpdateMessageAsync(QueueMessage queueMessage, bool updateContent, TimeSpan? visibilityTimeout, CancellationToken cancellationToken);
     }
 }

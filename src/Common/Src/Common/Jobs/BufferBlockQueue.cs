@@ -86,12 +86,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     var queueMessage = await BufferBlock.ReceiveAsync(timeout, cancellationToken);
                     if (QueueMessages.TryRemove(queueMessage.Id, out var removed))
                     {
-                        if (visibilityTimeout.HasValue)
-                        {
-                            var visibilityExpired = DateTime.Now.Add(visibilityTimeout.Value);
-                            InvisibleMessages[queueMessage.Id] = new Tuple<QueueMessage, DateTime>(queueMessage, visibilityExpired);
-                        }
-
                         queueMessages.Add(queueMessage);
                         --messageCount;
                     }
@@ -99,6 +93,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 catch (TimeoutException)
                 {
                     break;
+                }
+            }
+
+            if (visibilityTimeout.HasValue)
+            {
+                var visibilityExpired = DateTime.Now.Add(visibilityTimeout.Value);
+                foreach (var queueMessage in queueMessages)
+                {
+                    InvisibleMessages[queueMessage.Id] = new Tuple<QueueMessage, DateTime>(queueMessage, visibilityExpired);
                 }
             }
 
@@ -114,7 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         }
 
         /// <inheritdoc/>
-        public Task UpdateMessageAsync(QueueMessage queueMessage, bool updateContent, TimeSpan visibilityTimeout, CancellationToken cancellationToken)
+        public Task UpdateMessageAsync(QueueMessage queueMessage, bool updateContent, TimeSpan? visibilityTimeout, CancellationToken cancellationToken)
         {
             if (InvisibleMessages.TryGetValue(queueMessage.Id, out var invisibleQueue))
             {
@@ -122,11 +125,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 if (updateContent)
                 {
                     invisibleQueue.Item1.Content = queueMessage.Content;
-                    visibilityDateTime = invisibleQueue.Item2;
+                }
+
+                if (visibilityTimeout.HasValue)
+                {
+                    visibilityDateTime = DateTime.Now.Add(visibilityTimeout.Value);
                 }
                 else
                 {
-                    visibilityDateTime = DateTime.Now.Add(visibilityTimeout);
+                    visibilityDateTime = invisibleQueue.Item2;
                 }
 
                 InvisibleMessages[queueMessage.Id] = new Tuple<QueueMessage, DateTime>(invisibleQueue.Item1, visibilityDateTime);

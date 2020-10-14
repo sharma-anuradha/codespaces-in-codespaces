@@ -71,7 +71,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 var cloudMessage = messages.First();
                 await queue.UpdateMessageAsync(cloudMessage, false, TimeSpan.FromMilliseconds(10), default);
                 await queue.UpdateMessageAsync(cloudMessage, false, TimeSpan.FromMilliseconds(750), default);
-                await queue.UpdateMessageAsync(cloudMessage, false, TimeSpan.FromMilliseconds(1250), default);
+                var messageContentUpdated = CreateMessageContent("message#1_updated");
+                cloudMessage.Content = messageContentUpdated;
+                await queue.UpdateMessageAsync(cloudMessage, true, TimeSpan.FromMilliseconds(1250), default);
+
+                messages = await queue.GetMessagesAsync(10, TimeSpan.FromMilliseconds(800), TimeSpan.FromSeconds(2), default);
+                Assert.NotEmpty(messages);
+                Assert.Single(messages);
+                cloudMessage = messages.First();
+                Assert.Equal(messageContentUpdated, cloudMessage.Content);
+
                 await queue.DeleteMessageAsync(cloudMessage, default);
             });
 

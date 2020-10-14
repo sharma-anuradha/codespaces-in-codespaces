@@ -55,6 +55,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <inheritdoc/>
         public event Action<IJob> JobCreated;
 
+        /// <inheritdoc/>
+        public event Action<string, IJobHandlerMetrics> JobHandlerMetricsUpdated;
+
         private IQueue Queue { get; }
 
         private bool IsRunning => this.keepInvisibleJobsTask != null;
@@ -110,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         {
                             childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, job.Id)
                                 .FluentAddBaseValue(JobQueueLoggerConst.JobType, nameof(JobPayloadError));
-                            return CompleteJobAsync((Job)job, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.PayloadError, ((Job<JobPayloadError>)job).Payload.Error);
+                            return CompleteJobAsync((Job)job, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.PayloadError, ((Job<JobPayloadError>)job).Payload.Error, childLogger);
                         });
                 }, JobHandlerBase.DefaultDataflowBlockOptions);
 
@@ -213,7 +216,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         if (expireTimeout.HasValue == true &&
                             nowUtc > job.Created.Add(expireTimeout.Value))
                         {
-                            await CompleteJobAsync(jobInstance, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.Expired, null);
+                            await CompleteJobAsync(jobInstance, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.Expired, null, childLogger);
                             childLogger.FluentAddValue(JobQueueLoggerConst.JobDidExpired, true)
                                 .FluentAddValue(JobQueueLoggerConst.JobHandlerStatus, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.Expired);
                             expired = true;
@@ -241,7 +244,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                     if (jobInstance.RetryTimeout.HasValue)
                                     {
                                         // keep this job message queue but retry again.
-                                        await jobInstance.UpdateVisibilityAsync(jobInstance.RetryTimeout.Value, DisposeToken);
+                                        jobInstance.JobPayloadInfo.NextRetry(logger);
+                                        jobInstance.VisibilityTimeout = jobInstance.RetryTimeout.Value;
                                     }
                                     else
                                     {
@@ -250,7 +254,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                     }
 
                                     childLogger.FluentAddValue(JobQueueLoggerConst.JobHandlerStatus, status);
-                                    await CompleteJobAsync(jobInstance, status, null);
+                                    await CompleteJobAsync(jobInstance, status, null, childLogger);
                                 }
                             }
                         }
@@ -272,70 +276,66 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                             status = status | JobCompletedStatus.Cancelled;
                         }
 
-                        try
-                        {
-                            ++jobInstance.JobPayloadInfo.Retries;
-                            logger.FluentAddValue(JobQueueLoggerConst.JobRetries, jobInstance.JobPayloadInfo.Retries);
+                        jobInstance.JobPayloadInfo.NextRetry(logger);
 
-                            // Note: we will start by allowing 'custom' defined error handlers to handle the job error and decide
-                            // what completion status is returned
-                            var errorHandlerStatus = JobCompletedStatus.None;
-                            if (jobHandlerOptions?.ErrorCallbacks != null)
+                        // Note: we will start by allowing 'custom' defined error handlers to handle the job error and decide
+                        // what completion status is returned
+                        var errorHandlerStatus = JobCompletedStatus.None;
+                        if (jobHandlerOptions?.ErrorCallbacks != null)
+                        {
+                            foreach (var errorCallback in jobHandlerOptions.ErrorCallbacks)
                             {
-                                foreach (var errorCallback in jobHandlerOptions.ErrorCallbacks)
+                                try
                                 {
-                                    errorHandlerStatus = await errorCallback.HandleJobError(jobInstance, err, status, logger, DisposeToken);
+                                    errorHandlerStatus = await errorCallback.HandleJobErrorAsync(jobInstance, err, status, logger, DisposeToken);
                                     if (errorHandlerStatus != JobCompletedStatus.None)
                                     {
                                         // Any custom error handler that return != 'None' would stop.
                                         break;
                                     }
                                 }
-                            }
-
-                            if (errorHandlerStatus != JobCompletedStatus.None)
-                            {
-                                status = errorHandlerStatus;
-
-                                // If the custom error handler want 'Retry' we need some help to persist the 'Retries' property
-                                // on the queued message
-                                if (status.HasFlag(JobCompletedStatus.Retry))
+                                catch (Exception e)
                                 {
-                                    ++retries;
-                                    await jobInstance.UpdateContentAsync(DisposeToken);
+                                    logger.NewChildLogger().LogException("job_queue_consumer_error_callback_error", e);
                                 }
-                            } // Check first if we reach the max numbers of retries
-                            else if (jobInstance.JobPayloadInfo.Retries >= maxHandlerRetries)
-                            {
-                                // apply 'Exhaust' and 'Removed' flag status.
-                                // This code path will force the payload to be removed permanently from the queue.
-                                status = status | JobCompletedStatus.RetryExhausted | JobCompletedStatus.Removed;
                             }
-                            else
+                        }
+
+                        if (errorHandlerStatus != JobCompletedStatus.None)
+                        {
+                            status = errorHandlerStatus;
+
+                            // If the custom error handler want 'Retry' we need some help to persist the 'Retries' property
+                            // on the queued message
+                            if (status.HasFlag(JobCompletedStatus.Retry))
                             {
                                 ++retries;
-                                status = status | JobCompletedStatus.Retry;
-                                await jobInstance.UpdateContentAsync(DisposeToken);
-
-                                // if the job handler options has a retry timeout, otherwise it will re appear
-                                // on the consumer with the default setting how it was retrieved the first time.
-                                TimeSpan? retryTimeout = jobInstance.RetryTimeout ?? jobHandlerOptions?.RetryTimeout;
-                                if (retryTimeout.HasValue)
-                                {
-                                    await jobInstance.UpdateVisibilityAsync(retryTimeout.Value, DisposeToken);
-                                }
                             }
-
-                            logger.FluentAddValue(JobQueueLoggerConst.JobHandlerStatus, status);
-
-                            // in all scenarios we would need to complete the job.
-                            await CompleteJobAsync(jobInstance, status, err);
-                        }
-                        catch (Exception e)
+                        } // Check first if we reach the max numbers of retries
+                        else if (jobInstance.JobPayloadInfo.Retries >= maxHandlerRetries)
                         {
-                            var childLogger = logger.NewChildLogger();
-                            childLogger.LogException("job_queue_consumer_error_callback_error", e);
+                            // apply 'Exhaust' and 'Removed' flag status.
+                            // This code path will force the payload to be removed permanently from the queue.
+                            status = status | JobCompletedStatus.RetryExhausted | JobCompletedStatus.Removed;
                         }
+                        else
+                        {
+                            ++retries;
+                            status = status | JobCompletedStatus.Retry;
+
+                            // if the job handler options has a retry timeout, otherwise it will re appear
+                            // on the consumer with the default setting how it was retrieved the first time.
+                            TimeSpan? retryTimeout = jobInstance.RetryTimeout ?? jobHandlerOptions?.RetryTimeout;
+                            if (retryTimeout.HasValue)
+                            {
+                                jobInstance.VisibilityTimeout = retryTimeout.Value;
+                            }
+                        }
+
+                        logger.FluentAddValue(JobQueueLoggerConst.JobHandlerStatus, status);
+
+                        // in all scenarios we would need to complete the job.
+                        await CompleteJobAsync(jobInstance, status, err, logger);
                     },
                     swallowException: true);
 
@@ -425,12 +425,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             return job;
         }
 
-        private Task CompleteJobAsync(Job job, JobCompletedStatus status, Exception error)
+        private Task CompleteJobAsync(Job job, JobCompletedStatus status, Exception error, IDiagnosticsLogger logger)
         {
             // Note: this method will remove the dequeued message from dictionary
             // and also complete the job by firing events
             RemoveDequeuedJob(job);
-            return job.CompleteAsync(status, error, DisposeToken);
+            return job.CompleteAsync(status, error, logger, DisposeToken);
         }
 
         private async Task KeepInvisibleJobsAsync()
@@ -489,6 +489,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 }
 
                 updateCallback(jobHandlerMetrics);
+
+                JobHandlerMetricsUpdated?.Invoke(typeTag, jobHandlerMetrics);
             }
         }
 
@@ -563,7 +565,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             public IQueue Queue { get; }
 
             /// <inheritdoc/>
-            public TimeSpan VisibilityTimeout { get; }
+            public TimeSpan VisibilityTimeout { get; set; }
 
             /// <inheritdoc/>
             public DateTime Created => JobPayloadInfo.Created;
@@ -594,22 +596,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 }
             }
 
-            public Task UpdateVisibilityAsync(TimeSpan visibilityTimeout, CancellationToken cancellationToken)
+            internal async Task CompleteAsync(JobCompletedStatus status, Exception error, IDiagnosticsLogger logger, CancellationToken cancellationToken)
             {
-                return Queue.UpdateMessageAsync(this.queueMessage, false, visibilityTimeout, cancellationToken);
-            }
-
-            public Task UpdateContentAsync(CancellationToken cancellationToken)
-            {
-                this.queueMessage.Content = Encoding.UTF8.GetBytes(JobPayloadInfo.ToJson());
-                return Queue.UpdateMessageAsync(this.queueMessage, true, VisibilityTimeout, cancellationToken);
-            }
-
-            internal async Task CompleteAsync(JobCompletedStatus status, Exception error, CancellationToken cancellationToken)
-            {
-                if (status.HasFlag(JobCompletedStatus.Removed))
+                try
                 {
-                    await Queue.DeleteMessageAsync(this.queueMessage, cancellationToken);
+                    if (status.HasFlag(JobCompletedStatus.Removed))
+                    {
+                        await Queue.DeleteMessageAsync(this.queueMessage, cancellationToken);
+                    }
+                    else
+                    {
+                        await UpdateMessageAsync(cancellationToken);
+                    }
+                }
+                catch (Exception queueMessageError)
+                {
+                    logger.NewChildLogger().LogException("job_complete_error", queueMessageError);
                 }
 
                 if (Completed != null)
@@ -625,6 +627,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         Error = error,
                         KeepInvisibleCount = this.keepInvisibleCount,
                     };
+
                     foreach (var completed in Completed.GetInvocationList().Cast<Func<IJobCompleted, CancellationToken, Task>>())
                     {
                         await completed(jobCompleted, cancellationToken);
@@ -658,6 +661,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 where T : struct
             {
                 return value.HasValue ? value.Value : defaultValue;
+            }
+
+            private Task UpdateVisibilityAsync(TimeSpan visibilityTimeout, CancellationToken cancellationToken)
+            {
+                return Queue.UpdateMessageAsync(this.queueMessage, false, visibilityTimeout, cancellationToken);
+            }
+
+            private Task UpdateMessageAsync(CancellationToken cancellationToken)
+            {
+                this.queueMessage.Content = Encoding.UTF8.GetBytes(JobPayloadInfo.ToJson());
+                return Queue.UpdateMessageAsync(this.queueMessage, true, VisibilityTimeout, cancellationToken);
             }
 
             private void UpdateInvisibleTimeout(DateTime now)

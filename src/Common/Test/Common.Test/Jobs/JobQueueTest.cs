@@ -282,7 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 jobQueueConsumer.RegisterJobHandler<JobContentPayload<int>>(
                     async (job, logger, ct) =>
                     {
-                        await job.UpdateVisibilityAsync(TimeSpan.FromSeconds(60), ct);
+                        job.VisibilityTimeout = TimeSpan.FromSeconds(60);
                         await payloadsProcessed.SendAsync(job.Payload);
                     });
                 await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(200), new JobPayloadOptions() { HandlerTimeout = TimeSpan.FromMilliseconds(50) }, NullLogger);
@@ -298,7 +298,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
             {
                 var waitHandlers = new BufferBlock<int>();
-                var processHandlers = new BufferBlock<int>();
+                var metricsProgress = new List<(string, IJobHandlerMetrics)>();
+                var metricsUpdated = new BufferBlock<int>();
+
+                jobQueueConsumer.JobHandlerMetricsUpdated += (typeTag, metrics) =>
+                {
+                    metricsProgress.Add((typeTag, metrics));
+                    metricsUpdated.Post(0);
+                };
 
                 jobQueueConsumer.RegisterJobHandler<JobContentPayload<int>>(
                     async (job, logger, ct) =>
@@ -309,37 +316,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                         }
 
                         await waitHandlers.ReceiveAsync(ReceiveTimeout);
-                        await processHandlers.SendAsync(0);
                     }, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 1 });
                 var payloadStringHandlers = new BufferBlock<string>();
                 jobQueueConsumer.RegisterJobHandler<JobContentPayload<string>>(
                     async (job, logger, ct) =>
                     {
                         await waitHandlers.ReceiveAsync(ReceiveTimeout);
-                        await processHandlers.SendAsync(0);
                     }, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 1 });
 
-                const int TotalIntJosb = 50;
-                const int TotalStrJosb = 25;
+                const int TotalIntJobs = 12;
+                const int TotalStrJobs = 5;
 
-                for (int i = 0; i < TotalIntJosb; ++i)
+                for (int i = 0; i < TotalIntJobs; ++i)
                 {
                     await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(i), null, NullLogger);
                 }
 
-                for (int i = 0; i < TotalStrJosb; ++i)
+                for (int i = 0; i < TotalStrJobs; ++i)
                 {
                     await jobQueueProducer.AddJobAsync(new JobContentPayload<string>($"next:{i}"), null, NullLogger);
                 }
 
-                for (int i = 0; i < (TotalIntJosb + TotalStrJosb); ++i)
+                for (int i = 0; i < (TotalIntJobs + TotalStrJobs); ++i)
                 {
                     await waitHandlers.SendAsync(0);
                 }
 
-                for (int i = 0; i < (TotalIntJosb + TotalStrJosb -1); ++i)
+                for (int i = 0; i < (TotalIntJobs + TotalStrJobs); ++i)
                 {
-                    await processHandlers.ReceiveAsync(ReceiveTimeout);
+                    await metricsUpdated.ReceiveAsync(ReceiveTimeout);
                 }
 
                 var metrics = jobQueueConsumer.GetMetrics();
@@ -347,8 +352,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 var typeIntTag = JobPayloadHelpers.GetTypeTag(typeof(JobContentPayload<int>));
                 Assert.True(metrics.ContainsKey(typeIntTag));
                 var jobIntMetrics = metrics[typeIntTag];
-                Assert.Equal(TotalIntJosb, jobIntMetrics.Processed);
-                Assert.Equal(TotalIntJosb - 1, jobIntMetrics.MaxInputCount);
+                Assert.Equal(TotalIntJobs, jobIntMetrics.Processed);
+                Assert.Equal(TotalIntJobs - 1, jobIntMetrics.MaxInputCount);
                 Assert.Equal(1, jobIntMetrics.Failures);
                 Assert.Equal(0, jobIntMetrics.Cancelled);
                 Assert.NotEqual(TimeSpan.Zero, jobIntMetrics.ProcessTime);

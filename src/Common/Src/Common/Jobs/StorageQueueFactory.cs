@@ -186,7 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             }
 
             /// <inheritdoc/>
-            public Task UpdateMessageAsync(QueueMessage queueMessage, bool updateContent, TimeSpan visibilityTimeout, CancellationToken cancellationToken)
+            public Task UpdateMessageAsync(QueueMessage queueMessage, bool updateContent, TimeSpan? visibilityTimeout, CancellationToken cancellationToken)
             {
                 return this.logger.OperationScopeAsync(
                     $"{LoggingPrefix}_update",
@@ -195,12 +195,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, queueMessage.Id);
                         var queue = await this.cloudQueueFactoryCallback();
                         MessageUpdateFields messageUpdateFields =
-                            MessageUpdateFields.Visibility | (updateContent ? MessageUpdateFields.Content : 0);
+                            (visibilityTimeout.HasValue ? MessageUpdateFields.Visibility : 0) |
+                            (updateContent ? MessageUpdateFields.Content : 0);
 
                         var cloudQueueMessage = QueueMessageAdapter.AsCloudQueueMessage(queueMessage);
                         await queue.UpdateMessageAsync(
                             cloudQueueMessage,
-                            ToVisibilityTimeout(visibilityTimeout),
+                            visibilityTimeout.HasValue ? ToVisibilityTimeout(visibilityTimeout.Value) : TimeSpan.Zero,
                             messageUpdateFields);
                     },
                     swallowException: false);
@@ -214,7 +215,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             /// <returns>Nearest 1 sec round timeout.</returns>
             private TimeSpan ToVisibilityTimeout(TimeSpan value)
             {
-                var secs = Math.Min(1, Math.Round(value.TotalSeconds));
+                var secs = Math.Max(1, Math.Round(value.TotalSeconds));
                 return TimeSpan.FromSeconds(secs);
             }
         }

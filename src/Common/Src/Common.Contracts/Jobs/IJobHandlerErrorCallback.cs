@@ -23,6 +23,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="logger">A logger diagnostic instance.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>A custom status from this handler error.</returns>
-        Task<JobCompletedStatus> HandleJobError(IJob job, Exception error, JobCompletedStatus status, IDiagnosticsLogger logger, CancellationToken cancellationToken);
+        Task<JobCompletedStatus> HandleJobErrorAsync(IJob job, Exception error, JobCompletedStatus status, IDiagnosticsLogger logger, CancellationToken cancellationToken);
     }
 }

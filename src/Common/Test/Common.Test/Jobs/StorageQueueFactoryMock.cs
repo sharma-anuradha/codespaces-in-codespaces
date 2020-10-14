@@ -17,10 +17,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
     internal static class StorageQueueFactoryMock
     {
         const string AccountName = "vsclkonlinedevciusw2sa";
-        const string AccountKey = "{}";
+        const string AccountKey = "{from azure portal}";
 
         const string AccountName_WestEurope = "vsclkonlinedevcieuwsa";
-        const string AccountKey_WestEurope = "{}";
+        const string AccountKey_WestEurope = "{from azure portal}";
 
         public static IQueueFactory Create()
         {
@@ -39,7 +39,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             mockCrossRegionStorageQueueClientProvider.Setup(e => e.GetQueueAsync(It.IsAny<string>(), It.IsAny<AzureLocation>()))
                         .Returns(async (string queueName, AzureLocation controlPlaneRegion) =>
                         {
-                            var cloudQueueClient = CreateCloudQueueClient(AccountName_WestEurope, AccountKey_WestEurope);
+                            var accountInfo = GetAccountInfo(controlPlaneRegion);
+                            var cloudQueueClient = CreateCloudQueueClient(accountInfo.accountName, accountInfo.accountKey);
                             var client = cloudQueueClient.GetQueueReference(queueName);
 
                             await client.CreateIfNotExistsAsync();
@@ -49,7 +50,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             var mockControlPlaneInfo = new Mock<IControlPlaneInfo>();
             mockControlPlaneInfo.SetupGet(x => x.AllStamps).Returns(() =>
                 new Dictionary<AzureLocation, IControlPlaneStampInfo>()
-                { { AzureLocation.WestEurope, null } });
+                {
+                    { AzureLocation.WestUs2, null },
+                    { AzureLocation.WestEurope, null }
+                });
 
             var mockHealthProvider = new Mock<IHealthProvider>();
             mockHealthProvider.Setup(e => e.MarkUnhealthy(It.IsAny<Exception>(), It.IsAny<IDiagnosticsLogger>()))
@@ -61,6 +65,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 new ResourceNameBuilder(new DeveloperPersonalStampSettings(true, string.Empty, true)),
                 mockHealthProvider.Object,
                 new NullLogger());
+        }
+
+        private static (string accountName, string accountKey) GetAccountInfo(AzureLocation controlPlaneRegion)
+        {
+            if (controlPlaneRegion == AzureLocation.WestUs2)
+            {
+                return (AccountName, AccountKey);
+            }
+            else if (controlPlaneRegion == AzureLocation.WestEurope)
+            {
+                return (AccountName_WestEurope, AccountKey_WestEurope);
+            }
+
+            throw new NotSupportedException($"region:{controlPlaneRegion} not supported.");
         }
 
         private static CloudQueueClient CreateCloudQueueClient(string accountName, string accountKey)

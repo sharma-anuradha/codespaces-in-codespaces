@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     public abstract class JobHandlerErrorCallbackBase : IJobHandlerErrorCallback
     {
         /// <inheritdoc/>
-        public async Task<JobCompletedStatus> HandleJobError(IJob job, Exception error, JobCompletedStatus status, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        public Task<JobCompletedStatus> HandleJobErrorAsync(IJob job, Exception error, JobCompletedStatus status, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             if (DidRetryException(error, out var retryTimeout))
             {
@@ -26,11 +26,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                     .FluentAddValue("RetryException", error.GetType().Name)
                     .FluentAddValue("RetryTimeout", retryTimeout);
 
-                await job.UpdateVisibilityAsync(retryTimeout, cancellationToken);
-                return status | JobCompletedStatus.Retry;
+                job.VisibilityTimeout = retryTimeout;
+                return Task.FromResult(status | JobCompletedStatus.Retry);
             }
 
-            return JobCompletedStatus.None;
+            return Task.FromResult(JobCompletedStatus.None);
         }
 
         protected static T ToException<T>(Exception error)

@@ -42,6 +42,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         event Action<IJob> JobCreated;
 
         /// <summary>
+        /// Event fired when a job handler metric is changed for payload type.
+        /// </summary>
+        event Action<string, IJobHandlerMetrics> JobHandlerMetricsUpdated;
+
+        /// <summary>
         /// Return the current job handler metrics processed by this queue.
         /// </summary>
         /// <returns>A dictionary for each type of job taf type beign procesed.</returns>

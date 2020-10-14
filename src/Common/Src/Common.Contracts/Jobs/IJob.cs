@@ -106,9 +106,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         IQueue Queue { get; }
 
         /// <summary>
-        /// Gets the visibility timeout.
+        /// Gets or sets the visibility timeout.
         /// </summary>
-        TimeSpan VisibilityTimeout { get; }
+        TimeSpan VisibilityTimeout { get; set; }
 
         /// <summary>
         /// Gets the creation date/time.
@@ -124,14 +124,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets or sets the retry timeout value.
         /// </summary>
         public TimeSpan? RetryTimeout { get; set; }
-
-        /// <summary>
-        /// Update the job with a new visibility timeout.
-        /// </summary>
-        /// <param name="visibilityTimeout">The new visibility timeout.</param>
-        /// <param name="cancellationToken">Optional cancellation token.</param>
-        /// <returns>Completion task.</returns>
-        Task UpdateVisibilityAsync(TimeSpan visibilityTimeout, CancellationToken cancellationToken);
     }
 
     /// <summary>
