@@ -171,6 +171,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
         [HttpGet("~/auth")]
         [HttpOperationalScope("pf_auth")]
+        [DisableFormValueModelBinding]
         public async Task<IActionResult> AuthAsync(
             [FromQuery(Name = "skip_fetch_codespace")] bool skipFetchingCodespace,
             [FromServices] IWorkspaceInfo workspaceInfo,
