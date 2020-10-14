@@ -84,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     childLogger.LogInfo($"{LogBaseName}_run_start");
 
                     var enableWorkers = await billingSettings.V2WorkersAreEnabledAsync(logger.NewChildLogger());
+                    var enableArchiving = await billingSettings.V2EnableArchivingAsync(logger.NewChildLogger());
                     var enableCheckForMissingEnvironments = await billingSettings.V2EnableCheckForMissingEnvironmentsAsync(logger.NewChildLogger());
                     var enableCheckForFinalStates = await billingSettings.V2EnableCheckForFinalStatesAsync(logger.NewChildLogger());
 
@@ -101,6 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                     DesiredEndTime = desiredEndDate,
                                     CheckForMissingEnvironments = enableCheckForMissingEnvironments,
                                     CheckForFinalStates = enableCheckForFinalStates,
+                                    EnableArchiving = enableArchiving,
                                 },
                                 innerLogger);
                             },
