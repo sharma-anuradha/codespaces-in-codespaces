@@ -61,6 +61,7 @@ const isLightThemeColor = (
     return true;
 };
 
+// tslint:disable-next-line: max-func-body-length
 export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
     props: ISplashScreenProps
 ) => {
@@ -138,6 +139,15 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
                 <SplashScreenMessage
                     message={message || 'Codespace error.'}
                     messageIcon={'error'}
+                    isLightTheme={isLightTheme}
+                />
+            );
+        }
+        case EnvironmentStateInfo.Queued: {
+            return (
+                <SplashScreenMessage
+                    message='Getting things ready...'
+                    messageIcon={'progress'}
                     isLightTheme={isLightTheme}
                 />
             );

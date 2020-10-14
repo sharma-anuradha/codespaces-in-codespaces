@@ -33,6 +33,7 @@ export enum EnvironmentStateInfo {
     Failed = 'Failed',
     Starting = 'Starting',
     Provisioning = 'Provisioning',
+    Queued = "Queued"
 }
 
 export enum EnvironmentType {
