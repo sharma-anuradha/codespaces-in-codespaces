@@ -10,7 +10,7 @@ import {
 } from '../../constants';
 
 export const getFirstRunExtensions = (): string[] => {
-    const defaultExtensions = [...DEFAULT_EXTENSIONS, ...DEFAULT_NON_ESSENTIAL_EXTENSIONS];
+    const defaultExtensions = [...DEFAULT_EXTENSIONS];
 
     if (!isHostedOnGithub()) {
         return [...defaultExtensions];
