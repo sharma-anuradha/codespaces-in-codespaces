@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             if (type == ResourceType.ComputeVM)
             {
                 var separateNetworkAndComputeSubscriptions = await ConfigurationReader.ReadFeatureFlagAsync("separate-network-and-compute-subscriptions", logger.NewChildLogger(), true);
-                
+
                 var createOSDiskRecord = details is ResourcePoolComputeDetails computeDetails && computeDetails.OS == ComputeOS.Windows;
 
                 options = new CreateComputeContinuationInputOptions()
@@ -314,7 +314,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var consolidatedloggerProperties = await BuildLoggingProperties(blobResourceId, reason, logger, loggingProperties);
 
-            if (await IsJobContinuationHandlerEnabledAsync(logger))
+            if (await IsJobContinuationHandlerEnabledAsync(logger, false, nameof(StartArchiveContinuationJobHandler)))
             {
                 await JobQueueProducerFactory.GetOrCreate(StartArchiveContinuationJobHandler.DefaultQueueId).AddJobAsync(
                    new StartArchiveContinuationJobHandler.Payload()
@@ -525,9 +525,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             return consolidatedloggerProperties;
         }
 
-        private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger)
+        private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger, bool defaultEnabled = true, string handlerName = null)
         {
-            return ConfigurationReader.ReadFeatureFlagAsync("job-continuation-handler", logger, true);
+            var featureFlagName = "job-continuation-handler" + handlerName != null ? $"-{handlerName}" : string.Empty;
+            return ConfigurationReader.ReadFeatureFlagAsync(featureFlagName, logger, defaultEnabled);
         }
     }
 }
