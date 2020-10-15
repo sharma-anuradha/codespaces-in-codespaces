@@ -8,8 +8,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
@@ -208,9 +206,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     var originalState = cloudEnvironment.State;
                     var newState = originalState;
+                    var connectionSessionId = cloudEnvironment.Connection?.ConnectionSessionId;
 
                     childLogger
                         .FluentAddBaseValue("CloudEnvironmentOldState", originalState)
+                        .FluentAddBaseValue("ConnectionSessionId", connectionSessionId)
                         .FluentAddValue("CloudEnvironmentOldStateUpdated", cloudEnvironment.LastStateUpdated)
                         .FluentAddValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
                         .FluentAddValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason);
@@ -233,7 +233,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             {
                                 newState = CloudEnvironmentState.Failed;
 
-                                childLogger.LogException($"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes.", new TimeoutException());
+                                childLogger
+                                    .FluentAddValue(LoggingConstants.ErrorException, "TimeOutException")
+                                    .FluentAddValue(LoggingConstants.ErrorMessage, "TimeOutException")
+                                    .LogError($"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes.");
                             }
 
                             break;
@@ -244,8 +247,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                             if (checkWorkspaceStatus)
                             {
-                                var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                                var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
+                                var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(connectionSessionId, childLogger.NewChildLogger());
 
                                 childLogger
                                     .FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
