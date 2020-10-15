@@ -21,6 +21,16 @@ SCRIPT_PARAM_VM_PUBLIC_KEY_PATH='__REPLACE_VM_PUBLIC_KEY_PATH__'
 # wait for cloud-init to finish before proceeding.
 cloud-init status --wait
 
+# Install and configure auditd for monitoring of killed processes
+# (rules don't persistent on reboot)
+PROD_FRONTEND_DNS_SUBSTR='online.visualstudio.com'
+if [[ "$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" != *"$PROD_FRONTEND_DNS_SUBSTR"* ]]; then
+      echo "Install and configure auditd ..."
+      apt update && apt install -y auditd
+      auditctl -a exit,always -F arch=b64 -S kill -k audit_kill
+      auditctl -l
+fi
+
 echo "Verify docker ..."
 docker --version
 docker-compose --version
