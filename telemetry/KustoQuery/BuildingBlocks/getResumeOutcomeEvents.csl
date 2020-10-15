@@ -62,7 +62,7 @@ getResumeOutcomeEvents
         | join kind=leftouter (StartingToArchivedEvents) on $left.WorkspaceId == $right.EventAtStartingToArchived_WorkspaceId
         | join kind=leftouter (BugExcludeDupeStartingEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.PreviousCorrelationId
         | join kind=leftouter (AgentCollectedErrorDataOnJobEvents) on $left.EventAtStartingToShutdown_CorrelationId == $right.EventAtAgentCollectedError_CorrelationId
-        //| join kind=leftouter (MountFailureEvents) on $left.EventAtWorkspaceCreation_NewSessionId == $right.EventAtMountFailure_SessionId
+        | join kind=leftouter (MountFailureEvents) on $left.EventAtWorkspaceCreation_NewSessionId == $right.EventAtMountFailure_SessionId
         | extend SkuName = EventAtResumeSkuResolve_SkuName
         | extend CodespaceId = EventAtResumeSkuResolve_CloudEnvironmentId
         | extend TimeStamp = EventAtResumeRequestStart_Time

@@ -16,6 +16,7 @@ ComputeId: string))
         | where MountLogs != ""
         | where Service == "VsoAgent"
         | where level == "error"
+        | where SessionId != ""
         | extend EventAtMountFailure = 1
         | extend EventAtMountFailure_Time = ["time"]
         | extend EventAtMountFailure_CorrelationId = CorrelationId
