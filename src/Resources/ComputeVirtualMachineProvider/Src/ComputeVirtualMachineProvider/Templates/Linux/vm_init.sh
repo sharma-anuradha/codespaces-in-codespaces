@@ -82,6 +82,10 @@ echo "VMTOKEN=$SCRIPT_PARAM_VMTOKEN" >> $codespacesAgentIni
 echo "RESOURCEID=$SCRIPT_PARAM_RESOURCEID" >> $codespacesAgentIni
 echo "SERVICEHOSTNAME=$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" >> $codespacesAgentIni
 
+echo 'Disabling Transparent Huge Pages'
+echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled
+echo 'never' > /sys/kernel/mm/transparent_hugepage/defrag
+
 echo "Start codespaces agent"
 # Switch to daemon process until service permission issue is fixed.
 bash -c 'nohup ./codespaces vmagent &>/dev/null & jobs -p %1'
