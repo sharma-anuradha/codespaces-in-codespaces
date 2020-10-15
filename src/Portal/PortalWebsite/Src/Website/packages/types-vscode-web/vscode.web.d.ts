@@ -4,6 +4,8 @@ declare module 'vscode-web' {
             readonly reportIssueUrl: string;
             readonly requestFeatureUrl: string;
         };
+        
+        readonly telemetryOptOutUrl?: string;
     }
 
     interface SessionData {

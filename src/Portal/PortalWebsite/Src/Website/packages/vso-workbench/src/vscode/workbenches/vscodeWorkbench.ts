@@ -195,6 +195,9 @@ export class VSCodeWorkbench {
             connectionToken: vscodeConfig.commit,
             productQualityChangeHandler: ProductQualityChangeHandler,
             ...providers,
+            productConfiguration: {
+                telemetryOptOutUrl: undefined,
+            },
         };
 
         trace(`Creating workbench on #${domElementId}, with config: `, workbenchConfig);
