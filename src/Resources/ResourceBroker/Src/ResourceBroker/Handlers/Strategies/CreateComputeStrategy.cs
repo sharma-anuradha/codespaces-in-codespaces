@@ -105,6 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.St
                 CustomComponents = operationInput.CustomComponents,
                 QueueConnectionInfo = queueConnectionInfo,
                 Options = options,
+                DiskSize = computeDetails.DiskSize,
             };
 
             return result;

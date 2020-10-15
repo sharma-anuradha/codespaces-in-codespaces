@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                 SkuName = computeDetails.SkuName,
                 VmAgentImageName = computeDetails.VmAgentImageName,
                 VmAgentImageFamilyName = computeDetails.VmAgentImageFamilyName,
+                DiskSize = computeDetails.DiskSize,
             };
 
             // Copy over pool reference detail.

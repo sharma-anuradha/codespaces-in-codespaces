@@ -212,6 +212,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     tierSettings.StorageSkuName,
                     storageImageFamily,
                     tierSettings.StorageSizeInGB,
+                    item.Value?.SkuConfiguration?.DiskSizeInGB,
                     cloudEnvironmentSettings.StorageVsoUnitsPerHour,
                     cloudEnvironmentSettings.ComputeVsoUnitsPerHour,
                     enabled ? skuConfiguration.ComputePoolSize.GetValueOrDefault() : 0,

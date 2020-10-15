@@ -57,5 +57,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public bool Enabled { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets desired disk size for this SKU.
+        /// </summary>
+        [JsonProperty(Required = Required.AllowNull)]
+        public int? DiskSizeInGB { get; set; }
     }
 }

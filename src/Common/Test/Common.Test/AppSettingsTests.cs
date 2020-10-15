@@ -86,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         !sku.SkuName.Equals("premiumWindowsStaging") &&
                         !sku.SkuName.Equals("premiumWindowsInternalStaging") &&
                         !sku.SkuName.Equals("premiumWindowsServerInternalStaging") &&
+                        !sku.SkuName.Equals("ultimatePremiumWindows") &&
                         !sku.SkuName.Equals("internal64Server") &&
                         !sku.SkuName.Equals("internal32Server") &&
                         !sku.SkuName.Equals("internalDailyWindows"))

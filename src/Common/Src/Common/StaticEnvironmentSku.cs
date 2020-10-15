@@ -59,6 +59,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public int StorageSizeInGB { get; } = 0;
 
         /// <inheritdoc/>
+        public int? DiskSizeInGB { get; } = null;
+
+        /// <inheritdoc/>
         public decimal StorageVsoUnitsPerHour { get; } = 0;
 
         /// <inheritdoc/>

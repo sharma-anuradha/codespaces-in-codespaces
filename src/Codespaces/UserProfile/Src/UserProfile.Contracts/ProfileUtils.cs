@@ -24,7 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts
                 if (sku.SkuName.Equals("internalWindows") ||
                     sku.SkuName.Equals("premiumWindowsStaging") ||
                     sku.SkuName.Equals("premiumWindowsInternalStaging") ||
-                    sku.SkuName.Equals("premiumWindowsServerInternalStaging"))
+                    sku.SkuName.Equals("premiumWindowsServerInternalStaging") ||
+                    sku.SkuName.Equals("ultimatePremiumWindows"))
                 {
                     return profile != null && profile.IsWindowsSkuInternalUser();
                 }

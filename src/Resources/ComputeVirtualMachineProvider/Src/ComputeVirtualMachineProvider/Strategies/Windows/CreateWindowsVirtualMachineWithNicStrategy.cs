@@ -66,6 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                             DiskCreateOptionTypes.FromImage,
                             OperatingSystemTypes.Windows,
                             name: VirtualMachineResourceNames.GetOsDiskName(virtualMachineName),
+                            diskSizeGB: input.DiskSize,
                             managedDisk: new ManagedDiskParametersInner(storageAccountType: StorageAccountTypes.PremiumLRS)),
             };
 

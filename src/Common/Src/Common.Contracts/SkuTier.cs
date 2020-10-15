@@ -52,5 +52,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// A premium tier SKU, 8 vCPU, FSv2 compute, 32GB Storage.
         /// </summary>
         Premium32gb = 7,
+
+        /// <summary>
+        /// A premium tier SKU, 8 vCPU, FSv2 compute, 1TB storage
+        /// </summary>
+        UltimatePremium = 8,
     }
 }

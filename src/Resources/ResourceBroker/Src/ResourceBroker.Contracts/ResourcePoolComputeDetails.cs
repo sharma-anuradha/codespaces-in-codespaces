@@ -29,6 +29,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         public int Cores { get; set; }
 
         /// <summary>
+        /// Gets or sets the disk size.
+        /// </summary>
+        public int? DiskSize { get; set; }
+
+        /// <summary>
         /// Gets or sets the target Compute Agent Image.
         /// </summary>
         public string VmAgentImageName { get; set; }
@@ -54,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
                 [ResourcePoolDimensionsKeys.Location] = Location.ToString(),
                 [ResourcePoolDimensionsKeys.ImageFamilyName] = ImageFamilyName,
                 [ResourcePoolDimensionsKeys.ImageName] = ImageName,
+                [ResourcePoolDimensionsKeys.SizeInGB] = DiskSize?.ToString(),
             };
         }
 

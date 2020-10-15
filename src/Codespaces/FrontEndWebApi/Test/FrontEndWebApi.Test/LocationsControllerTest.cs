@@ -81,6 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         null,
                         currentImageInfoProvider.Object),
                     64,
+                    null,
                     storageUnits,
                     computeUnits,
                     5,

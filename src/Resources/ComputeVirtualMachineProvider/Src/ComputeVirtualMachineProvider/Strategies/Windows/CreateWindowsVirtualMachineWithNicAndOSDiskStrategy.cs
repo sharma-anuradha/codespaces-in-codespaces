@@ -88,6 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                 OsDisk = new OSDisk(
                      DiskCreateOptionTypes.Attach,
                      OperatingSystemTypes.Windows,
+                     diskSizeGB: input.DiskSize,
                      managedDisk: new ManagedDiskParametersInner(
                          storageAccountType: StorageAccountTypes.PremiumLRS,
                          id: disk.Id)),

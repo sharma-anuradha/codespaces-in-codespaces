@@ -32,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="storageSkuName">The azure storage sku name.</param>
         /// <param name="storageImageFamily">The storage image family.</param>
         /// <param name="storageSizeInGB">The azure storage size in GB.</param>
+        /// <param name="diskSizeInGB">The disk size in GB.</param>
         /// <param name="storageVsoUnitsPerHour">The cloud environment units for this sku when active.</param>
         /// <param name="computeVsoUnitsPerHour">The cloud environment units for this sku when inactive.</param>
         /// <param name="computePoolLevel">The size of the compute pool that should be maintained.</param>
@@ -55,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             string storageSkuName,
             IBuildArtifactImageFamily storageImageFamily,
             int storageSizeInGB,
+            int? diskSizeInGB,
             decimal storageVsoUnitsPerHour,
             decimal computeVsoUnitsPerHour,
             int computePoolLevel,
@@ -76,6 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNullOrEmpty(storageSkuName, nameof(storageSkuName));
             Requires.NotNull(storageImageFamily, nameof(storageImageFamily));
             Requires.Argument(storageSizeInGB > 0, nameof(storageSizeInGB), "The storage size must be greater than zero.");
+            Requires.Argument(diskSizeInGB == null || diskSizeInGB > 0, nameof(diskSizeInGB), "The disk size must be either null or greater than zero");
             Requires.Argument(storageVsoUnitsPerHour >= 0m, nameof(storageVsoUnitsPerHour), "The environment units must be greater than or equal to 0.");
             Requires.Argument(computeVsoUnitsPerHour >= 0m, nameof(computeVsoUnitsPerHour), "The environment units must be greater than or equal to 0.");
             Requires.Argument(!enabled || computePoolLevel > 0, nameof(computePoolLevel), "The compute pool level must be greater than zero.");
@@ -99,6 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             StorageSkuName = storageSkuName;
             StorageImage = storageImageFamily;
             StorageSizeInGB = storageSizeInGB;
+            DiskSizeInGB = diskSizeInGB;
             StorageVsoUnitsPerHour = storageVsoUnitsPerHour;
             ComputeVsoUnitsPerHour = computeVsoUnitsPerHour;
             ComputePoolLevel = computePoolLevel;
@@ -156,6 +160,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public int StorageSizeInGB { get; }
+
+        /// <inheritdoc/>
+        public int? DiskSizeInGB { get; }
 
         /// <inheritdoc/>
         public decimal StorageVsoUnitsPerHour { get; }

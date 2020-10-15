@@ -52,6 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public string AzureVirtualMachineImage { get; set; }
 
         /// <summary>
+        /// Gets or sets the disk size.
+        /// </summary>
+        public int? DiskSize { get; set; }
+
+        /// <summary>
         /// Gets or sets resource tags that should be added to the resource.
         /// </summary>
         public IDictionary<string, string> ResourceTags { get; set; }

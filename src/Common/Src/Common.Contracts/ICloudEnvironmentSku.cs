@@ -93,6 +93,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         int StorageSizeInGB { get; }
 
         /// <summary>
+        /// Gets the requested disk size in GB.
+        /// </summary>
+        int? DiskSizeInGB { get; }
+
+        /// <summary>
         /// Gets the number of VSO units per hour for storage.
         /// </summary>
         decimal StorageVsoUnitsPerHour { get; }

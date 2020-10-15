@@ -281,6 +281,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                             ImageName = await x.ComputeImage.GetCurrentImageUrlAsync(y, logger.NewChildLogger()),
                             VmAgentImageName = await x.VmAgentImage.GetCurrentImageNameAsync(logger.NewChildLogger()),
                             VmAgentImageFamilyName = x.VmAgentImage.ImageFamilyName,
+                            DiskSize = x.DiskSizeInGB,
                             Location = y,
                             SkuName = x.ComputeSkuName,
                             SkuFamily = x.ComputeSkuFamily,

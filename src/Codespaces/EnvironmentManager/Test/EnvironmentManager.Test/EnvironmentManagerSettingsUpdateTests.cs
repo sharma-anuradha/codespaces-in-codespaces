@@ -722,6 +722,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     null,
                     currentImageInfoProvider.Object),
                 64,
+                null,
                 storageUnits,
                 computeUnits,
                 5,
