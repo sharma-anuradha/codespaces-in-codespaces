@@ -187,8 +187,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 {
                     var azure = (input.CustomComponents != default &&
                     input.CustomComponents.Any(c => c.ComponentType == ResourceType.NetworkInterface)) ?
-                        await ClientFPAFactory.GetAzureClientAsync(input.VirtualMachineResourceInfo.SubscriptionId) :
-                        await ClientFactory.GetAzureClientAsync(input.VirtualMachineResourceInfo.SubscriptionId);
+                        await ClientFPAFactory.GetAzureClientAsync(input.VirtualMachineResourceInfo.SubscriptionId, childLogger) :
+                        await ClientFactory.GetAzureClientAsync(input.VirtualMachineResourceInfo.SubscriptionId, childLogger);
 
                     var virtualMachine = await azure.VirtualMachines.GetByResourceGroupAsync(input.VirtualMachineResourceInfo.ResourceGroup, input.VirtualMachineResourceInfo.Name);
                     var mergedTags = GetMergedTags(virtualMachine.Tags, input.AdditionalComputeResourceTags);

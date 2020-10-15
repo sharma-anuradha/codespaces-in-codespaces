@@ -193,7 +193,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     {
                         List<double> taskTimes = new List<double>();
                         var displayName = job.DisplayName;
-                        logger.FluentAddValue("ActiveTasks", taskCounts.Active)
+
+                        childLogger.FluentAddValue("ActiveTasks", taskCounts.Active)
                                 .FluentAddValue("RunningTasks", taskCounts.Running)
                                 .FluentAddValue("CompletedTasks", taskCounts.Completed)
                                 .FluentAddValue("SucceededTasks", taskCounts.Succeeded)
@@ -202,33 +203,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                                 .FluentAddValue("JobId", job.Id);
                         if (taskCounts.Completed > 0)
                         {
-                            logger.FluentAddValue("TotalSuccessRate", taskCounts.Succeeded / (double)taskCounts.Completed);
+                            childLogger.FluentAddValue("TotalSuccessRate", taskCounts.Succeeded / (double)taskCounts.Completed);
                         }
 
                         var successRate = await GetTaskTimes(job.Id, taskQuery, taskTimes, batchClient);
                         if (successRate.HasValue)
                         {
-                            logger.FluentAddValue("CurrentSuccessRate", successRate);
+                            childLogger.FluentAddValue("CurrentSuccessRate", successRate);
                         }
 
                         if (displayName.Equals(ArchiveTaskDisplayName))
                         {
-                            logger.FluentAddValue("TaskType", "Archive");
+                            childLogger.FluentAddValue("TaskType", "Archive");
                         }
                         else if (displayName.Equals(PrepareTaskDisplayName))
                         {
-                            logger.FluentAddValue("TaskType", "Prepare");
+                            childLogger.FluentAddValue("TaskType", "Prepare");
                         }
 
                         if (taskTimes.Count > 0)
                         {
-                            logger.FluentAddValue("AverageExecutionTimeSec", taskTimes.Average())
+                            childLogger.FluentAddValue("AverageExecutionTimeSec", taskTimes.Average())
                                   .FluentAddValue("MinExecutionTimeSec", taskTimes.Min())
                                   .FluentAddValue("MaxExecutionTimeSec", taskTimes.Max())
                                   .FluentAddValue("TaskCount", taskTimes.Count());
                         }
 
-                        logger.LogInfo($"{LogBaseName}_job_status");
+                        childLogger.LogInfo($"{LogBaseName}_job_status");
                     },
                     (e, childLogger) => Task.FromResult(!Disposed),
                     swallowException: true);
@@ -241,7 +242,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// <param name="job">Job to check for tasks.</param>
         /// <param name="batchClient">Batch client</param>
         /// <param name="failedTaskQuery"> Query to get recent failed tasks</param>
-        public async void LogFailedTasks(IDiagnosticsLogger logger, CloudJob job, BatchClient batchClient, ODATADetailLevel failedTaskQuery)
+        public async Task LogFailedTasks(IDiagnosticsLogger logger, CloudJob job, BatchClient batchClient, ODATADetailLevel failedTaskQuery)
         {
             var tasks = batchClient.JobOperations.ListTasks(job.Id, failedTaskQuery);
             string taskType = string.Empty;
@@ -254,51 +255,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 taskType = "Prepare";
             }
 
-            await tasks.ForEachAsync(delegate(CloudTask task)
+            if (tasks != null)
             {
-                if (task.ExecutionInformation.Result != Microsoft.Azure.Batch.Common.TaskExecutionResult.Success)
+                await tasks.ForEachAsync(delegate(CloudTask task)
                 {
-                    logger.OperationScopeAsync(
-                        $"{LogBaseName}_task_failure",
-                        (childlogger) =>
+                    if (task.ExecutionInformation != null)
+                    {
+                        if (task.ExecutionInformation.Result != TaskExecutionResult.Success)
                         {
-                            var childLogger = logger.NewChildLogger();
-                            childLogger.FluentAddValue("ExitCode", task.ExecutionInformation.ExitCode)
-                            .FluentAddValue("EndTime", task.ExecutionInformation.EndTime)
-                            .FluentAddValue("StartTime", task.ExecutionInformation.StartTime)
-                            .FluentAddValue("RetryCount", task.ExecutionInformation.RetryCount)
-                            .FluentAddValue("ReqeueCount", task.ExecutionInformation.RequeueCount)
-                            .FluentAddValue("TaskType", taskType)
-                            .FluentAddValue("TaskId", task.Id)
-                            .FluentAddValue("ETag", task.ETag);
-                            if (task.ExecutionInformation.FailureInformation != null)
-                            {
-                                var details = task.ExecutionInformation.FailureInformation.Details;
-                                var detailsString = string.Join(System.Environment.NewLine, details.Select((detail) => $"{detail.Name} : {detail.Value}"));
+                            logger.OperationScopeAsync(
+                                $"{LogBaseName}_task_failure",
+                                (childLogger) =>
+                                {
+                                    childLogger.FluentAddValue("ExitCode", task.ExecutionInformation.ExitCode)
+                                    .FluentAddValue("EndTime", task.ExecutionInformation.EndTime)
+                                    .FluentAddValue("StartTime", task.ExecutionInformation.StartTime)
+                                    .FluentAddValue("RetryCount", task.ExecutionInformation.RetryCount)
+                                    .FluentAddValue("ReqeueCount", task.ExecutionInformation.RequeueCount)
+                                    .FluentAddValue("TaskType", taskType)
+                                    .FluentAddValue("TaskId", task.Id)
+                                    .FluentAddValue("ETag", task.ETag);
+                                    if (task.ExecutionInformation.FailureInformation != null)
+                                    {
+                                        var details = task.ExecutionInformation.FailureInformation.Details;
+                                        var detailsString = string.Join(System.Environment.NewLine, details.Select((detail) => $"{detail.Name} : {detail.Value}"));
 
-                                childLogger.FluentAddValue("FailureCategory", task.ExecutionInformation.FailureInformation.Category)
-                                .FluentAddValue("FailureCode", task.ExecutionInformation.FailureInformation.Code)
-                                .FluentAddValue("FailureMessage", task.ExecutionInformation.FailureInformation.Message)
-                                .FluentAddValue("FailureDetails", detailsString);
-                            }
+                                        childLogger.FluentAddValue("FailureCategory", task.ExecutionInformation.FailureInformation.Category)
+                                        .FluentAddValue("FailureCode", task.ExecutionInformation.FailureInformation.Code)
+                                        .FluentAddValue("FailureMessage", task.ExecutionInformation.FailureInformation.Message)
+                                        .FluentAddValue("FailureDetails", detailsString);
+                                    }
 
-                            if (task.ComputeNodeInformation != null)
-                            {
-                                childLogger.FluentAddValue("ComputeNodeId", task.ComputeNodeInformation.ComputeNodeId)
-                                .FluentAddValue("PoolId", task.ComputeNodeInformation.PoolId)
-                                .FluentAddValue("AffinityId", task.ComputeNodeInformation.AffinityId)
-                                .FluentAddValue("TaskRootDirectory", task.ComputeNodeInformation.TaskRootDirectory)
-                                .FluentAddValue("ComputeNodeUrl", task.ComputeNodeInformation.ComputeNodeUrl)
-                                .FluentAddValue("TaskRootDirectoryUrl", task.ComputeNodeInformation.TaskRootDirectoryUrl);
-                            }
+                                    if (task.ComputeNodeInformation != null)
+                                    {
+                                        childLogger.FluentAddValue("ComputeNodeId", task.ComputeNodeInformation.ComputeNodeId)
+                                        .FluentAddValue("PoolId", task.ComputeNodeInformation.PoolId)
+                                        .FluentAddValue("AffinityId", task.ComputeNodeInformation.AffinityId)
+                                        .FluentAddValue("TaskRootDirectory", task.ComputeNodeInformation.TaskRootDirectory)
+                                        .FluentAddValue("ComputeNodeUrl", task.ComputeNodeInformation.ComputeNodeUrl)
+                                        .FluentAddValue("TaskRootDirectoryUrl", task.ComputeNodeInformation.TaskRootDirectoryUrl);
+                                    }
 
-                            childLogger.LogInfo($"{LogBaseName}_task_failure");
-                            return Task.FromResult(!Disposed);
-                        },
-                        (e, childLogger) => Task.FromResult(!Disposed),
-                        swallowException: true);
-                }
-            });
+                                    childLogger.LogInfo($"{LogBaseName}_task_failure");
+                                    return Task.FromResult(!Disposed);
+                                },
+                                (e, childLogger) => Task.FromResult(!Disposed),
+                                swallowException: true);
+                        }
+                    }
+                });
+            }
         }
 
         /// <summary>
@@ -336,7 +342,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     var displayName = job.DisplayName;
                     TaskCounts taskCounts = await batchClient.JobOperations.GetJobTaskCountsAsync(job.Id);
                     LogJobStats(logger.NewChildLogger(), job, batchClient, taskOdataQuery, taskCounts);
-                    LogFailedTasks(logger, job, batchClient, failedTaskQuery);
+                    _ = LogFailedTasks(logger, job, batchClient, failedTaskQuery);
                     activeTasks += taskCounts.Active;
                     runningTasks += taskCounts.Running;
                     completedTasks += taskCounts.Completed;
