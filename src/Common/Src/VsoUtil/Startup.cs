@@ -12,8 +12,10 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
@@ -104,6 +106,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                  options.UseMultipleWriteLocations = true;
                  options.PreferredLocation = CurrentAzureLocation.ToString();
              });
+
+            // Add the regional Document client provider which uses the default DocumentDbClientOptions and points to regional db.
+            services.AddResourcesRegionalDocumentDbClientProvider();
+
+            // Setup configuration
+            services.AddVsoDocumentDbCollection<SystemConfigurationRecord, IRegionalSystemConfigurationRepository, RegionalSystemConfigurationRepository>(
+                RegionalSystemConfigurationRepository.ConfigureOptions);
+
+            services.AddVsoDocumentDbCollection<SystemConfigurationRecord, IGlobalSystemConfigurationRepository, GlobalSystemConfigurationRepository>(
+                GlobalSystemConfigurationRepository.ConfigureOptions);
 
             services.AddVsoDocumentDbCollection<ResourcePoolSettingsRecord, IResourcePoolSettingsRepository, CosmosDbResourcePoolSettingsRepository>(
                 CosmosDbResourcePoolSettingsRepository.ConfigureOptions);

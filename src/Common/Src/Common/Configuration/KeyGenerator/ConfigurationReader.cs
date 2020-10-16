@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
 
             foreach (var scope in scopes)
             {
-                var key = GetCompleteKey(scope, configurationType, componentName, configurationName);
+                var key = ConfigurationHelpers.GetCompleteKey(scope, configurationType, componentName, configurationName);
                 var record = await CachedSystemConfigurationRepository.GetAsync(key, logger.NewChildLogger());
 
                 if (!string.IsNullOrEmpty(record?.Value))
@@ -79,15 +79,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
             // Return default value if we couldn't find anything
             logger.FluentAddValue("DefaultUsed", true);
             return defaultValue;
-        }
-
-        private string GetCompleteKey(string scope, ConfigurationType configurationType, string componentName, string configurationName)
-        {
-            string configType = configurationType.ToString();
-            string keyName = $"{componentName}-{configurationName}";
-
-            // return the lower case version
-            return $"{configType}:{scope}:{keyName}".ToLower();
         }
 
         private T ConvertType<T>(SystemConfigurationRecord record)

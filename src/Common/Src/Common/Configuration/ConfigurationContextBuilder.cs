@@ -5,7 +5,7 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration
 {
     /// <summary>
-    /// Configuration helpers.
+    /// Configuration context builder helper.
     /// </summary>
     public static class ConfigurationContextBuilder
     {

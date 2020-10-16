@@ -28,11 +28,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
             Assert.Equal(2, scopes.Count());
             // The first one should be most specific i.e. highest priority key. In default context, the regions scope key should be first then
             Assert.Equal("vsclk-usw2", scopes.First());
-            Assert.Equal("feature:vsclk-usw2:vnet-injection-enabled", GetCompleteKey(scopes.First(), ConfigurationType.Feature, "vnet-injection", ConfigurationConstants.EnabledFeatureName));
+            Assert.Equal("feature:vsclk-usw2:vnet-injection-enabled", ConfigurationHelpers.GetCompleteKey(scopes.First(), ConfigurationType.Feature, "vnet-injection", ConfigurationConstants.EnabledFeatureName));
 
             // The last or 2nd should be the service scoped key
             Assert.Equal("vsclk", scopes.Last());
-            Assert.Equal("feature:vsclk:vnet-injection-enabled", GetCompleteKey(scopes.Last(), ConfigurationType.Feature, "vnet-injection", ConfigurationConstants.EnabledFeatureName));
+            Assert.Equal("feature:vsclk:vnet-injection-enabled", ConfigurationHelpers.GetCompleteKey(scopes.Last(), ConfigurationType.Feature, "vnet-injection", ConfigurationConstants.EnabledFeatureName));
         }
 
         [Fact]
@@ -51,19 +51,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
 
             // The first one should be most specific i.e. highest priority key. In this context, the subscription scoped key under a region should be first.
             Assert.Equal("vsclk-usw2-subscription-1234-5678-909", subScopes.ElementAt(0));
-            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", GetCompleteKey(subScopes.ElementAt(0), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(subScopes.ElementAt(0), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             // The 2nd should be the subscription scoped key at service level.
             Assert.Equal("vsclk-subscription-1234-5678-909", subScopes.ElementAt(1));
-            Assert.Equal("quota:vsclk-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", GetCompleteKey(subScopes.ElementAt(1), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(subScopes.ElementAt(1), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             // The 3rd should be the the region scoped key.
             Assert.Equal("vsclk-usw2", subScopes.ElementAt(2));
-            Assert.Equal("quota:vsclk-usw2:environmentmanager-max-plans-per-sub", GetCompleteKey(subScopes.ElementAt(2), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(subScopes.ElementAt(2), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             // The last should be service scoped key. This is also the one with least priority
             Assert.Equal("vsclk", subScopes.ElementAt(3));
-            Assert.Equal("quota:vsclk:environmentmanager-max-plans-per-sub", GetCompleteKey(subScopes.ElementAt(3), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(subScopes.ElementAt(3), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
         }
 
         [Fact]
@@ -87,31 +87,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
 
             // 2 user scopes
             Assert.Equal("vsclk-usw2-user-uuuu", planScopes.ElementAt(0));
-            Assert.Equal("quota:vsclk-usw2-user-uuuu:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(0), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2-user-uuuu:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(0), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             Assert.Equal("vsclk-user-uuuu", planScopes.ElementAt(1));
-            Assert.Equal("quota:vsclk-user-uuuu:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(1), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-user-uuuu:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(1), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             // next 2 should be plan scope
             Assert.Equal("vsclk-usw2-subscription-1234-5678-909-plan-xyz", planScopes.ElementAt(2));
-            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909-plan-xyz:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(2), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909-plan-xyz:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(2), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             Assert.Equal("vsclk-subscription-1234-5678-909-plan-xyz", planScopes.ElementAt(3));
-            Assert.Equal("quota:vsclk-subscription-1234-5678-909-plan-xyz:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(3), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-subscription-1234-5678-909-plan-xyz:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(3), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             // next 2 are subscription scopes
             Assert.Equal("vsclk-usw2-subscription-1234-5678-909", planScopes.ElementAt(4));
-            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(4), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(4), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             Assert.Equal("vsclk-subscription-1234-5678-909", planScopes.ElementAt(5));
-            Assert.Equal("quota:vsclk-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(5), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(5), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             // last 2 are region and service scope keys respectively
             Assert.Equal("vsclk-usw2", planScopes.ElementAt(6));
-            Assert.Equal("quota:vsclk-usw2:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(6), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(6), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             Assert.Equal("vsclk", planScopes.ElementAt(7));
-            Assert.Equal("quota:vsclk:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(7), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(7), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
         }
 
         // since a plan is associated with a subscription, the subscription scope applies as well. We cannot switch it off.
@@ -132,16 +132,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
             // 2 from plan and 2 from subscription scope. Plan scopes should have higher priority.
             Assert.Equal(4, planScopes.Count());
             Assert.Equal("vsclk-usw2-subscription-1234-5678-909-plan-xyz", planScopes.ElementAt(0));
-            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909-plan-xyz:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(0), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909-plan-xyz:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(0), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             Assert.Equal("vsclk-subscription-1234-5678-909-plan-xyz", planScopes.ElementAt(1));
-            Assert.Equal("quota:vsclk-subscription-1234-5678-909-plan-xyz:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(1), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-subscription-1234-5678-909-plan-xyz:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(1), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             Assert.Equal("vsclk-usw2-subscription-1234-5678-909", planScopes.ElementAt(2));
-            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(2), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(2), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             Assert.Equal("vsclk-subscription-1234-5678-909", planScopes.ElementAt(3));
-            Assert.Equal("quota:vsclk-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", GetCompleteKey(planScopes.ElementAt(3), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(planScopes.ElementAt(3), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
         }
 
         [Fact]
@@ -155,7 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
 
             Assert.Single(serviceScope);
             Assert.Equal("vsclk", serviceScope.First());
-            Assert.Equal("feature:vsclk:vnet-injection-enabled", GetCompleteKey(serviceScope.First(), ConfigurationType.Feature, "vnet-injection", ConfigurationConstants.EnabledFeatureName));
+            Assert.Equal("feature:vsclk:vnet-injection-enabled", ConfigurationHelpers.GetCompleteKey(serviceScope.First(), ConfigurationType.Feature, "vnet-injection", ConfigurationConstants.EnabledFeatureName));
         }
 
         [Fact]
@@ -169,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
 
             Assert.Single(regionScope);
             Assert.Equal("vsclk-usw2", regionScope.First());
-            Assert.Equal("setting:vsclk-usw2:watchpooljob-enabled", GetCompleteKey(regionScope.First(), ConfigurationType.Setting, "watchpooljob", ConfigurationConstants.EnabledSettingName));
+            Assert.Equal("setting:vsclk-usw2:watchpooljob-enabled", ConfigurationHelpers.GetCompleteKey(regionScope.First(), ConfigurationType.Setting, "watchpooljob", ConfigurationConstants.EnabledSettingName));
         }
 
         [Fact]
@@ -187,10 +187,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
 
             Assert.Equal(2, subScopes.Count());
             Assert.Equal("vsclk-usw2-subscription-1234-5678-909", subScopes.First());
-            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", GetCompleteKey(subScopes.First(), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-usw2-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(subScopes.First(), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
 
             Assert.Equal("vsclk-subscription-1234-5678-909", subScopes.Last());
-            Assert.Equal("quota:vsclk-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", GetCompleteKey(subScopes.Last(), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
+            Assert.Equal("quota:vsclk-subscription-1234-5678-909:environmentmanager-max-plans-per-sub", ConfigurationHelpers.GetCompleteKey(subScopes.Last(), ConfigurationType.Quota, ConfigurationConstants.EnvironmentManagerComponent, "max-plans-per-sub"));
         }
 
         [Fact]
@@ -210,10 +210,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
             
             Assert.Equal(2, userScopes.Count());
             Assert.Equal("vsclk-usw2-user-1234-5678-909", userScopes.First());
-            Assert.Equal("quota:vsclk-usw2-user-1234-5678-909:planmanager-max-plans-per-user", GetCompleteKey(userScopes.First(), ConfigurationType.Quota, ConfigurationConstants.PlanManagerComponent, "max-plans-per-user"));
+            Assert.Equal("quota:vsclk-usw2-user-1234-5678-909:planmanager-max-plans-per-user", ConfigurationHelpers.GetCompleteKey(userScopes.First(), ConfigurationType.Quota, ConfigurationConstants.PlanManagerComponent, "max-plans-per-user"));
 
             Assert.Equal("vsclk-user-1234-5678-909", userScopes.Last());
-            Assert.Equal("quota:vsclk-user-1234-5678-909:planmanager-max-plans-per-user", GetCompleteKey(userScopes.Last(), ConfigurationType.Quota, ConfigurationConstants.PlanManagerComponent, "max-plans-per-user"));
+            Assert.Equal("quota:vsclk-user-1234-5678-909:planmanager-max-plans-per-user", ConfigurationHelpers.GetCompleteKey(userScopes.Last(), ConfigurationType.Quota, ConfigurationConstants.PlanManagerComponent, "max-plans-per-user"));
         }
 
         private ConfigurationScopeGenerator CreateConfigurationScopeGenerator()
@@ -265,14 +265,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test.Configuration.
             var resourceNameBuilder = new ResourceNameBuilder(devStampSettings);
             var controlPlaneInfo = new ControlPlaneInfo(Options.Create(controlPlaneOptions), currentLocationProvider.Object, resourceNameBuilder);
             return (controlPlaneOptions, controlPlaneInfo);
-        }
-
-        private string GetCompleteKey(string scope, ConfigurationType configurationType, string componentName, string configurationName)
-        {
-            string configType = configurationType.ToString();
-            string keyName = $"{componentName}-{configurationName}";
-            return $"{configType}:{scope}:{keyName}".ToLower();
-
         }
     }
 }
