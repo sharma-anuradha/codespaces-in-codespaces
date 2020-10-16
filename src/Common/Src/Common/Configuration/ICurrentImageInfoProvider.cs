@@ -1,4 +1,4 @@
-﻿// <copyright file="ICurrentImageInfoProvider.cs" company="Microsoft">
+// <copyright file="ICurrentImageInfoProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
