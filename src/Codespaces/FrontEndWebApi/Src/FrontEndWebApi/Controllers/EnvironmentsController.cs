@@ -539,6 +539,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 repository,
                 skuName,
                 null,
+                forkIfNeeded: true, // note: this is currently default
                 logger);
 
             if (result != null)

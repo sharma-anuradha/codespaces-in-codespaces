@@ -117,6 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
             string repoFullName,
             string sku,
             string reference,
+            bool forkIfNeeded,
             IDiagnosticsLogger logger)
         {
             // currentUsername string, repoName string, ref string, sku string
@@ -144,6 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
                         Location = location.ToString(),
                         Sku = sku,
                         Reference = reference ?? defaultBranch,
+                        ForkIfNeeded = forkIfNeeded,
                     };
 
                     // we can let GitHub know we're running in our "special" environments

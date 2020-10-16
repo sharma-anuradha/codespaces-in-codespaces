@@ -28,6 +28,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         [JsonProperty(Required = Required.AllowNull, PropertyName = "vscs_target", NullValueHandling = NullValueHandling.Ignore)]
         public Targets? Target { get; set; } = null;
 
+        [JsonProperty(Required = Required.Always, PropertyName = "fork_if_needed")]
+        public bool ForkIfNeeded { get; set; } = true;
+
         [JsonConverter(typeof(StringEnumConverter))]
         public enum Targets
         {
