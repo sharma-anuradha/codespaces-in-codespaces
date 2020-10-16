@@ -34,6 +34,9 @@ which unzip
 echo "Installing chrony ..."
 apt -yq install chrony
 
+echo "Installing auditd ..."
+apt -yq install auditd
+
 echo "Verify chrony ..."
 which chronyd
 
