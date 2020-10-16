@@ -55,6 +55,7 @@
     <MoqVersion>4.9.0</MoqVersion>
     <NerdBankGitVersioningVersion>3.1.91</NerdBankGitVersioningVersion>
     <NewtonsoftJsonVersion>12.0.3</NewtonsoftJsonVersion>
+    <NewtonsoftJsonSchemaVersion>2.0.8</NewtonsoftJsonSchemaVersion>
     <ReportGeneratorVersion>4.0.15</ReportGeneratorVersion>
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
     <FxCopAnalyzersPackageVersion>3.3.0</FxCopAnalyzersPackageVersion>

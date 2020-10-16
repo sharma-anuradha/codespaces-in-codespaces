@@ -1,14 +1,18 @@
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Moq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Xunit;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 {
@@ -183,7 +187,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
 
         [Fact]
-        public void Serialize_and_compare_PartnerSubmission()
+        public void Serialize_and_validate_PartnerSubmission()
         {
             // Note: This test governs the partner interaction between our billing system and github system.
             // ANY changes to this test must be be correlated with GitHub otherwise billing systems will break down as this test confirms the schema we are sending to GitHub.
@@ -196,7 +200,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 Subscription = GitHubSubscription,
             };
 
-
             var billEvent = new BillingEvent
             {
                 Id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
@@ -206,15 +209,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 Type = BillingEventTypes.BillingSummary
             };
 
-            var queuMessage = new PartnerQueueSubmission(billEvent);
+            var queueMessage = new PartnerQueueSubmission(billEvent);
 
-            var jsonBlob = queuMessage.ToJson();
-            string expectedJSon = @$"{{""time"":""{TestTimeNow.Subtract(TimeSpan.FromHours(6)).ToString("yyyy-MM-ddTHH:mm:ssZ")}"",""id"":""aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"",""plan"":{{""subscription"":""{GitHubSubscription}"",""resourceGroup"":""RG"",""name"":""PlanName"",""location"":""WestUs2""}},""periodStart"":""0001-01-01T00:00:00"",""periodEnd"":""{TestTimeNow.AddHours(-4).ToString("yyyy-MM-ddTHH:mm:ssZ")}"",""usageDetail"":{{""environments"":[{{""id"":""{testEnvironment.Id}"",""name"":""testEnvironment"",""resourceUsage"":{{""compute"":[{{""usage"":3600.0,""sku"":""standardLinuxSku""}}],""storage"":[{{""usage"":3600.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}},{{""id"":""{testEnvironment2.Id}"",""name"":""testEnvironment2"",""resourceUsage"":{{""compute"":[],""storage"":[{{""usage"":3600.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}},{{""id"":""{testEnvironment3.Id}"",""name"":""testEnvironment3"",""resourceUsage"":{{""compute"":[],""storage"":[{{""usage"":1800.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}}]}}}}";
-            Assert.Equal(expectedJSon, jsonBlob);
+            ValidatePartnerQueueSubmission(queueMessage);
         }
 
         [Fact]
-        public void Serialize_and_compare_PartnerSubmissionBillingV2()
+        public void Serialize_and_validate_PartnerSubmissionBillingV2()
         {
             var planInfo = new VsoPlanInfo()
             {
@@ -297,13 +298,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 },
             };
 
-            var queuMessage = new PartnerQueueSubmission(billSummary);
+            var queueMessage = new PartnerQueueSubmission(billSummary);
 
-            var jsonBlob = queuMessage.ToJson();
-            string expectedJSon = @$"{{""time"":""{TestTimeNow.Subtract(TimeSpan.FromHours(6)).ToString("yyyy-MM-ddTHH:mm:ssZ")}"",""id"":""aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"",""plan"":{{""subscription"":""{GitHubSubscription}"",""resourceGroup"":""RG"",""name"":""PlanName"",""location"":""WestUs2""}},""periodStart"":""0001-01-01T00:00:00"",""periodEnd"":""{TestTimeNow.AddHours(-4).ToString("yyyy-MM-ddTHH:mm:ssZ")}"",""usageDetail"":{{""environments"":[{{""id"":""{testEnvironment.Id}"",""resourceUsage"":{{""compute"":[{{""usage"":3600.0,""sku"":""standardLinuxSku""}}],""storage"":[{{""usage"":3600.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}},{{""id"":""{testEnvironment2.Id}"",""resourceUsage"":{{""compute"":[],""storage"":[{{""usage"":3600.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}},{{""id"":""{testEnvironment3.Id}"",""resourceUsage"":{{""compute"":[],""storage"":[{{""usage"":1800.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}}]}}}}";
-            Assert.Equal(expectedJSon, jsonBlob);
+            ValidatePartnerQueueSubmission(queueMessage);
         }
 
+        private static void ValidatePartnerQueueSubmission(PartnerQueueSubmission queueMessage)
+        {
+            var jsonBlob = queueMessage.ToJson();
+            var jObject = JObject.Parse(jsonBlob);
+
+            var subSchema = GetGitHubBillingSchema();
+
+            // validate against the JSON schema
+            Assert.True(jObject.IsValid(subSchema, out IList<string> errorMessages), string.Join(Environment.NewLine, errorMessages));
+        }
+
+        private static JSchema GetGitHubBillingSchema()
+        {
+            var schemaReader = File.OpenText(Path.Combine("Partner", "vscs_billing_data_schema.json"));
+            var schema = JSchema.Load(new JsonTextReader(schemaReader));
+            JSchema subSchema = schema.Properties["additionalPropertiesDenied"];
+            return subSchema;
+        }
 
         public static readonly string standardLinuxSkuName = "standardLinuxSku";
         public static readonly EnvironmentBillingInfo testEnvironment = new EnvironmentBillingInfo
