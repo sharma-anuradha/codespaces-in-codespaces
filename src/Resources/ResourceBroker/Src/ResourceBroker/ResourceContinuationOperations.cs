@@ -527,7 +527,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger, bool defaultEnabled = true, string handlerName = null)
         {
-            var featureFlagName = "job-continuation-handler" + handlerName != null ? $"-{handlerName}" : string.Empty;
+            var featureFlagName = (handlerName != null) ? $"job-continuation-handler-{handlerName}" : "job-continuation-handler";
             return ConfigurationReader.ReadFeatureFlagAsync(featureFlagName, logger, defaultEnabled);
         }
     }
