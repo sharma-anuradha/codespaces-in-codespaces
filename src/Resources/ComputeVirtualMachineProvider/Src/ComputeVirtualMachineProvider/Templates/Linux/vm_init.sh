@@ -21,15 +21,13 @@ SCRIPT_PARAM_VM_PUBLIC_KEY_PATH='__REPLACE_VM_PUBLIC_KEY_PATH__'
 # wait for cloud-init to finish before proceeding.
 cloud-init status --wait
 
-# Install and configure auditd for monitoring of killed processes
+# Configure auditd for monitoring of killed processes
 # (rules don't persistent on reboot)
-PROD_FRONTEND_DNS_SUBSTR='online.visualstudio.com'
-if [[ "$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" != *"$PROD_FRONTEND_DNS_SUBSTR"* ]]; then
-      echo "Install and configure auditd ..."
-      apt update && apt install -y auditd
-      auditctl -a exit,always -F arch=b64 -S kill -k audit_kill
-      auditctl -l
-fi
+# Since this is tracing syscalls, it takes CPU cycles. However, we don't expect kill syscall to be executed
+# in the order of 100s every second - so making this default for now. Perf of auditd is well studied and 
+# based on the literature on the internet we shouldn't hit more that 0.1% CPU for this.
+auditctl -a exit,always -F arch=b64 -S kill -k audit_kill
+auditctl -l
 
 echo "Verify docker ..."
 docker --version
