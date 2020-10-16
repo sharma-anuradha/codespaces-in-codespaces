@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
@@ -33,5 +34,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public MocksSettings MocksSettings { get; set; } = new MocksSettings();
+
+        /// <summary>
+        /// Gets or sets the system configuration migration settings.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public SystemConfigurationMigrationSettings SystemConfigurationMigrationSettings { get; set; } = new SystemConfigurationMigrationSettings();   
     }
 }

@@ -245,8 +245,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddVsoDocumentDbCollection<SystemConfigurationRecord, IGlobalSystemConfigurationRepository, GlobalSystemConfigurationRepository>(
                 GlobalSystemConfigurationRepository.ConfigureOptions);
 
-            services.AddSingleton<ISystemConfigurationRepository, SystemConfigurationRepository>();
-            services.AddSingleton<ICachedSystemConfigurationRepository, SystemConfigurationRepository>();
+            services.AddSystemConfigurationRepository(appSettings.BackEnd.SystemConfigurationMigrationSettings);
 
             // Add the cache system configuration warmup task
             services.AddCacheSystemConfigurationWarmupTask();

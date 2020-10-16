@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
 {
@@ -22,41 +23,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
     /// </summary>
     public class SystemConfigurationRepository : ICachedSystemConfigurationRepository
     {
-        private RolloutStatus rolloutStatus = RolloutStatus.Phase1;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SystemConfigurationRepository"/> class.
         /// </summary>
         /// <param name="regionalSystemConfigurationRepository">Regional system configuration repository.</param>
-        /// <param name="cachedSystemConfiguration">Global system configuration repository.</param>
-        public SystemConfigurationRepository(IRegionalSystemConfigurationRepository regionalSystemConfigurationRepository, IGlobalSystemConfigurationRepository globalSystemConfigurationRepository)
+        /// <param name="globalSystemConfigurationRepository">Global system configuration repository.</param>
+        public SystemConfigurationRepository(
+            IRegionalSystemConfigurationRepository regionalSystemConfigurationRepository,
+            IGlobalSystemConfigurationRepository globalSystemConfigurationRepository,
+            SystemConfigurationMigrationSettings migrationSettings)
         {
-            if (rolloutStatus == RolloutStatus.Phase1)
-            {
-                // use regional configuration collection for backend. 
-                ConfigurationRepository = regionalSystemConfigurationRepository;
-            }
-            else
+            // Move to using global configurations collection instead of regional if enabled via AppSetting.
+            if (migrationSettings.UseGlobalConfigurationCollection)
             {
                 // Switch to using the global/resources configuration collection.
                 ConfigurationRepository = globalSystemConfigurationRepository;
             }
-        }
-
-        private enum RolloutStatus
-        {
-            /// <summary>
-            /// Use local database for BackEnd service. At this stage, the configuration collections would
-            /// be created in every environment but we would continue to use the regional configuration collection.
-            /// Once we have configuration collection everywhere, we would migrate the keys from local/regional databases
-            /// to global resources configuration collections.
-            /// </summary>
-            Phase1,
-
-            /// <summary>
-            /// Use global resources configuration collection for BackEnd.
-            /// </summary>
-            Phase2,
+            else
+            {
+                // use regional configuration collection for backend. 
+                ConfigurationRepository = regionalSystemConfigurationRepository;
+            }    
         }
 
         public async Task<SystemConfigurationRecord> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)

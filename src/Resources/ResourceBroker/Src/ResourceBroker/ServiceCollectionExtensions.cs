@@ -5,10 +5,10 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Backend.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
@@ -240,6 +240,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             services.Configure(configureOptions);
             services.TryAddSingleton<IResourcesGlobalDocumentDbClientProvider, ResourcesGlobalDocumentDbClientProvider>();
+
+            return services;
+        }
+
+        /// <summary>
+        /// <see cref="IServiceCollection"/> extensions for the system configuration repository.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="systemConfigurationMigrationSettings">The system configuration migration settings.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
+        public static IServiceCollection AddSystemConfigurationRepository(
+            this IServiceCollection services,
+            SystemConfigurationMigrationSettings systemConfigurationMigrationSettings)
+        {
+            Requires.NotNull(services, nameof(services));
+
+            services.AddSingleton(systemConfigurationMigrationSettings);
+            services.AddSingleton<ISystemConfigurationRepository, SystemConfigurationRepository>();
+            services.AddSingleton<ICachedSystemConfigurationRepository, SystemConfigurationRepository>();
 
             return services;
         }
