@@ -1,0 +1,96 @@
+// Auto-Generated From Template
+// "codesp.environment.servicemodel.jsonc"
+// with names file "codesp.ppe-ctl.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "vscs-codesp-ppe-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-codesp-ppe-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-codesp-ppe-env-identities-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.ppe-ctl/ARM/codesp.environment.identities.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-ppe-env-keyvault-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.ppe-ctl/ARM/codesp.environment.keyvault.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-ppe-env-keyvaults-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.ppe-ctl/ARM/codesp.environment.keyvaults.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-ppe-env-acr-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.ppe-ctl/ARM/codesp.environment.acr.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-ppe-env-network-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.ppe-ctl/ARM/codesp.environment.network.arm.json"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-codesp-ppe",
+      "location": "WestUs2",
+      "instanceOf": "vscs-codesp-ppe-rg-def",
+      "azureSubscriptionId": "c57ef400-af62-4b47-a0b6-24ae55e7b8fd",
+      "serviceResources": [
+        {
+          "name": "vscs-codesp-ppe-env-identities",
+          "instanceOf": "vscs-codesp-ppe-env-identities-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-ppe-env-keyvault",
+          "instanceOf": "vscs-codesp-ppe-env-keyvault-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-ppe-env-keyvaults",
+          "instanceOf": "vscs-codesp-ppe-env-keyvaults-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-ppe-env-acr",
+          "instanceOf": "vscs-codesp-ppe-env-acr-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-ppe-env-network",
+          "instanceOf": "vscs-codesp-ppe-env-network-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

@@ -3,12 +3,6 @@
 
 #requires -version 7.0
 
-# Global error handling
-trap {
-  Write-Error $_
-  exit 1
-}
-
 # Utilities
 . "$PSScriptRoot\OpsUtilities.ps1"
 

@@ -1,0 +1,57 @@
+{
+    // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutParameters.json",
+    "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutParameters.json",
+    "contentVersion": "1.0.0.0",
+    "applications": [
+        {
+            "serviceResourceName": "{{{baseRegionName}}}-region-cluster-charts",
+            "applicationName": "{{{baseRegionName}}}-docker-image-cleanup-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "{{{baseRegionName}}}-region-cluster-charts",
+            "applicationName": "{{{baseRegionName}}}-geneva-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "{{{baseRegionName}}}-region-cluster-charts",
+            "applicationName": "{{{baseRegionName}}}-kubernetes-dashboard-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "{{{baseRegionName}}}-region-cluster-charts",
+            "applicationName": "{{{baseRegionName}}}-kured-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "{{{baseRegionName}}}-region-cluster-charts",
+            "applicationName": "{{{baseRegionName}}}-nginx-ingress-controller-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        }
+    ]
+}

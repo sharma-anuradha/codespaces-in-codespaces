@@ -1,0 +1,4 @@
+image:
+  repositoryUrl: vscscodespppeacr.azurecr.io
+  kuredDaemonsetName: 'kured-modded'
+  kuredDaemonsetTag: '1'

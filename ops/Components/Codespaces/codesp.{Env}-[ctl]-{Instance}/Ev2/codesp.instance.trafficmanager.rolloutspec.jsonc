@@ -1,0 +1,24 @@
+{
+  //"$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "{{{baseInstanceFileName}}}/Ev2/codesp.instance.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "{{{baseInstanceName}}}-trafficmanager",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "{{{baseInstanceName}}}-instance-trafficmanagerprofile",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseInstanceName}}}-instance-trafficmanagerprofile",
+      "actions": [ "Shell/deploy-instancetrafficmanagerprofile" ]
+    }
+  ]
+}

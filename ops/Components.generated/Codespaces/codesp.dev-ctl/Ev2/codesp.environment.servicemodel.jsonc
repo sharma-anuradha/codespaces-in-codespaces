@@ -1,0 +1,96 @@
+// Auto-Generated From Template
+// "codesp.environment.servicemodel.jsonc"
+// with names file "codesp.dev-ctl.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "vscs-codesp-dev-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-codesp-dev-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-codesp-dev-env-identities-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.dev-ctl/ARM/codesp.environment.identities.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-dev-env-keyvault-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.dev-ctl/ARM/codesp.environment.keyvault.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-dev-env-keyvaults-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.dev-ctl/ARM/codesp.environment.keyvaults.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-dev-env-acr-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.dev-ctl/ARM/codesp.environment.acr.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-dev-env-network-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.dev-ctl/ARM/codesp.environment.network.arm.json"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-codesp-dev",
+      "location": "WestUs2",
+      "instanceOf": "vscs-codesp-dev-rg-def",
+      "azureSubscriptionId": "b47d56d7-0429-47f0-a6cf-c32531f2aebe",
+      "serviceResources": [
+        {
+          "name": "vscs-codesp-dev-env-identities",
+          "instanceOf": "vscs-codesp-dev-env-identities-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-dev-env-keyvault",
+          "instanceOf": "vscs-codesp-dev-env-keyvault-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-dev-env-keyvaults",
+          "instanceOf": "vscs-codesp-dev-env-keyvaults-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-dev-env-acr",
+          "instanceOf": "vscs-codesp-dev-env-acr-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-dev-env-network",
+          "instanceOf": "vscs-codesp-dev-env-network-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

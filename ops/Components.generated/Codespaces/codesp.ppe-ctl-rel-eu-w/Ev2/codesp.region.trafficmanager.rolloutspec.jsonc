@@ -1,0 +1,31 @@
+// Auto-Generated From Template
+// "codesp.region.trafficmanager.rolloutspec.jsonc"
+// with names file "codesp.ppe-ctl-rel-eu-w.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.ppe-ctl-rel-eu-w/Ev2/codesp.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-ppe-rel-eu-w-trafficmanager",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-ppe-rel-eu-w-region-trafficmanagerendpoint",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-ppe-rel-eu-w-region-trafficmanagerendpoint",
+      "actions": [
+        "Shell/deploy-instancetrafficmanagerendpoint"
+      ]
+    }
+  ]
+}

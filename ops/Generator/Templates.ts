@@ -3,6 +3,7 @@ import FileHandler from "./Helpers/FileHandler";
 import { Environment, Plane, Instance, Stamp } from "./Parser/Environments";
 import * as path from "path";
 import { writeFileSync } from "fs";
+import { cloneDeep } from "lodash";
 
 class Match {
   key: string;
@@ -23,21 +24,58 @@ class NameMatch {
   names: any;
 }
 
+class TemplateFileInfo {
+  readonly originalFilePath: string;
+  readonly contentFilePath: string;
+  readonly templateFileName: string;
+  readonly fileName: string;
+  readonly filetype: string;
+  readonly isTemplatedContent: boolean;
+
+  static getTemplateFile(originalFilePath: string, templatesDir: string): TemplateFileInfo {
+    let fileName = path.basename(originalFilePath);
+    const filetype = path.extname(originalFilePath);
+    let contentFilePath = originalFilePath;
+    let templateFileName = "";
+    let isTemplatedContent = false;
+
+    const fileNameParts = fileName.split('@');
+    if (fileNameParts.length === 2) {
+      fileName = fileNameParts[0] + filetype;
+      templateFileName = fileNameParts[1];
+      contentFilePath = path.join(templatesDir, templateFileName);
+      isTemplatedContent = true;
+    }
+
+    return {
+      originalFilePath: originalFilePath,
+      contentFilePath: contentFilePath,
+      fileName: fileName,
+      filetype: filetype,
+      isTemplatedContent: isTemplatedContent,
+      templateFileName: templateFileName
+    }
+  }
+}
+
 export default class Templates {
-  inputDir: string;
-  outputDir: string;
-  components: Component[];
-  staticItemsDetect = /[^[\\}]+(?=])/g;
-  staticCommentHeader = "Auto-Generated From Template";
-  staticCommentFooter =
+  readonly inputDir: string;
+  readonly templatesDir: string;
+  readonly outputDir: string;
+  readonly components: Component[];
+  private readonly staticItemsDetect = /[^[\\}]+(?=])/; // don't use global flag, it makes subsequent tests stateful.
+  private readonly staticCommentHeader = "Auto-Generated From Template";
+  private readonly staticCommentFooter =
     "Do not edit this generated file. Edit the source file and rerun the generator instead.";
 
   constructor(
     inputDir: string,
+    templatesDir: string,
     outputDir: string,
     components: Component[]
   ) {
     this.inputDir = path.normalize(inputDir);
+    this.templatesDir = path.normalize(templatesDir);
     this.outputDir = path.normalize(outputDir);
     this.components = components;
   }
@@ -54,15 +92,13 @@ export default class Templates {
 
     // Level 2
     const componentFolders = FileHandler.GetDirectories(rootDir);
-    for (const componentFolderName of componentFolders)
-    {
+    for (const componentFolderName of componentFolders) {
       const componentFolderDir = path.join(rootDir, componentFolderName);
       this.GenerateFolder(componentFolderDir, false);
 
       // Level 3
       const componentTemplateFolders = FileHandler.GetDirectories(componentFolderDir);
-      for (const componentTemplateFolderName of componentTemplateFolders)
-      {
+      for (const componentTemplateFolderName of componentTemplateFolders) {
         const componentTemplateDir = path.join(componentFolderDir, componentTemplateFolderName);
         this.GenerateFolder(componentTemplateDir, true);
       }
@@ -84,12 +120,26 @@ export default class Templates {
 
     const templateFiles = this.getTemplateList(folderPath, recurse);
     for (const templatePath of templateFiles) {
-      const fileName = path.basename(templatePath);
-      const filetype = path.extname(templatePath);
-      const orgBuffer = FileHandler.GetFile(templatePath);
+      const templateFileInfo = TemplateFileInfo.getTemplateFile(templatePath, this.templatesDir);
+      const fileName = templateFileInfo.fileName;
+      const filetype = templateFileInfo.filetype;
+      const contentFileBuffer = FileHandler.GetFile(templateFileInfo.contentFilePath);
+      let additionalNames = null;
+
+      if (templateFileInfo.isTemplatedContent) {
+        const orgFileText = FileHandler.GetFileText(templateFileInfo.originalFilePath);
+        if (orgFileText.length > 0) {
+          try {
+            additionalNames = JSON.parse(orgFileText);
+          }
+          catch (error) {
+            throw `${error} : '${templateFileInfo.originalFilePath}'`;
+          }
+        }
+      }
 
       for (const name of names) {
-        let buffer = orgBuffer;
+        let buffer = contentFileBuffer;
         const commentHeader = [
           this.staticCommentHeader,
           `"${fileName}"`
@@ -98,21 +148,30 @@ export default class Templates {
           const withNamesFileName = `with names file "${name.names.baseFileName}.names.json"`;
           commentHeader.push(withNamesFileName);
         }
+        if (templateFileInfo.isTemplatedContent) {
+          const fromTemplateFile = `from template file "${templateFileInfo.templateFileName}"`;
+          commentHeader.push(fromTemplateFile);
+        }
         commentHeader.push(this.staticCommentFooter);
 
         switch (filetype) {
           case ".jsonc":
             buffer = this.textHeader(buffer, commentHeader);
-            buffer = this.textReplacement(buffer, name, templatePath);
             break;
-          default:
-            buffer = this.textReplacement(buffer, name, templatePath);
+          case ".ps1":
+            buffer = this.textHeader(buffer, commentHeader, '#');
             break;
         }
 
-        const outputFile = path.resolve(templatePath)
+        buffer = this.textReplacement(buffer, name.names, additionalNames, templateFileInfo.originalFilePath);
+
+        let outputFile = path.resolve(templateFileInfo.originalFilePath)
           .replace(path.resolve(this.inputDir), path.resolve(this.outputDir))
           .replace(folderName, name.outputFolderName);
+
+        if (templateFileInfo.isTemplatedContent) {
+          outputFile = path.join(path.dirname(outputFile), templateFileInfo.fileName);
+        }
 
         FileHandler.CreateDirectory(path.dirname(outputFile));
         writeFileSync(outputFile, buffer);
@@ -258,26 +317,31 @@ export default class Templates {
     return matches.filter((n) => filters.includes(n.key)).length > 0;
   }
 
-  private textHeader(buffer: Buffer, injectStrings: string[] = []): Buffer {
+  private textHeader(buffer: Buffer, injectStrings: string[] = [], commentDelimiter = '//'): Buffer {
     const text = buffer.toString("utf8");
     // Add single comment to strings, add new lines.
     // If nothing in the array, return the same text.
     const generatedText =
       injectStrings.length > 0
-        ? `${injectStrings.map((n) => `// ${n}`).join("\r\n")}\r\n\r\n${text}`
+        ? `${injectStrings.map((n) => `${commentDelimiter} ${n}`).join("\r\n")}\r\n\r\n${text}`
         : text;
     return Buffer.from(generatedText, "utf8");
   }
 
-  private textReplacement(buffer: Buffer, namesObj: NameMatch, templateFile: string): Buffer {
+  private textReplacement(buffer: Buffer, names: any, additionalNames: any, templateFile: string): Buffer {
     let text = buffer.toString("utf8");
-    const names = namesObj.names;
 
     if (names) {
       const variablePattern = /[^{{{\\}]+(?=}}})/g;
       const matches = text.match(variablePattern);
 
       if (matches?.length > 0) {
+        // Inject additional names to the original names
+        if (additionalNames) {
+          names = cloneDeep(names);
+          Object.assign(names, additionalNames);
+        }
+
         for (const match of matches) {
           // At least one file returns a false-positivle match '"";
           // just ignore it rather than risk breaking the regex variablePattern.
@@ -288,15 +352,24 @@ export default class Templates {
           }
         }
 
+        // Process each name
         for (const name in names) {
           const regex = new RegExp("{{{" + name + "}}}", "g");
 
           if (text.match(regex)) {
-            const value = namesObj.names[name];
+            let value = names[name];
             if (!value) {
-              throw `error: property '${name}' is undefined in names object '${names.baseName}': template file '${namesObj.folderName}'`;
+              if (name !== "subscriptionId" && name !== 'subscriptionName') {
+                throw `error: property '${name}' is undefined in names object '${names.baseFileName}.names.json': template file '${templateFile}'`;
+              }
             }
-            const replaceValue = typeof value === 'string' ? value : JSON.stringify(value)?.replace(/\n/g, '\r\n');
+
+            // Late invocation of 'name()'
+            if (typeof value === 'function') {
+              value = value.call(name);
+            }
+
+            const replaceValue = typeof value === 'string' ? value : JSON.stringify(value, null, 2)?.replace(/\n/g, '\r\n');
             text = text.replace(regex, replaceValue);
           }
         }

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: geneva
+description: Geneva Logger and Azure Security Pack
+type: application
+version: 1.0.0
+appVersion: 1.0.0

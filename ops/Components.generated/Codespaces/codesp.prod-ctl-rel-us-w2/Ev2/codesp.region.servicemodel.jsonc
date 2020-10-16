@@ -1,0 +1,351 @@
+// Auto-Generated From Template
+// "codesp.region.servicemodel.jsonc"
+// with names file "codesp.prod-ctl-rel-us-w2.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "vscs-codesp-prod-rel-us-w2-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-codesp-prod-rel-us-w2-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-network-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.network.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-cluster-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.cluster.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-cluster-charts-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "empty.arm.json"
+            },
+            "application": {
+              "names": [
+                "vscs-codesp-prod-rel-us-w2-docker-image-cleanup-chart-def",
+                "vscs-codesp-prod-rel-us-w2-geneva-chart-def",
+                "vscs-codesp-prod-rel-us-w2-kubernetes-dashboard-chart-def",
+                "vscs-codesp-prod-rel-us-w2-kured-chart-def",
+                "vscs-codesp-prod-rel-us-w2-nginx-ingress-controller-chart-def"
+              ]
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-batch-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.batch.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-databases-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.databases.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-servicebus-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.servicebus.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-bl-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.storage.bl.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-cq-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.storage.cq.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-gh-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.storage.gh.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-sa-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.storage.sa.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-si-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.storage.si.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-vm-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.storage.vm.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-trafficmanagerendpoint-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "empty.arm.json"
+            },
+            "extension": {
+              "rolloutParametersPath": "codesp.prod-ctl-rel-us-w2/Ev2/codesp.region.scripts.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/deploy-instancetrafficmanagerendpoint"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "deploy-instancetrafficmanagerendpoint",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v14"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "applicationDefinitions": [
+    {
+      "name": "vscs-codesp-prod-rel-us-w2-docker-image-cleanup-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "docker-image-cleanup-release",
+        "namespace": "kube-system",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "codesp.prod-ctl-rel-us-w2/charts/docker-image-cleanup/docker-image-cleanup.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-w2-geneva-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "geneva-release",
+        "namespace": "kube-system",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "codesp.prod-ctl-rel-us-w2/charts/geneva/geneva.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-w2-kubernetes-dashboard-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "kubernetes-dashboard-release",
+        "namespace": "kube-system",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "codesp.prod-ctl-rel-us-w2/charts/kubernetes-dashboard/kubernetes-dashboard.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-w2-kured-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "kured-release",
+        "namespace": "kube-system",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "codesp.prod-ctl-rel-us-w2/charts/kured/kured.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-w2-nginx-ingress-controller-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "nginx-ingress-controller-release",
+        "namespace": "default",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "codesp.prod-ctl-rel-us-w2/charts/nginx-ingress-controller/nginx-ingress-controller.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-codesp-prod-rel-us-w2",
+      "location": "WestUs2",
+      "instanceOf": "vscs-codesp-prod-rel-us-w2-rg-def",
+      "azureSubscriptionId": "babc8408-303e-4acc-9d13-194c075c1cce",
+      "serviceResources": [
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-network",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-network-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-cluster",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-cluster-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-cluster-charts",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-cluster-charts-def",
+          "armParametersPath": "empty.arm.parameters.json",
+          "rolloutParametersPath": "codesp.prod-ctl-rel-us-w2/Ev2/codesp.region.charts.rolloutparameters.jsonc",
+          "applications": [
+            {
+              "name": "vscs-codesp-prod-rel-us-w2-docker-image-cleanup-chart",
+              "instanceOf": "vscs-codesp-prod-rel-us-w2-docker-image-cleanup-chart-def",
+              "armResourceName": "vscs-codesp-prod-rel-us-w2-cluster-v1"
+            },
+            {
+              "name": "vscs-codesp-prod-rel-us-w2-geneva-chart",
+              "instanceOf": "vscs-codesp-prod-rel-us-w2-geneva-chart-def",
+              "armResourceName": "vscs-codesp-prod-rel-us-w2-cluster-v1"
+            },
+            {
+              "name": "vscs-codesp-prod-rel-us-w2-kubernetes-dashboard-chart",
+              "instanceOf": "vscs-codesp-prod-rel-us-w2-kubernetes-dashboard-chart-def",
+              "armResourceName": "vscs-codesp-prod-rel-us-w2-cluster-v1"
+            },
+            {
+              "name": "vscs-codesp-prod-rel-us-w2-kured-chart",
+              "instanceOf": "vscs-codesp-prod-rel-us-w2-kured-chart-def",
+              "armResourceName": "vscs-codesp-prod-rel-us-w2-cluster-v1"
+            },
+            {
+              "name": "vscs-codesp-prod-rel-us-w2-nginx-ingress-controller-chart",
+              "instanceOf": "vscs-codesp-prod-rel-us-w2-nginx-ingress-controller-chart-def",
+              "armResourceName": "vscs-codesp-prod-rel-us-w2-cluster-v1"
+            }
+          ]
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-batch",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-batch-def",
+          "armParametersPath": "codesp.prod-ctl-rel-us-w2/ARM/codesp.region.batch.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-databases",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-databases-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-servicebus",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-servicebus-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-bl",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-storage-bl-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-cq",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-storage-cq-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-gh",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-storage-gh-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-sa",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-storage-sa-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-si",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-storage-si-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-storage-vm",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-storage-vm-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-rel-us-w2-region-trafficmanagerendpoint",
+          "instanceOf": "vscs-codesp-prod-rel-us-w2-region-trafficmanagerendpoint-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-frontend-lb
+  labels:
+    {{ template "labelvalues" . }}
+spec:
+  ports:
+    - port: 80
+      name: http
+    - port: 443
+      name: https
+  selector:
+    k8s-app: nginx-ingress-controller
+  externalTrafficPolicy: Local
+  type: LoadBalancer

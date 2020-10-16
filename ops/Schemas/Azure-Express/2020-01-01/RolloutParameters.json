@@ -1,0 +1,488 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Rollout Parameters",
+  "description": "A document that declares the parameters for an update to an Azure Service.",
+  "type": "object",
+  "properties": {
+    "contentVersion": {
+      "description": "The version of the schema that a document conforms to.",
+      "type": "string",
+      "pattern": "^([0-9]+\\.)?([0-9]+\\.)?([0-9]+\\.)?([0-9]+){1}$"
+    },
+
+    "applications": {
+      "description": "The list of parameters for the application deployment.",
+      "type": "array",
+      "items": {
+        "description": "The parameters for each application deployment",
+        "type": "object",
+        "properties": {
+          "serviceResourceName": {
+            "description": "The service resource instance name.",
+            "type": "string"
+          },
+          "applicationName": {
+            "description": "The application instance name.",
+            "type": "string"
+          },
+          "authentication": {
+            "description": "The details of authentication information for connecting to cluster.",
+            "type": "object",
+            "properties": {
+              "type": {
+                "description": "The type of authentication. Valid values are CertificateAuthentication, KubeConfig.",
+                "type": "string"
+              },
+              "properties": {
+                "description": "The properties for authentication.",
+                "type": "object",
+                "properties": {
+                  "AksRole": {
+                    "description": "The credentials to be used to get kubeconfig. Valid values are: User, Admin",
+                    "type": "string"
+                  }
+                }
+              },
+              "reference": {
+                "type": "object",
+                "description": "Parameter reference for authentication. Required for kubeconfig authentication.",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "description": "Valid value is 'AzureKeyVault'"
+                  },
+                  "parameters": {
+                    "type": "object",
+                    "description": "Parameters for provider",
+                    "properties": {
+                      "secretId": {
+                        "description": "The Key vault reference to the kubeconfig secret.",
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "required": [ "type" ]
+          }
+        },
+        "required": ["serviceResourceName", "applicationName", "authentication"]
+      }
+    },
+    "mdmHealthCheckParameters": {
+      "description": "The parameters for the Mdm Health Check action.",
+      "type": "object",
+      "properties": {
+        "mdmHealthCheckEndPoint": {
+          "description": "The Mdm Health endpoint URL to be used to check the health of the resource.",
+          "type": "string"
+        },
+        "monitoringAccountName": {
+          "description": "The monitoring account name used to query the health of the resource.",
+          "type": "string"
+        },
+        "cloudServiceName": {
+          "description": "The Cloud Service Name to check the health of. This is to be specified only if the ServiceResource name doesn't correspond to the service name to check the health of.",
+          "type": "string"
+        },
+        "waitBeforeMonitorTimeInMinutes": {
+          "description": "An integer value representing the time the rollout system waits before checking the health of the resource.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "monitorTimeInMinutes": {
+          "description": "An integer value representing the time the rollout system monitors the health of the resource after the 'WaitBeforeMoniorTimeInMinutes' time has elapsed.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "healthResources": {
+          "description": "A list of resources to check the health of.",
+          "type": "array",
+          "minimum": 0,
+          "items": {
+            "type": "object",
+            "description": "The object representation of the definition of a health resource.",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The human-readable name of the health resource."
+              },
+              "resourceType": {
+                "type": "string",
+                "description": "The type of the health resource as defined in the Geneva health system (MDM)."
+              },
+              "dimensions": {
+                "description": "The dimensions that identify the health resource in the Geneva health system (MDM).",
+                "type": "object",
+                "minimum": 1,
+                "properties": {
+                  "/^[ A-Za-z0-9_@./#&+-]*$/": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "required": ["name", "resourceType", "dimensions"]
+          }
+        }
+      },
+      "required": ["monitoringAccountName", "mdmHealthCheckEndPoint"]
+    },
+
+    "extensions": {
+      "description": "List of Extensions and associated name, type and properties.",
+      "type": "array",
+      "minimum": 0,
+      "items": {
+        "type": "object",
+        "description": "Extension and associated name, type and properties.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Extension name uniquely identifying a specific extension invocation."
+          },
+          "type": {
+            "type": "string",
+            "description": "Registered extension type."
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the extension."
+          },
+          "connectionProperties": {
+            "type": "object",
+            "description": "Connection properties of extension request.",
+            "properties": {
+              "endpoint": {
+                "type": "string",
+                "description": "One of the registered endpoints of the extension, this is optional if only one endpoint is registered."
+              },
+              "maxExecutionTime": {
+                "type": "string",
+                "description": "Maximum execution time for the extension request, in Iso8601 format. If the extension does not complete within the specified duration, the request will be abandoned and the action will be designated as Failed."
+              },
+              "authentication": {
+                "type": "object",
+                "description": "Authentication information for extension request",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Authentication type, 'CertificateAuthentication'"
+                  },
+                  "reference": {
+                    "type": "object",
+                    "description": "Parameter reference for authentication",
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "description": "Secret provider, 'AzureKeyVault'"
+                      },
+                      "parameters": {
+                        "type": "object",
+                        "description": "Parameters for provider",
+                        "minimum": 1,
+                        "properties": {
+                          "/^[ A-Za-z0-9_@./#&+-]*$/": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "payloadProperties": {
+            "type": "object",
+            "description": "Key-value property bag to send to http extension in the request body",
+            "properties": {
+              "/^[ A-Za-z0-9_@./#&+-]*$/": {
+                "type": "object",
+                "description": "Can use eithter 'Value' or 'Reference'",
+                "properties": {
+                  "value": {
+                    "type": "object",
+                    "description": "Object to send as-is in the extension request body"
+                  },
+                  "reference": {
+                    "type": "object",
+                    "description": "Reference to a property that will be resolved before adding to the extension request body as 'Value'",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "description": "Path to a file under ServiceGroupRoot folder that needs to be accessed in the extension. This path must be relative to the ServiceGroupRoot folder. The path will be resolved and transformed into an Azure Storage SAS Uri and passed in as a 'Value' property to the extension."
+                      },
+                      "provider": {
+                        "type": "string",
+                        "description": "Secret provider, 'AzureKeyVault'"
+                      },
+                      "parameters": {
+                        "type": "object",
+                        "description": "Parameters for provider",
+                        "minimum": 1,
+                        "properties": {
+                          "/^[ A-Za-z0-9_@./#&+-]*$/": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "enableScopeTagBindings ": {
+                        "type": "string",
+                        "description": "True or False value to enable the scope tag parameter replacements feature for the extension."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "shellExtensions": {
+      "description": "List of shell extensions and associated name, type and properties.",
+      "type": "array",
+      "minimum": 0,
+      "items": {
+        "type": "object",
+        "description": "Shell extension and associated name, type and properties.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the shell referenced in Orchestrated Step Action in Rollout Specification."
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of shell referenced in Service Resource Definition in Service Model."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Properties for shell execution.",
+            "properties": {
+              "maxExecutionTime": {
+                "type": "string",
+                "description": "Timeout for shell execution. Shell will be terminated if the max time is reached and the shell has not exited."
+              }
+            }
+          },
+          "package": {
+            "type": "object",
+            "description": "The package containing shell scripts.",
+            "properties": {
+              "reference": {
+                "type": "object",
+                "description": "Reference to a path.",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Path relative to the service group root that contains the package."
+                  }
+                }
+              }
+            }
+          },
+          "launch": {
+            "type": "object",
+            "description": "The launch parameters for your shell.",
+            "properties": {
+              "command": {
+                "description": "List of startup commands for your script execution.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "The command for script execution."
+                }
+              },
+              "environmentVariables": {
+                "description": "List of environment variables.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "The environment variable.",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The environment variable name."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "The plaintext value."
+                    },
+                    "reference": {
+                      "type": "object",
+                      "description": "Reference to a path or secret.",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "description": "The path to a file."
+                        },
+                        "provider": {
+                          "type": "string",
+                          "description": "The provider for secret reference."
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "description": "The identifiers for secret reference.",
+                          "properties": {
+                            "/^[ A-Za-z0-9_@./#&+-]*$/": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "enableScopeTagBindings ": {
+                          "type": "string",
+                          "description": "True or False value that determines if Ev2 should look for and replace any scope tags for parameter replacements."
+                        }
+                      }
+                    },
+                    "asSecureValue": {
+                      "type": "string",
+                      "description": "Passes the environment variable as secure value to your shell so that it is not visible on Azure Portal/CLI etc."
+                    }
+                  },
+                  "required": [ "name" ]
+                }
+              },
+              "secretVolumes": {
+                "description": "The mount containing secrets needed for execution.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "The secret definition containing name, reference, etc.",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the secret."
+                    },
+                    "mountPath": {
+                      "type": "string",
+                      "description": "The mount path."
+                    },
+                    "secrets": {
+                      "type": "array",
+                      "description": "The secret references.",
+                      "properties": {
+                        "reference": {
+                          "type": "object",
+                          "description": "Reference to a secret.",
+                          "properties": {
+                            "provider": {
+                              "type": "string",
+                              "description": "The provider for secret reference."
+                            },
+                            "parameters": {
+                              "type": "object",
+                              "description": "The identifiers for secret reference.",
+                              "properties": {
+                                "/^[ A-Za-z0-9_@./#&+-]*$/": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "convertToBase64": {
+                          "type": "string",
+                          "description": "Converts the secret value to base 64 format before adding it to the mount."
+                        }
+                      }
+                    }
+                  },
+                  "required": ["name", "mountPath", "secrets"]
+                }
+              },
+              "fileVolumes": {
+                "type": "array",
+                "description": "The mount containing files needed for execution.",
+                "items": {
+                  "type": "object",
+                  "description": "The mount file needed for execution.",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The mount name."
+                    },
+                    "mountPath": {
+                      "type": "string",
+                      "description": "The mount path."
+                    },
+                    "azureFile": {
+                      "type": "object",
+                      "description": "The Azure storage file details.",
+                      "properties": {
+                        "storageAccountName": {
+                          "type": "string",
+                          "description": "The storage account name."
+                        },
+                        "storageAccountKey": {
+                          "type": "object",
+                          "description": "The storage account keys",
+                          "properties": {
+                            "reference": {
+                              "type": "object",
+                              "description": "Reference to a secret.",
+                              "properties": {
+                                "provider": {
+                                  "type": "string",
+                                  "description": "The provider for secret reference."
+                                },
+                                "parameters": {
+                                  "type": "object",
+                                  "description": "The identifiers for secret reference.",
+                                  "properties": {
+                                    "/^[ A-Za-z0-9_@./#&+-]*$/": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": ["name", "mountPath", "azureFile"]
+                }
+              },
+              "networkProfile": {
+                "type": "object",
+                "description": "The network profile Id required for VNet.",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The network profile Id required for VNet."
+                  }
+                }
+              },
+              "identity": {
+                "type": "object",
+                "description": "The identity referenced required for Managed Identities.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Type of identity e.g. userAssigned."
+                  },
+                  "userAssignedIdentities": {
+                    "type": "array",
+                    "description": "The list of user assigned identities.",
+                    "items": {
+                      "type": "string",
+                      "description": "path to the user assigned identity"
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["command"]
+          }
+        }
+      },
+      "required": ["name", "type", "properties", "package", "launch"]
+    }
+  },
+  "required": ["contentVersion"]
+}

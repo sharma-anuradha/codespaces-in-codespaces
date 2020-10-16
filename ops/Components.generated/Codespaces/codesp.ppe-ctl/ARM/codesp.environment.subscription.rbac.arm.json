@@ -1,0 +1,538 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appSpId": {
+      "type": "string"
+    },
+    "breakGlassGroupId": {
+      "type": "string",
+      "defaultValue": "86701306-e3cd-4b17-85a1-2956e25a2527"
+    },
+    "jitAdminsGroupId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "jitContributorsGroupId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "jitReadersGroup": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "opsSpId": {
+      "type": "string"
+    },
+    "teamReadersGroupId": {
+      "type": "string",
+      "defaultValue": "6837c2b1-4f15-45e3-a9f5-9bfac0726a47"
+    }
+  },
+  "variables": {
+    "appSpId": "[parameters('appSpId')]",
+    "appSpIdInTenant": "[equals(subscription().tenantId,'33e01921-4d64-4f8c-a055-5bdaffd5e33d')]",
+    "breakGlassGroupId": "[parameters('breakGlassGroupId')]",
+    "breakGlassGroupIdInTenant": "[equals(subscription().tenantId,'33e01921-4d64-4f8c-a055-5bdaffd5e33d')]",
+    "jitAdminsGroupId": "[parameters('jitAdminsGroupId')]",
+    "jitAdminsGroupIdInTenant": "[equals(subscription().tenantId,'33e01921-4d64-4f8c-a055-5bdaffd5e33d')]",
+    "jitContributorsGroupId": "[parameters('jitContributorsGroupId')]",
+    "jitContributorsGroupIdInTenant": "[equals(subscription().tenantId,'33e01921-4d64-4f8c-a055-5bdaffd5e33d')]",
+    "jitReadersGroup": "[parameters('jitReadersGroup')]",
+    "jitReadersGroupInTenant": "[equals(subscription().tenantId,'33e01921-4d64-4f8c-a055-5bdaffd5e33d')]",
+    "opsSpId": "[parameters('opsSpId')]",
+    "opsSpIdInTenant": "[equals(subscription().tenantId,'33e01921-4d64-4f8c-a055-5bdaffd5e33d')]",
+    "teamReadersGroupId": "[parameters('teamReadersGroupId')]",
+    "teamReadersGroupIdInTenant": "[equals(subscription().tenantId,'33e01921-4d64-4f8c-a055-5bdaffd5e33d')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('7f951dda-4ed3-4680-a7ca-43fe172d538d',if(empty(variables('appSpId')),'appSpId',variables('appSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('appSpId'))),variables('appSpIdInTenant'))]",
+      "properties": {
+        "description": "appSpId : AcrPull",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+        "principalId": "[variables('appSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('8311e382-0749-4cb8-b61a-304f252e45ec',if(empty(variables('appSpId')),'appSpId',variables('appSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('appSpId'))),variables('appSpIdInTenant'))]",
+      "properties": {
+        "description": "appSpId : AcrPush",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','8311e382-0749-4cb8-b61a-304f252e45ec')]",
+        "principalId": "[variables('appSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('b24988ac-6180-42a0-ab88-20f7382dd24c',if(empty(variables('appSpId')),'appSpId',variables('appSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('appSpId'))),variables('appSpIdInTenant'))]",
+      "properties": {
+        "description": "appSpId : Contributor",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[variables('appSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('fbdf93bf-df7d-467e-a4d2-9458aa1360c8',if(empty(variables('appSpId')),'appSpId',variables('appSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('appSpId'))),variables('appSpIdInTenant'))]",
+      "properties": {
+        "description": "appSpId : CosmosDB Account Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','fbdf93bf-df7d-467e-a4d2-9458aa1360c8')]",
+        "principalId": "[variables('appSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('21090545-7ca7-4776-b22c-e363652d74d2',if(empty(variables('appSpId')),'appSpId',variables('appSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('appSpId'))),variables('appSpIdInTenant'))]",
+      "properties": {
+        "description": "appSpId : Key Vault Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','21090545-7ca7-4776-b22c-e363652d74d2')]",
+        "principalId": "[variables('appSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('4633458b-17de-408a-b874-0445c86b69e6',if(empty(variables('appSpId')),'appSpId',variables('appSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('appSpId'))),variables('appSpIdInTenant'))]",
+      "properties": {
+        "description": "appSpId : Key Vault Secrets User",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','4633458b-17de-408a-b874-0445c86b69e6')]",
+        "principalId": "[variables('appSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('acdd72a7-3385-48ef-bd42-f606fba81ae7',if(empty(variables('appSpId')),'appSpId',variables('appSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('appSpId'))),variables('appSpIdInTenant'))]",
+      "properties": {
+        "description": "appSpId : Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "principalId": "[variables('appSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('8e3af657-a8ff-443c-a75c-2fe8c4bcb635',if(empty(variables('breakGlassGroupId')),'breakGlassGroupId',variables('breakGlassGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('breakGlassGroupId'))),variables('breakGlassGroupIdInTenant'))]",
+      "properties": {
+        "description": "breakGlassGroupId : Owner",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
+        "principalId": "[variables('breakGlassGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('7f951dda-4ed3-4680-a7ca-43fe172d538d',if(empty(variables('jitAdminsGroupId')),'jitAdminsGroupId',variables('jitAdminsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitAdminsGroupId'))),variables('jitAdminsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitAdminsGroupId : AcrPull",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+        "principalId": "[variables('jitAdminsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('8311e382-0749-4cb8-b61a-304f252e45ec',if(empty(variables('jitAdminsGroupId')),'jitAdminsGroupId',variables('jitAdminsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitAdminsGroupId'))),variables('jitAdminsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitAdminsGroupId : AcrPush",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','8311e382-0749-4cb8-b61a-304f252e45ec')]",
+        "principalId": "[variables('jitAdminsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('b24988ac-6180-42a0-ab88-20f7382dd24c',if(empty(variables('jitAdminsGroupId')),'jitAdminsGroupId',variables('jitAdminsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitAdminsGroupId'))),variables('jitAdminsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitAdminsGroupId : Contributor",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[variables('jitAdminsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('fbdf93bf-df7d-467e-a4d2-9458aa1360c8',if(empty(variables('jitAdminsGroupId')),'jitAdminsGroupId',variables('jitAdminsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitAdminsGroupId'))),variables('jitAdminsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitAdminsGroupId : CosmosDB Account Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','fbdf93bf-df7d-467e-a4d2-9458aa1360c8')]",
+        "principalId": "[variables('jitAdminsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('00482a5a-887f-4fb3-b363-3b7fe8e74483',if(empty(variables('jitAdminsGroupId')),'jitAdminsGroupId',variables('jitAdminsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitAdminsGroupId'))),variables('jitAdminsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitAdminsGroupId : Key Vault Administrator",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','00482a5a-887f-4fb3-b363-3b7fe8e74483')]",
+        "principalId": "[variables('jitAdminsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('21090545-7ca7-4776-b22c-e363652d74d2',if(empty(variables('jitAdminsGroupId')),'jitAdminsGroupId',variables('jitAdminsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitAdminsGroupId'))),variables('jitAdminsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitAdminsGroupId : Key Vault Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','21090545-7ca7-4776-b22c-e363652d74d2')]",
+        "principalId": "[variables('jitAdminsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('4633458b-17de-408a-b874-0445c86b69e6',if(empty(variables('jitAdminsGroupId')),'jitAdminsGroupId',variables('jitAdminsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitAdminsGroupId'))),variables('jitAdminsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitAdminsGroupId : Key Vault Secrets User",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','4633458b-17de-408a-b874-0445c86b69e6')]",
+        "principalId": "[variables('jitAdminsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('acdd72a7-3385-48ef-bd42-f606fba81ae7',if(empty(variables('jitAdminsGroupId')),'jitAdminsGroupId',variables('jitAdminsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitAdminsGroupId'))),variables('jitAdminsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitAdminsGroupId : Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "principalId": "[variables('jitAdminsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('7f951dda-4ed3-4680-a7ca-43fe172d538d',if(empty(variables('jitContributorsGroupId')),'jitContributorsGroupId',variables('jitContributorsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitContributorsGroupId'))),variables('jitContributorsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitContributorsGroupId : AcrPull",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+        "principalId": "[variables('jitContributorsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('8311e382-0749-4cb8-b61a-304f252e45ec',if(empty(variables('jitContributorsGroupId')),'jitContributorsGroupId',variables('jitContributorsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitContributorsGroupId'))),variables('jitContributorsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitContributorsGroupId : AcrPush",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','8311e382-0749-4cb8-b61a-304f252e45ec')]",
+        "principalId": "[variables('jitContributorsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('b24988ac-6180-42a0-ab88-20f7382dd24c',if(empty(variables('jitContributorsGroupId')),'jitContributorsGroupId',variables('jitContributorsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitContributorsGroupId'))),variables('jitContributorsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitContributorsGroupId : Contributor",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[variables('jitContributorsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('fbdf93bf-df7d-467e-a4d2-9458aa1360c8',if(empty(variables('jitContributorsGroupId')),'jitContributorsGroupId',variables('jitContributorsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitContributorsGroupId'))),variables('jitContributorsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitContributorsGroupId : CosmosDB Account Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','fbdf93bf-df7d-467e-a4d2-9458aa1360c8')]",
+        "principalId": "[variables('jitContributorsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('21090545-7ca7-4776-b22c-e363652d74d2',if(empty(variables('jitContributorsGroupId')),'jitContributorsGroupId',variables('jitContributorsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitContributorsGroupId'))),variables('jitContributorsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitContributorsGroupId : Key Vault Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','21090545-7ca7-4776-b22c-e363652d74d2')]",
+        "principalId": "[variables('jitContributorsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('4633458b-17de-408a-b874-0445c86b69e6',if(empty(variables('jitContributorsGroupId')),'jitContributorsGroupId',variables('jitContributorsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitContributorsGroupId'))),variables('jitContributorsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitContributorsGroupId : Key Vault Secrets User",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','4633458b-17de-408a-b874-0445c86b69e6')]",
+        "principalId": "[variables('jitContributorsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('acdd72a7-3385-48ef-bd42-f606fba81ae7',if(empty(variables('jitContributorsGroupId')),'jitContributorsGroupId',variables('jitContributorsGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitContributorsGroupId'))),variables('jitContributorsGroupIdInTenant'))]",
+      "properties": {
+        "description": "jitContributorsGroupId : Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "principalId": "[variables('jitContributorsGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('21090545-7ca7-4776-b22c-e363652d74d2',if(empty(variables('jitReadersGroup')),'jitReadersGroup',variables('jitReadersGroup')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitReadersGroup'))),variables('jitReadersGroupInTenant'))]",
+      "properties": {
+        "description": "jitReadersGroup : Key Vault Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','21090545-7ca7-4776-b22c-e363652d74d2')]",
+        "principalId": "[variables('jitReadersGroup')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('acdd72a7-3385-48ef-bd42-f606fba81ae7',if(empty(variables('jitReadersGroup')),'jitReadersGroup',variables('jitReadersGroup')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('jitReadersGroup'))),variables('jitReadersGroupInTenant'))]",
+      "properties": {
+        "description": "jitReadersGroup : Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "principalId": "[variables('jitReadersGroup')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('7f951dda-4ed3-4680-a7ca-43fe172d538d',if(empty(variables('opsSpId')),'opsSpId',variables('opsSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('opsSpId'))),variables('opsSpIdInTenant'))]",
+      "properties": {
+        "description": "opsSpId : AcrPull",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('8311e382-0749-4cb8-b61a-304f252e45ec',if(empty(variables('opsSpId')),'opsSpId',variables('opsSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('opsSpId'))),variables('opsSpIdInTenant'))]",
+      "properties": {
+        "description": "opsSpId : AcrPush",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','8311e382-0749-4cb8-b61a-304f252e45ec')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('b24988ac-6180-42a0-ab88-20f7382dd24c',if(empty(variables('opsSpId')),'opsSpId',variables('opsSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('opsSpId'))),variables('opsSpIdInTenant'))]",
+      "properties": {
+        "description": "opsSpId : Contributor",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('fbdf93bf-df7d-467e-a4d2-9458aa1360c8',if(empty(variables('opsSpId')),'opsSpId',variables('opsSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('opsSpId'))),variables('opsSpIdInTenant'))]",
+      "properties": {
+        "description": "opsSpId : CosmosDB Account Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','fbdf93bf-df7d-467e-a4d2-9458aa1360c8')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('21090545-7ca7-4776-b22c-e363652d74d2',if(empty(variables('opsSpId')),'opsSpId',variables('opsSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('opsSpId'))),variables('opsSpIdInTenant'))]",
+      "properties": {
+        "description": "opsSpId : Key Vault Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','21090545-7ca7-4776-b22c-e363652d74d2')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('4633458b-17de-408a-b874-0445c86b69e6',if(empty(variables('opsSpId')),'opsSpId',variables('opsSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('opsSpId'))),variables('opsSpIdInTenant'))]",
+      "properties": {
+        "description": "opsSpId : Key Vault Secrets User",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','4633458b-17de-408a-b874-0445c86b69e6')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('acdd72a7-3385-48ef-bd42-f606fba81ae7',if(empty(variables('opsSpId')),'opsSpId',variables('opsSpId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('opsSpId'))),variables('opsSpIdInTenant'))]",
+      "properties": {
+        "description": "opsSpId : Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('21090545-7ca7-4776-b22c-e363652d74d2',if(empty(variables('teamReadersGroupId')),'teamReadersGroupId',variables('teamReadersGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('teamReadersGroupId'))),variables('teamReadersGroupIdInTenant'))]",
+      "properties": {
+        "description": "teamReadersGroupId : Key Vault Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','21090545-7ca7-4776-b22c-e363652d74d2')]",
+        "principalId": "[variables('teamReadersGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[guid('acdd72a7-3385-48ef-bd42-f606fba81ae7',if(empty(variables('teamReadersGroupId')),'teamReadersGroupId',variables('teamReadersGroupId')),subscription().subscriptionId)]",
+      "condition": "[and(not(empty(variables('teamReadersGroupId'))),variables('teamReadersGroupIdInTenant'))]",
+      "properties": {
+        "description": "teamReadersGroupId : Reader",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "principalId": "[variables('teamReadersGroupId')]",
+        "principalType": "Group",
+        "scope": "[concat('/subscriptions/',subscription().subscriptionId)]"
+      }
+    }
+  ],
+  "outputs": {
+    "appSpId": {
+      "type": "string",
+      "value": "[variables('appSpId')]"
+    },
+    "breakGlassGroupId": {
+      "type": "string",
+      "value": "[variables('breakGlassGroupId')]"
+    },
+    "component": {
+      "type": "string",
+      "value": "codesp"
+    },
+    "env": {
+      "type": "string",
+      "value": "ppe"
+    },
+    "isSupportedComponent": {
+      "type": "bool",
+      "value": true
+    },
+    "jitAdminsGroupId": {
+      "type": "string",
+      "value": "[variables('jitAdminsGroupId')]"
+    },
+    "jitContributorsGroupId": {
+      "type": "string",
+      "value": "[variables('jitContributorsGroupId')]"
+    },
+    "jitReadersGroup": {
+      "type": "string",
+      "value": "[variables('jitReadersGroup')]"
+    },
+    "opsSpId": {
+      "type": "string",
+      "value": "[variables('opsSpId')]"
+    },
+    "plane": {
+      "type": "string",
+      "value": "ctl"
+    },
+    "teamReadersGroupId": {
+      "type": "string",
+      "value": "[variables('teamReadersGroupId')]"
+    }
+  }
+}

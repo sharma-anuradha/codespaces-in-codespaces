@@ -1,0 +1,87 @@
+// Auto-Generated From Template
+// "codesp.instance.servicemodel.jsonc"
+// with names file "codesp.ppe-ctl-rel.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "vscs-codesp-ppe-rel-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-codesp-ppe-rel-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-codesp-ppe-rel-instance-databases-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.ppe-ctl-rel/ARM/codesp.instance.databases.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-ppe-rel-instance-maps-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.ppe-ctl-rel/ARM/codesp.instance.maps.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-ppe-rel-instance-trafficmanagerprofile-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "empty.arm.json"
+            },
+            "extension": {
+              "rolloutParametersPath": "codesp.ppe-ctl-rel/Ev2/codesp.instance.scripts.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/deploy-instancetrafficmanagerprofile"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "deploy-instancetrafficmanagerprofile",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v14"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-codesp-ppe-rel",
+      "location": "WestUs2",
+      "instanceOf": "vscs-codesp-ppe-rel-rg-def",
+      "azureSubscriptionId": "c57ef400-af62-4b47-a0b6-24ae55e7b8fd",
+      "serviceResources": [
+        {
+          "name": "vscs-codesp-ppe-rel-instance-databases",
+          "instanceOf": "vscs-codesp-ppe-rel-instance-databases-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-ppe-rel-instance-maps",
+          "instanceOf": "vscs-codesp-ppe-rel-instance-maps-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-ppe-rel-instance-trafficmanagerprofile",
+          "instanceOf": "vscs-codesp-ppe-rel-instance-trafficmanagerprofile-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

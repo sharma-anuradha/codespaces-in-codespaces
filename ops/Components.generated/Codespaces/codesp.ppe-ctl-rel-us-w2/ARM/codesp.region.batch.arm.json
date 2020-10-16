@@ -1,0 +1,152 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+    "startTaskCommandLineBase64": {
+      "type": "string",
+      // TODO: need to construct this value at EV2 deployment time :(
+      "defaultValue": null
+    }
+  },
+
+  "variables": {
+    "batchAccountName": "codesppperelusw2ba",
+    "batchAccountNsgName": "codesppperelusw2ba-nsg",
+    "batchAccountVnetName": "codesppperelusw2ba-vnet",
+    "batchAccountId": "[resourceId('Microsoft.Batch/batchAccounts', variables('batchAccountName'))]",
+    "batchAccountNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('batchAccountNsgName'))]",
+    "batchAccountVnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('batchAccountVnetName'))]"
+  },
+
+  "resources": [
+    {
+      "comments": "***** Network Security Group associated with Batch Pool Virtual Network Subnet - See https://docs.microsoft.com/en-us/azure/batch/batch-virtual-network#network-security-groups *****",
+      "name": "[variables('batchAccountNsgName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-09-01",
+      "location": "WestUs2",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "BatchServiceRule",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "29876-29877",
+              "sourceAddressPrefix": "BatchNodeManagement",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('batchAccountVnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-09-01",
+      "location": "WestUs2",
+      "dependsOn": [
+        "[variables('batchAccountNsgId')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "172.18.0.0/16"
+          ]
+        },
+        "dhcpOptions": {
+          "dnsServers": []
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "172.18.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[variables('batchAccountNsgId')]"
+              },
+              "delegations": [],
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "name": "[variables('batchAccountName')]",
+      "type": "Microsoft.Batch/batchAccounts",
+      "apiVersion": "2020-03-01",
+      "location": "WestUs2",
+      "properties": {
+        "poolAllocationMode": "BatchService"
+      },
+      "resources": [
+        {
+          "name": "[concat(variables('batchAccountName'), '/storage-worker-pool')]",
+          "type": "Microsoft.Batch/batchAccounts/pools",
+          "apiVersion": "2020-03-01",
+          "dependsOn": [
+            "[variables('batchAccountId')]",
+            "[variables('batchAccountVnetId')]"
+          ],
+          "properties": {
+            "vmSize": "STANDARD_D8S_V3",
+            "interNodeCommunication": "Disabled",
+            "maxTasksPerNode": 8,
+            "taskSchedulingPolicy": {
+              "nodeFillType": "Spread"
+            },
+            "deploymentConfiguration": {
+              "virtualMachineConfiguration": {
+                "imageReference": {
+                  "publisher": "Canonical",
+                  "offer": "ubuntuserver",
+                  "sku": "18.04-lts",
+                  "version": "latest"
+                },
+                "nodeAgentSkuId": "batch.node.ubuntu 18.04",
+                "dataDisks": [
+                  {
+                    "lun": 0,
+                    "caching": "ReadOnly",
+                    "diskSizeGB": 1024,
+                    "storageAccountType": "Premium_LRS"
+                  }
+                ]
+              }
+            },
+            "networkConfiguration": {
+              "subnetId": "[concat(variables('batchAccountVnetId'), '/subnets/default')]"
+            },
+            "scaleSettings": {
+              "fixedScale": {
+                "targetDedicatedNodes": 5,
+                "targetLowPriorityNodes": 0,
+                "resizeTimeout": "PT15M"
+              }
+            },
+            "startTask": {
+              "commandLine": "[concat('/bin/bash -cxe \" base64 --decode <<< ', parameters('startTaskCommandLineBase64'), ' | /bin/bash -xe\"')]",
+              "userIdentity": {
+                "autoUser": {
+                  "scope": "Pool",
+                  "elevationLevel": "Admin"
+                }
+              },
+              "maxTaskRetryCount": 0,
+              "waitForSuccess": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

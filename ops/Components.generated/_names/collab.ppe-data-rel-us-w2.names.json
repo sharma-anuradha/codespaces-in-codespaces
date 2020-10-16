@@ -13,12 +13,14 @@
   "baseRegionName": "vscs-collab-ppe-data-rel-us-w2",
   "baseRegionStorageName": "collabppedatarelusw2",
   "component": "collab",
+  "componentDisplayName": "Collaboration",
   "env": "ppe",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestEurope",
     "WestUs2"
   ],
+  "environmentTenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
   "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
@@ -30,9 +32,12 @@
     "eu-w",
     "us-w2"
   ],
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-collab-ppe-data-ops-sp",
   "plane": "data",
   "prefix": "vscs",
   "region": "us-w2",
   "regionLocation": "WestUs2",
-  "regionSuffix": "w2"
+  "regionSuffix": "w2",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

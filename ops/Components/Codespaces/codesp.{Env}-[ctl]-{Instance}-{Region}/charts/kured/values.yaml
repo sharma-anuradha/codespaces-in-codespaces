@@ -1,0 +1,4 @@
+image:
+  repositoryUrl: {{{imageRepositoryUrl}}}
+  kuredDaemonsetName: 'kured-modded'
+  kuredDaemonsetTag: '1'

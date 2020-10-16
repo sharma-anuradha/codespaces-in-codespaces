@@ -6,11 +6,15 @@
   "baseFileName": "comm.ppe",
   "baseName": "vscs-comm-ppe",
   "component": "comm",
+  "componentDisplayName": "Communications",
   "env": "ppe",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestEurope",
     "WestUs2"
   ],
-  "prefix": "vscs"
+  "environmentTenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
+  "location": "WestUs2",
+  "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

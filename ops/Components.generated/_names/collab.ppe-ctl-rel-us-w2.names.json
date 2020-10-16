@@ -13,13 +13,45 @@
   "baseRegionName": "vscs-collab-ppe-rel-us-w2",
   "baseRegionStorageName": "collabpperelusw2",
   "component": "collab",
+  "componentDisplayName": "Collaboration",
+  "containerRegistryName": "vscscollabppeacr",
+  "containerRegistryReplications": [
+    {
+      "name": "vscscollabppeacr/westeurope",
+      "condition": "[not(equals(toLower(variables('location')),'westeurope'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westeurope",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscollabppeacr')]"
+      ]
+    },
+    {
+      "name": "vscscollabppeacr/westus2",
+      "condition": "[not(equals(toLower(variables('location')),'westus2'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westus2",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscollabppeacr')]"
+      ]
+    }
+  ],
   "env": "ppe",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestEurope",
     "WestUs2"
   ],
+  "environmentTenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
   "geo": "us",
+  "imageRepositoryUrl": "vscscollabppeacr.azurecr.io",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceStampLocations": [
@@ -30,9 +62,12 @@
     "eu-w",
     "us-w2"
   ],
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-collab-ppe-ops-sp",
   "plane": "ctl",
   "prefix": "vscs",
   "region": "us-w2",
   "regionLocation": "WestUs2",
-  "regionSuffix": "w2"
+  "regionSuffix": "w2",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

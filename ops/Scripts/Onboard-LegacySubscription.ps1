@@ -12,12 +12,6 @@ param(
     [switch]$AdminOwner
 )
 
-# Global error handling
-trap {
-    Write-Error $_
-    exit 1
-}
-
 # Utilities
 . "$PSScriptRoot\OpsUtilities.ps1"
 
@@ -213,9 +207,6 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName, [int]$perce
         }
     }
 }
-
-# User must be Owner to run this script on the subscription.
-# Assert-SignedInUserIsOwner | Out-Null
 
 # Get the group accounts and appids for subscription RBAC.
 if (!$SkipRbac) {

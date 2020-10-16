@@ -13,11 +13,13 @@
   "baseRegionName": "vscs-collab-dev-data-ci-us-w2",
   "baseRegionStorageName": "collabdevdataciusw2",
   "component": "collab",
+  "componentDisplayName": "Collaboration",
   "env": "dev",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestUs2"
   ],
+  "environmentTenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
   "geo": "us",
   "instance": "ci",
   "instanceLocation": "WestUs2",
@@ -27,9 +29,12 @@
   "instanceStampRegions": [
     "us-w2"
   ],
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-collab-dev-data-ops-sp",
   "plane": "data",
   "prefix": "vscs",
   "region": "us-w2",
   "regionLocation": "WestUs2",
-  "regionSuffix": "w2"
+  "regionSuffix": "w2",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

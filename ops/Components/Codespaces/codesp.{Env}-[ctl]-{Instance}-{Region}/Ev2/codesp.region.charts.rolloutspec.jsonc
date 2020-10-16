@@ -1,0 +1,41 @@
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "{{{baseRegionFileName}}}/Ev2/codesp.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "{{{baseRegionName}}}-common-charts",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "{{{baseRegionName}}}-common-charts",
+      "targetType": "Application",
+      "applications": {
+        "names": [
+          "{{{baseRegionName}}}-docker-image-cleanup-chart",
+          "{{{baseRegionName}}}-geneva-chart",
+          "{{{baseRegionName}}}-kubernetes-dashboard-chart",
+          "{{{baseRegionName}}}-kured-chart",
+          "{{{baseRegionName}}}-nginx-ingress-controller-chart"
+        ],
+        "actions": [
+          "AppDeploy"
+        ],
+        "applyAcrossServiceResources": {
+          "definitionName": "{{{baseRegionName}}}-region-cluster-charts-def",
+          "deployArmResources": false,
+          "names": [
+            "{{{baseRegionName}}}-region-cluster-charts"
+          ]
+        }
+      }
+    }
+  ]
+}

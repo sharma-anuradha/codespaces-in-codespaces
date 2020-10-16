@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "name": "vscs-codesp-prod-rel-us-e-db",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2015-04-08",
+      "location": "EastUS",
+      "kind": "GlobalDocumentDB",
+      "tags": {
+        "defaultExperience": "Core (SQL)"
+      },
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        },
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": false,
+        "isVirtualNetworkFilterEnabled": false,
+        "locations": [
+          {
+            "locationName": "EastUS",
+            "failoverPriority": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-regional-db",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2019-08-01",
+      "location": "EastUS",
+      "kind": "GlobalDocumentDB",
+      "tags": {
+        "defaultExperience": "Core (SQL)"
+      },
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "BoundedStaleness",
+          "maxStalenessPrefix": 100000,
+          "maxIntervalInSeconds": 300
+        },
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": false,
+        "isVirtualNetworkFilterEnabled": false,
+        "locations": [
+          {
+            "locationName": "EastUS",
+            "failoverPriority": 0
+          }
+        ]
+      }
+    }
+  ]
+}

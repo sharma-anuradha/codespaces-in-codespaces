@@ -1,5 +1,9 @@
 @echo off
-setlocal
+setlocal enableDelayedExpansion
+set /a "EV2ONLY=0"
+if /I "%1" == "ev2only" (
+    set /a "EV2ONLY=1"
+)
 
 ::Update-GeneratedFiles
 set CMD=pwsh -f "%~dp0%Scripts\Update-GeneratedFiles.ps1" -UpdateComponents
@@ -17,8 +21,8 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-::Test-ServiceRollout for Stub
-set CMD=powershell -f "%~dp0%Scripts\Test-ServiceRollout.ps1" -Component stub
+::Test-ServiceRollout for Codespaces
+set CMD=powershell -f "%~dp0%Scripts\Test-ServiceRollout.ps1" -Component Codespaces
 echo call %CMD%
 call %CMD%
 if errorlevel 1 (
@@ -26,47 +30,29 @@ if errorlevel 1 (
 )
 echo.
 
-::Test-ServiceRollout for Core
-set CMD=powershell -f "%~dp0%Scripts\Test-ServiceRollout.ps1" -Component core
-echo call %CMD%
-call %CMD%
+if %EV2ONLY% == 1 (
+    call :write_host "All validation succeeded" green
+    exit /b 0
+)
+
+:: Invoke generated validators for all components
+set cmd=pwsh -f "%~dp0%Scripts\Invoke-GeneratedValidators.ps1" -All
+echo %cmd%
+call %cmd%
 if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
-echo.
-
-::ARM templates for dev environment
-for %%f in (%~dp0..\bin\debug\ops\Components.generated\Core\core.dev-ctl\arm\*.arm.json) do (
-    call :az_deployment_group_validate vscs-core-dev-ctl vscs-core-dev %%f
-    if errorlevel 1 (
-        exit /b 1
-    )
+    call :write_host "One or more validators failed" Red
+    exit /b 1
 )
 
-::ARM templates for dev instances
-for %%f in (%~dp0..\bin\debug\ops\Components.generated\Core\core.dev-ctl-ci\arm\*.arm.json) do (
-    call :az_deployment_group_validate vscs-core-dev-ctl vscs-core-dev-ci %%f
-    if errorlevel 1 (
-        exit /b 1
-    )
-)
-
-::ARM templates for dev regions
-for %%f in (%~dp0..\bin\debug\ops\Components.generated\Core\Core.dev-ctl-ci-us-w2\arm\*.arm.json) do (
-    call :az_deployment_group_validate vscs-core-dev-ctl vscs-core-dev-ci-us-w2 %%f
-    if errorlevel 1 (
-        exit /b 1
-    )
-)
-
-::HELM Lint Charts
-for /D %%d in (%~dp0..\bin\debug\ops\Components.generated\Core\charts\*) do (
+::HELM Lint Codespaces Charts
+for /D %%d in (%~dp0..\bin\debug\ops\Components.generated\Codespaces\charts\*) do (
     call :helm_lint %%d
     if errorlevel 1 (
         exit /b 1
     )
 )
 
+call :write_host "All validation succeeded" green
 exit /b 0
 :: END
 
@@ -76,15 +62,18 @@ exit /b 0
     set "subscription=%1"
     set "group=%2"
     set "template=%3"
-    echo Validating ARM tempalte "%template%"
-    set cmd=az deployment group validate -f "%template%" --subscription %subscription% -g %group% -o none
+    set "parameters_file=%template:.arm.json=.arm.parameters.json%"
+    set "parameters="
+    if exist "%parameters_file%" set "parameters=-p @%parameters_file%"
+    call :write_host "Validating ARM template '%template%'" DarkBlue
+    set cmd=az deployment group validate --no-prompt -f "%template%" %parameters% --subscription %subscription% -g %group% -o none
     echo %cmd%
     call %cmd%
     if errorlevel 1 (
-        call pwsh -C Write-Host "validation failed" -ForegroundColor red
+        call :write_host "ARM validation failed" red
         exit /b 1
     )
-    call pwsh -C Write-Host "validation succeeded" -ForegroundColor green
+    call :write_host "ARM validation succeeded" green
     echo.
     exit /b 0
 
@@ -97,10 +86,26 @@ exit /b 0
         echo helm lint "%chart_dir%" -f "%%v"
         call helm lint "%chart_dir%" -f "%%v"
         if errorlevel 1 (
-            call pwsh -C Write-Host "validation failed" -ForegroundColor red
+            call :write_host "helm lint validation failed" red
+            exit /b 1
+        )
+        echo helm template "%chart_dir%" -f "%%v"
+        call helm template "%chart_dir%" -f "%%v" > nul
+        if errorlevel 1 (
+            call :write_Host "helm template validation failed" red
             exit /b 1
         )
     )
-    call pwsh -C Write-Host "validation succeeded" -ForegroundColor green
+    call :write_host "helm validation succeeded" green
     echo.
     exit /b 0
+
+:write_host
+    setlocal
+    set "message=%1"
+    set "color=%2"
+    set "foregroundcolor="
+    if defined color set "foregroundcolor=-ForegroundColor %color%"
+    call pwsh -C Write-Host "%message%" %foregroundcolor%
+    exit /b 0
+

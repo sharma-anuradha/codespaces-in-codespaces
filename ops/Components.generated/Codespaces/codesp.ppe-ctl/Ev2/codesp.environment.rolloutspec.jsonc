@@ -1,0 +1,63 @@
+// Auto-Generated From Template
+// "codesp.environment.rolloutspec.jsonc"
+// with names file "codesp.ppe-ctl.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  //"$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.ppe-ctl/Ev2/codesp.environment.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-ppe-arm",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-ppe-env-identities",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-ppe-env-identities",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-ppe-env-keyvault",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-ppe-env-keyvault",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-ppe-env-keyvaults",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-ppe-env-keyvaults",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-ppe-env-acr",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-ppe-env-acr",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-ppe-env-network",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-ppe-env-network",
+      "actions": [
+        "Deploy"
+      ]
+    }
+  ]
+}

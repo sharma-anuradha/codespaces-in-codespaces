@@ -14,15 +14,6 @@ param(
     [switch]$Confirm
 )
 
-# Global error handling
-trap {
-    Write-Error $_
-    exit 1
-}
-
-# Utilities
-# . "$PSScriptRoot\OpsUtilities.ps1"
-
 # Preamble
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"

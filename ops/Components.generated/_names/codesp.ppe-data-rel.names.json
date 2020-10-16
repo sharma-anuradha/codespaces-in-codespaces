@@ -10,12 +10,14 @@
   "basePlaneFileName": "codesp.ppe-data",
   "basePlaneName": "vscs-codesp-ppe-data",
   "component": "codesp",
+  "componentDisplayName": "Codespaces",
   "env": "ppe",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestEurope",
     "WestUs2"
   ],
+  "environmentTenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceStampLocations": [
@@ -26,6 +28,9 @@
     "eu-w",
     "us-w2"
   ],
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-codesp-ppe-data-ops-sp",
   "plane": "data",
-  "prefix": "vscs"
+  "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

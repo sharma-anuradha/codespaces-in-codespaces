@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Scope Bindings",
+  "description": "A document that defines the bindings for resource parameters, configuration files and any custom payloads files for extensions. It is required to use the Parameterization feature and otherwise optional.",
+  "type": "object",
+  "properties": {
+    "scopeBindings": {
+      "description": "The list of scope binding definitions.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "scopeTagName": {
+            "description": "The unique tag name tied to a service resource group or a service resource.",
+            "type": "string"
+          },
+          "bindings": {
+            "description": "The list of bindings related to a service resource group or a service resource.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "find": {
+                  "description": "The placeholder to be replaced.",
+                  "type": "string"
+                },
+                "replaceWith": {
+                  "description": "The value to replace the placeholder.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

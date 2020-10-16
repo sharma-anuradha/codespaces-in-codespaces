@@ -1,0 +1,57 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "variables": {
+    "serviceBusQueueProperties": {
+      "lockDuration": "PT30S",
+      "maxSizeInMegabytes": 4096,
+      "requiresDuplicateDetection": true,
+      "requiresSession": true,
+      "defaultMessageTimeToLive": "PT30S",
+      "duplicateDetectionHistoryTimeWindow": "PT30S",
+      "maxDeliveryCount": 3
+    }
+  },
+
+  "resources": [
+    {
+      "name": "vscs-codesp-ppe-rel-us-w2-service-bus",
+      "type": "Microsoft.ServiceBus/namespaces",
+      "apiVersion": "2017-04-01",
+      "location": "WestUs2",
+      "sku": {
+        "name": "Standard"
+      },
+      "resources": [
+        {
+          "name": "connections-new",
+          "type": "queues",
+          "apiVersion": "2017-04-01",
+          "properties": "[variables('serviceBusQueueProperties')]",
+          "dependsOn": [
+            "vscs-codesp-ppe-rel-us-w2-service-bus"
+          ]
+        },
+        {
+          "name": "connections-established",
+          "type": "queues",
+          "apiVersion": "2017-04-01",
+          "properties": "[variables('serviceBusQueueProperties')]",
+          "dependsOn": [
+            "vscs-codesp-ppe-rel-us-w2-service-bus"
+          ]
+        },
+        {
+          "name": "connections-errors",
+          "type": "queues",
+          "apiVersion": "2017-04-01",
+          "properties": "[variables('serviceBusQueueProperties')]",
+          "dependsOn": [
+            "vscs-codesp-ppe-rel-us-w2-service-bus"
+          ]
+        }
+      ]
+    }
+  ]
+}

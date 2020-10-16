@@ -1,7 +1,7 @@
 // Environments.ts
 
 import { find, cloneDeep } from "lodash";
-import ResourceNames, { EnvironmentNames, InstanceNames, RegionNames, PlaneNames, ComponentNames } from "./ResourceNames";
+import ResourceNames, { EnvironmentNames, InstanceNames, RegionNames, PlaneNames, ComponentNames } from "../Values/ResourceNames";
 
 export class EnvironmentsDeployment implements IEnvironmentsDeployment {
     globalPrefix: string;
@@ -39,7 +39,7 @@ export class EnvironmentsDeployment implements IEnvironmentsDeployment {
         for (const envName in environments) {
             const envObj = environments[envName];
             const envLocation = this.getDataLocation(envObj.location);
-            const env = new Environment(envName, envObj.pme, envLocation);
+            const env = new Environment(envName, envObj.tenantId, envLocation);
             for (const plane of env.planes) {
                 for (const instanceName in envObj.instances) {
                     const instanceObj = envObj.instances[instanceName];
@@ -126,14 +126,14 @@ export class Plane {
 
 export class Environment {
     readonly name: string;
-    readonly pme: boolean;
+    readonly tenantId: string;
     readonly primaryLocation: DataLocation;
-    readonly planes: Plane[] = [new Plane("ops", this), new Plane("ctl", this), new Plane("data", this)];
+    readonly planes: Plane[] = [new Plane("ctl", this), new Plane("data", this)];
     outputNames: EnvironmentNames;
 
-    constructor(name: string, pme: boolean, primaryLocation: DataLocation) {
+    constructor(name: string, tenantId: string, primaryLocation: DataLocation) {
         this.name = name;
-        this.pme = pme;
+        this.tenantId = tenantId;
         this.primaryLocation = primaryLocation;
     }
 
@@ -145,7 +145,7 @@ export class Environment {
     }
 
     generateNamesJson(componentNames: ComponentNames): EnvironmentNames {
-        this.outputNames = ResourceNames.sortKeys(new EnvironmentNames(componentNames, this.name, this.primaryLocation.azureLocation, this.allStampAzureLocations));
+        this.outputNames = ResourceNames.sortKeys(new EnvironmentNames(componentNames, this.name, this.tenantId, this.primaryLocation.azureLocation, this.allStampAzureLocations));
         return this.outputNames;
     }
 

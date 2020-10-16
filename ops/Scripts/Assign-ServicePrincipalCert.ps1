@@ -18,12 +18,6 @@ param(
     [int]$Count
 )
 
-#Global error handling
-trap {
-    Write-Error $_
-    exit 1
-}
-
 # Utilities
 . "$PSScriptRoot\OpsUtilities.ps1"
 

@@ -1,0 +1,46 @@
+// Auto-Generated From Template
+// "codesp.region.charts.rolloutspec.jsonc"
+// with names file "codesp.ppe-ctl-rel-us-w2.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.ppe-ctl-rel-us-w2/Ev2/codesp.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-ppe-rel-us-w2-common-charts",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-ppe-rel-us-w2-common-charts",
+      "targetType": "Application",
+      "applications": {
+        "names": [
+          "vscs-codesp-ppe-rel-us-w2-docker-image-cleanup-chart",
+          "vscs-codesp-ppe-rel-us-w2-geneva-chart",
+          "vscs-codesp-ppe-rel-us-w2-kubernetes-dashboard-chart",
+          "vscs-codesp-ppe-rel-us-w2-kured-chart",
+          "vscs-codesp-ppe-rel-us-w2-nginx-ingress-controller-chart"
+        ],
+        "actions": [
+          "AppDeploy"
+        ],
+        "applyAcrossServiceResources": {
+          "definitionName": "vscs-codesp-ppe-rel-us-w2-region-cluster-charts-def",
+          "deployArmResources": false,
+          "names": [
+            "vscs-codesp-ppe-rel-us-w2-region-cluster-charts"
+          ]
+        }
+      }
+    }
+  ]
+}

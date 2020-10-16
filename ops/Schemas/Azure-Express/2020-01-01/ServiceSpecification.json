@@ -1,0 +1,38 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ServiceSpecification",
+  "description": "The document representation of the Service Specification of a Service.",
+  "type": "object",
+  "properties": {
+    "contentVersion": {
+      "description": "The version of the schema that a document conforms to.",
+      "type": "string",
+      "pattern": "^([0-9]+\\.)?([0-9]+\\.)?([0-9]+\\.)?([0-9]+){1}$"
+    },
+    "identifier": {
+      "description": "The unique identifier for the service registered with Azure Deployment Manager.",
+      "type": "string"
+    },
+    "description": {
+      "description": "A brief description for the service.",
+      "type": "string"
+    },
+    "ownerGroupObjectId": {
+      "description": "The owner security group object identifier.",
+      "type": "string"
+    },
+    "ownerGroupDisplayName": {
+      "description": "The display name for the owner group object identifier.",
+      "type": "string"
+    },
+    "ownerGroupContactEmail": {
+      "description": "The email contact alias for the owner group.",
+      "type": "string"
+    },
+    "policyCheckEnabled": {
+      "description": "The value indicating if all rollouts for this service should use a policy.",
+      "type": "boolean"
+    }
+  },
+  "required": [ "identifier", "ownerGroupContactEmail", "description", "ownerGroupObjectId", "policyCheckEnabled" ]
+}

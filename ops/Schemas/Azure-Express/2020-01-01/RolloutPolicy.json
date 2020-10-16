@@ -1,0 +1,207 @@
+﻿{
+  "title": "RolloutPolicy",
+  "description": "The document representation of the Rollout Policy.",
+  "type": "object",
+  "properties": {
+    "contentVersion": {
+      "description": "The version of the schema that a document conforms to.",
+      "type": "string",
+      "pattern": "^([0-9]+\\.)?([0-9]+\\.)?([0-9]+\\.)?([0-9]+){1}$"
+    },
+
+    "name": {
+      "description": "The name to identify the policy.",
+      "type": "string"
+    },
+    "version": {
+      "description": "The version of the rollout policy.",
+      "type": "string"
+    },
+    "safeRollout": {
+      "description": "Defines the safe rollout policies.",
+      "type": "object",
+      "properties": {
+        "regionPairs": {
+          "description": "Defines the region pairs for the service.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "primary": {
+                "description": "The name of the primary region.",
+                "type": "string"
+              },
+              "secondary": {
+                "description": "The name of the secondary region.",
+                "type": "string"
+              }
+            },
+            "required": [ "primary", "secondary" ]
+          }
+        },
+        "stages": {
+          "description": "Defines the stages that the rollout should conform to.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "number": {
+                "description": "The stage number.",
+                "type": "integer"
+              },
+              "name": {
+                "description": "A human-readable stage name.",
+                "type": "string"
+              },
+              "maxDeployableRegions": {
+                "description": "The maximum number of regions that can be deployed to in parallel in this stage.",
+                "type": "integer"
+              },
+              "allowedRegions": {
+                "description": "The regions that can be deployed to in this stage.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disallowedRegions": {
+                "description": "The regions that cannot be deployed to in this stage.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "waitAfterCompletion": {
+                "description": "The time to wait before starting the dependent stage in ISO8601 format.",
+                "type": "string"
+              }
+            },
+            "required": [ "number", "name", "maxDeployableRegions" ]
+          }
+        }
+      },
+      "required": [ "regionPairs", "stages" ]
+    },
+    "artifactSource": {
+      "description": "Defines the artifact source policy.",
+      "type": "object",
+      "properties": {
+        "disallowedTypes": {
+          "description": "The disallowed artifact source types for the rollout, list of types: SmbShare, AzureStorage",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [ "disallowedTypes" ]
+    },
+    "noRollout": {
+      "description": "Defines policy to block new rollout creation and suspend running rollout within specified time windows.",
+      "type": "object",
+      "properties": {
+        "noRolloutZones": {
+          "description": "The time periods (UTC) for of No-Rollout policy",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "The name of the no-rollout zone",
+                "type": "string"
+              },
+              "locations": {
+                "description": "Locations where no-rollout zone is applicable. If not specified all locations are in effect",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "startDateTime": {
+                "description": "(default = now) UTC date time in ISO 8601 format to indicate start time of no-rollout [yyyy-mm-ddThh:mm:ss]",
+                "type": "string"
+              },
+              "endDateTime": {
+                "description": "(default = infinity) UTC date time in ISO 8601 format to indicate end time of no-rollout [yyyy-mm-ddThh:mm:ss]",
+                "type": "string"
+              },
+              "effectiveTimeRanges": {
+                "description": "The recurring weekdays and times of when the No-rollout Zone is effective",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "description": "The start day of the week and time (UTC) of the recurring range that the No-rollout policy will be effective",
+                      "type": "object",
+                      "properties": {
+                        "dayOfWeek": {
+                          "description": "The start day of the week of the recurring range that the No-rollout policy will be effective",
+                          "type": "string",
+                          "enum": [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ]
+                        },
+                        "timeOfDay": {
+                          "description": "The start time of the day (UTC) of the recurrence range that the No-rollout policy will be effective [hh:mmZ or hh:mm+|-hh:mm]",
+                          "type": "string"
+                        }
+                      },
+                      "required": [ "dayOfWeek", "timeOfDay" ]
+                    },
+                    "to": {
+                      "description": "The end day of the week and time (UTC) of the recurring range that the No-rollout policy will be effective",
+                      "type": "object",
+                      "properties": {
+                        "dayOfWeek": {
+                          "description": "The end day of the week of the recurring range that the No-rollout policy will be effective",
+                          "type": "string"
+                        },
+                        "timeOfDay": {
+                          "description": "The end time of the day (UTC) of the recurring range that the No-rollout policy will be effective [hh:mmZ or hh:mm+|-hh:mm]",
+                          "type": "string"
+                        }
+                      },
+                      "required": [ "dayOfWeek", "timeOfDay" ]
+                    }
+                  },
+                  "required": [ "from", "to" ]
+                }
+              }
+            },
+            "required": [ "name" ]
+          }
+        }
+      },
+      "required": [ "noRolloutZones" ]
+    },
+    "autoRestart": {
+      "description": "Defines the auto restart policy.",
+      "type": "object",
+      "properties": {
+        "maxRestartAttempts": {
+          "description": "The maximum number of restart attempts for the rollout.",
+          "type": "integer"
+        },
+        "skipSucceeded": {
+          "description": "Flag indicating whether actions that succeeded in previous rollout should be skipped.",
+          "type": "boolean"
+        },
+        "waitDurationAfterFailure": {
+          "description": "The wait duration after which the rollout would be restarted in case of failure.",
+          "type": "string"
+        },
+        "restartOnErrorConditions": {
+          "description": "Error conditons on which restart should be triggered. If not defined, rollout would be restarted on any error encountered.",
+          "type": "object",
+          "properties": {
+            "errorsContainAny": {
+              "description": "The list of error conditions on which rollout should be restarted.",
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [ "maxRestartAttempts", "skipSucceeded" ]
+    }
+  },
+  "required": [ "name", "version"]
+}

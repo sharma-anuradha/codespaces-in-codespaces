@@ -1,0 +1,31 @@
+// Auto-Generated From Template
+// "codesp.region.trafficmanager.rolloutspec.jsonc"
+// with names file "codesp.prod-ctl-rel-ap-se.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.prod-ctl-rel-ap-se/Ev2/codesp.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-prod-rel-ap-se-trafficmanager",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-prod-rel-ap-se-region-trafficmanagerendpoint",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-ap-se-region-trafficmanagerendpoint",
+      "actions": [
+        "Shell/deploy-instancetrafficmanagerendpoint"
+      ]
+    }
+  ]
+}

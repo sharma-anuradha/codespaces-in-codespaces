@@ -1,0 +1,95 @@
+<MonitoringManagement version="1.0" eventVersion="1" timestamp="2019-05-23T00:00:00Z" namespace="VsOnlineDev">
+  <Accounts>
+    <Account moniker="vsonlinedevdiag" isDefault="true" />
+    <Account moniker="vsonlinedevsecurity" alias="SecurityStore" />
+    <Account moniker="vsonlinedevaudit" alias="AuditStore" />
+  </Accounts>
+  <!-- Linux mdsd usage documentation: https://jarvis.dc.ad.msft.net/?page=documents&section=1363da01-b6ed-43d4-970e-f89b011d591f&id=89b7a7f4-8cf1-4a76-b541-478d37fc760f  -->
+  <Management defaultRetentionInDays="90" eventVolume="Large">
+    <Identity>
+      <IdentityComponent name="Tenant">null</IdentityComponent>
+      <IdentityComponent name="Role">null</IdentityComponent>
+      <IdentityComponent name="RoleInstance">null</IdentityComponent>
+      <IdentityComponent name="MachineName">null</IdentityComponent>
+    </Identity>
+    <AgentResourceUsage diskQuotaInMB="20000" cpuPercentUsage="50" />
+    <AgentMetrics mdmMonitoringAccount="VsOnlineDev" />
+  </Management>
+  <!-- Linux events documentation: https://jarvis.dc.ad.msft.net/?page=documents&section=9c95f4eb-8689-4c9f-81bf-82d688e860fd&id=762a440d-3a1e-4ff3-86d6-03c491c163b2   -->
+  <!--
+      Events can contain one or more Event elements.  The Event elements each describe a different kind of collector.
+      Events must be defined in the order of the mds2.xsd.
+  -->
+  <Events>
+    <EventDeclarations storeType="CentralBond">
+      <Declaration account="SecurityStore" eventName="LinuxAsmHeartbeat" />
+      <Declaration account="SecurityStore" eventName="LinuxAsmBaseline" />
+      <Declaration account="SecurityStore" eventName="LinuxAsmSoftware" />
+      <Declaration account="SecurityStore" eventName="LinuxAsmClamav" />
+      <Declaration account="SecurityStore" eventName="LinuxAsmSyslog" />
+      <Declaration account="SecurityStore" eventName="LinuxAsmSecurity" />
+      <Declaration account="SecurityStore" eventName="LinuxAsmScanEvent" />
+      <Declaration account="SecurityStore" eventName="LinuxAsmAlert" />
+      <Declaration account="SecurityStore" eventName="LinuxAsmAudit" />
+      <Declaration account="SecurityStore" eventName="AsmVsaFMSnap" />
+      <Declaration account="AuditStore" eventName="AsmIfxAuditApp" retentionInDays="120" />
+      <Declaration account="AuditStore" eventName="AsmIfxAuditMgmt" retentionInDays="120" />
+      <Declaration eventName="DefaultEvent" />
+      <Declaration eventName="KubeProbeActivity" />
+      <Declaration eventName="EnvRegActivity" />
+      <Declaration eventName="ComputeProvActivity" />
+      <Declaration eventName="ContainerPoolActivity" />
+      <Declaration eventName="SignlrActivity" />
+      <Declaration eventName="VsoBiActivity" />
+    </EventDeclarations>
+    <FileMonitors storeType="CentralBond">
+      <FileWatchItem account="SecurityStore" eventName="AsmVsaFMSnap" container="shava-snapshots">
+        <Directory>/var/lib/vsanodescan/snapshots/</Directory>
+      </FileWatchItem>
+    </FileMonitors>
+    <CrashDumpMonitor>
+      <CrashDumpItem eventName="CrashDumpEvent" storeType="CentralBond" useAzureWatson="true">
+        <ProcessList>
+          <Process>[All]</Process>
+        </ProcessList>
+      </CrashDumpItem>
+    </CrashDumpMonitor>
+  </Events>
+  <EventStreamingAnnotations>
+    <EventStreamingAnnotation name="^LinuxAsm.*$">
+      <Cosmos>
+        <Content><![CDATA[ <Config /> ]]></Content>
+      </Cosmos>
+    </EventStreamingAnnotation>
+    <EventStreamingAnnotation name="^DefaultEvent$">
+      <LogAnalytics>
+        <Content>LogAnalyticsContent</Content>
+      </LogAnalytics>
+    </EventStreamingAnnotation>
+    <EventStreamingAnnotation name="^EnvRegActivity$">
+      <LogAnalytics>
+        <Content>LogAnalyticsContent</Content>
+      </LogAnalytics>
+    </EventStreamingAnnotation>
+    <EventStreamingAnnotation name="^ComputeProvActivity$">
+      <LogAnalytics>
+        <Content>LogAnalyticsContent</Content>
+      </LogAnalytics>
+    </EventStreamingAnnotation>
+    <EventStreamingAnnotation name="^ContainerPoolActivity$">
+      <LogAnalytics>
+        <Content>LogAnalyticsContent</Content>
+      </LogAnalytics>
+    </EventStreamingAnnotation>
+    <EventStreamingAnnotation name="^SignlrActivity$">
+      <LogAnalytics>
+        <Content>LogAnalyticsContent</Content>
+      </LogAnalytics>
+    </EventStreamingAnnotation>
+    <EventStreamingAnnotation name="^VsoBiActivity$">
+      <LogAnalytics>
+        <Content>LogAnalyticsContent</Content>
+      </LogAnalytics>
+    </EventStreamingAnnotation>
+  </EventStreamingAnnotations>
+</MonitoringManagement>

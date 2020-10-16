@@ -1,0 +1,82 @@
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "{{{baseInstanceName}}}-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "{{{baseInstanceName}}}-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "{{{baseInstanceName}}}-instance-databases-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseInstanceFileName}}}/ARM/codesp.instance.databases.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseInstanceName}}}-instance-maps-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseInstanceFileName}}}/ARM/codesp.instance.maps.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseInstanceName}}}-instance-trafficmanagerprofile-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "empty.arm.json"
+            },
+            "extension": {
+              "rolloutParametersPath": "{{{baseInstanceFileName}}}/Ev2/codesp.instance.scripts.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/deploy-instancetrafficmanagerprofile"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "deploy-instancetrafficmanagerprofile",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v14"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "{{{baseInstanceName}}}",
+      "location": "{{{instanceLocation}}}",
+      "instanceOf": "{{{baseInstanceName}}}-rg-def",
+      "azureSubscriptionId": "{{{subscriptionId}}}",
+      "serviceResources": [
+        {
+          "name": "{{{baseInstanceName}}}-instance-databases",
+          "instanceOf": "{{{baseInstanceName}}}-instance-databases-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseInstanceName}}}-instance-maps",
+          "instanceOf": "{{{baseInstanceName}}}-instance-maps-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseInstanceName}}}-instance-trafficmanagerprofile",
+          "instanceOf": "{{{baseInstanceName}}}-instance-trafficmanagerprofile-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

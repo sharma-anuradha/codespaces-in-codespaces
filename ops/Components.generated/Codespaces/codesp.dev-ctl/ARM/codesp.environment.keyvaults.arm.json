@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "variables": {
+    "keyVaultProperties": {
+      "sku": {
+        "family": "A",
+        "name": "standard"
+      },
+      "tenantId": "[subscription().tenantId]",
+      "accessPolicies": [],
+      "enabledForDeployment": true,
+      "enabledForDiskEncryption": true,
+      "enableSoftDelete": true,
+      "enableRbacAuthorization": true
+    }
+  },
+
+  "resources": [
+    {
+      "comments": "Environment STS Key Vault",
+      "name": "vscs-codesp-dev-sts-kv",
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2019-09-01",
+      "location": "WestUs2",
+      "properties": "[variables('keyVaultProperties')]"
+    },
+    {
+      "comments": "Environment Billing Key Vault",
+      "name": "vscs-codesp-dev-pav2-kv",
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2019-09-01",
+      "location": "WestUs2",
+      "properties": "[variables('keyVaultProperties')]"
+    }
+  ]
+}

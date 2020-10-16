@@ -1,0 +1,29 @@
+// Auto-Generated From Template
+// "codesp.instance.trafficmanager.rolloutspec.jsonc"
+// with names file "codesp.ppe-ctl-rel.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  //"$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.ppe-ctl-rel/Ev2/codesp.instance.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-ppe-rel-trafficmanager",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-ppe-rel-instance-trafficmanagerprofile",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-ppe-rel-instance-trafficmanagerprofile",
+      "actions": [ "Shell/deploy-instancetrafficmanagerprofile" ]
+    }
+  ]
+}

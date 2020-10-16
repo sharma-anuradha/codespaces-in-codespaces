@@ -1,0 +1,4 @@
+image:
+  repositoryUrl: vscscodespdevacr.azurecr.io
+  alpineDockerName: 'alpine-docker'
+  alpineDockerTag: '1'

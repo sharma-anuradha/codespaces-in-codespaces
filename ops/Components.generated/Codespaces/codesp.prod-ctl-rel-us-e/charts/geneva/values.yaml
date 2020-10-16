@@ -1,0 +1,33 @@
+image:
+  acskeyvaultagentName: acskeyvaultagent
+  busyboxName: busybox
+  busyboxTag: latest
+  genevafluentdtdagentName: genevafluentd_td-agent
+  genevamdmName: genevamdm
+  genevamdsdName: genevamdsd
+  genevasecpackinstallName: genevasecpackinstall
+  repositoryUrl: vscscodespprodacr.azurecr.io
+  acskeyvaultagentTag: master_28
+  genevafluentdtdagentTag: master_148
+  genevamdmTag: master_48
+  genevamdsdTag: master_309
+  genevasecpackinstallTag: master_57
+
+config:
+  AzSecPack_AuditMoniker: vsonlineprodaudit
+  AzSecPack_DiagnosticsMoniker: vsonlineproddiag
+  AzSecPack_EventVersion: 1
+  AzSecPack_GCS_Account: VsOnlineProd
+  AzSecPack_GCS_cert_name: vsclk-codesp-prod-monitoring
+  AzSecPack_GCS_cert: /secrets/certs/vsclk-codesp-prod-monitoring
+  AzSecPack_GCS_Environment: DiagnosticsProd
+  AzSecPack_GCS_key: /secrets/keys/vsclk-codesp-prod-monitoring
+  AzSecPack_Namespace: VsOnlineProd
+  AzSecPack_Role: vsonlineprodsecurity
+  AzSecPack_SecurityMoniker: vsonlineprodsecurity
+  AzSecPack_Tenant: 33e01921-4d64-4f8c-a055-5bdaffd5e33d
+  AzSecPack_Timestamp: 2018-05-07T00:00:00Z
+  Geneva_Mdm_Account: VsOnlineProd
+  Geneva_Mdm_Log_Level: "Info"
+  Geneva_Mdm_Metric_Endpoint: "https://global.metrics.nsatc.net/"
+  KeyVault: https://vscs-codesp-prod-ops-kv.vault.azure.net/

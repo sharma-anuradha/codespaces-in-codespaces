@@ -10,6 +10,7 @@ import { program } from "commander";
 
 program
   .requiredOption("-i, --input <inputDir>", "Input Directory", "../Components")
+  .requiredOption("-t --templates <templatedir>", "Templates Directory", "../Components/Templates")
   .requiredOption(
     "-o, --output <outputDir>",
     "Output Directory",
@@ -19,19 +20,20 @@ program
   .parse();
 
 class Main {
-  inputDir: string;
-  outputDir: string;
-  envDep: EnvironmentsDeployment;
-  compDep: ComponentsDeployment;
-  components: Component[];
-  staticItemsDetect = /[^[\\}]+(?=])/g;
+  readonly inputDir: string;
+  readonly templatesDir: string;
+  readonly outputDir: string;
+  readonly envDep: EnvironmentsDeployment;
+  readonly compDep: ComponentsDeployment;
+  readonly components: Component[];
 
-  constructor(inputDir: string, outputDir: string) {
+  constructor(inputDir: string, templatesDir: string, outputDir: string) {
     /*
         Verify and/or create the input and output directories.
         If they don't exist or we can't make them, throw.
       */
     this.inputDir = path.normalize(inputDir.trim());
+    this.templatesDir = path.normalize(templatesDir.trim())
     this.outputDir = path.normalize(outputDir.trim());
     this.verifyInputOutputDirs(this.inputDir, this.outputDir);
     const compJson = JSON.parse(
@@ -52,6 +54,7 @@ class Main {
   GenerateTemplates() {
     const templates = new Templates(
       this.inputDir,
+      this.templatesDir,
       this.outputDir,
       this.components
     );
@@ -79,7 +82,7 @@ class Main {
   }
 }
 
-const main = new Main(program.input, program.output);
+const main = new Main(program.input, program.templates, program.output);
 main.GenerateNames();
 main.GenerateTemplates();
 console.info(`info: Done, check ${main.outputDir}`);

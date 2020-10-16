@@ -6,10 +6,14 @@
   "baseFileName": "codesp.dev",
   "baseName": "vscs-codesp-dev",
   "component": "codesp",
+  "componentDisplayName": "Codespaces",
   "env": "dev",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestUs2"
   ],
-  "prefix": "vscs"
+  "environmentTenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+  "location": "WestUs2",
+  "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

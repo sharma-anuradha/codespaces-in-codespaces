@@ -1,0 +1,3 @@
+{
+    "helmNamespace": "kube-system"
+}

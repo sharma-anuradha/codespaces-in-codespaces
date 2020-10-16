@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "comments": "Codespaces Maps Account",
+      "type": "Microsoft.Maps/accounts",
+      "name": "vscs-codesp-prod-rel-maps",
+      "apiVersion": "2018-05-01",
+      "location": "global",
+      "sku": {
+        "name": "S1",
+        "tier": "Standard"
+      }
+    }
+  ]
+}

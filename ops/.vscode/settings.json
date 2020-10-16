@@ -1,0 +1,6 @@
+{
+  "files.exclude": {
+    "Components.generated/": true,
+    ".vscode/": true,
+  }
+}

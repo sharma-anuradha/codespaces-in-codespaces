@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+  },
+
+  "variables": {
+    "databaseLocationsArray": {{{instanceStampLocations}}}
+  },
+
+  "resources": [
+    {
+      "comments": "Codespaces instance (global) database account for the codespaces front-end",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "name": "{{{baseInstanceName}}}-db",
+      "apiVersion": "2019-08-01",
+      "location": "{{{instanceLocation}}}",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "enableAutomaticFailover": false,
+        "isVirtualNetworkFilterEnabled": false,
+        "virtualNetworkRules": [],
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "BoundedStaleness",
+          "maxStalenessPrefix": 100000,
+          "maxIntervalInSeconds": 300
+        },
+        "enableMultipleWriteLocations": true,
+        // locations
+        "copy": [
+          {
+            "name": "locations",
+            "count": "[length(variables('databaseLocationsArray'))]",
+            "input": {
+              "locationName": "[variables('databaseLocationsArray')[copyIndex('locations')]]",
+              "failoverPriority": "[copyIndex('locations')]",
+              "isZoneRedundant": false
+            }
+          }
+        ],
+        "databaseAccountOfferType": "Standard"
+      },
+      "tags": {
+        "defaultExperience": "Core (SQL)"
+      }
+    },
+    {
+      "comments": "Codespaces instance (global) database account for the resources back-end",
+      "name": "{{{baseInstanceName}}}-resources-db",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2020-06-01-preview",
+      "location": "{{{instanceLocation}}}",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "BoundedStaleness",
+          "maxStalenessPrefix": 100000,
+          "maxIntervalInSeconds": 300
+        },
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": true,
+        "isVirtualNetworkFilterEnabled": false,
+        "virtualNetworkRules": [],
+        // locations
+        "copy": [
+          {
+            "name": "locations",
+            "count": "[length(variables('databaseLocationsArray'))]",
+            "input": {
+              "locationName": "[variables('databaseLocationsArray')[copyIndex('locations')]]",
+              "failoverPriority": "[copyIndex('locations')]",
+              "isZoneRedundant": false
+            }
+          }
+        ]
+      },
+      "tags": {
+        "defaultExperience": "Core (SQL)"
+      }
+    }
+  ]
+}

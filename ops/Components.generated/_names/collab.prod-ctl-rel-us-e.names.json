@@ -13,21 +13,79 @@
   "baseRegionName": "vscs-collab-prod-rel-us-e",
   "baseRegionStorageName": "collabprodreluse",
   "component": "collab",
+  "componentDisplayName": "Collaboration",
+  "containerRegistryName": "vscscollabprodacr",
+  "containerRegistryReplications": [
+    {
+      "name": "vscscollabprodacr/eastus",
+      "condition": "[not(equals(toLower(variables('location')),'eastus'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "eastus",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscollabprodacr')]"
+      ]
+    },
+    {
+      "name": "vscscollabprodacr/southeastasia",
+      "condition": "[not(equals(toLower(variables('location')),'southeastasia'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "southeastasia",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscollabprodacr')]"
+      ]
+    },
+    {
+      "name": "vscscollabprodacr/westeurope",
+      "condition": "[not(equals(toLower(variables('location')),'westeurope'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westeurope",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscollabprodacr')]"
+      ]
+    },
+    {
+      "name": "vscscollabprodacr/westus2",
+      "condition": "[not(equals(toLower(variables('location')),'westus2'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westus2",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscollabprodacr')]"
+      ]
+    }
+  ],
   "env": "prod",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
+    "EastUS",
     "SoutheastAsia",
     "WestEurope",
-    "EastUS",
     "WestUs2"
   ],
+  "environmentTenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
   "geo": "us",
+  "imageRepositoryUrl": "vscscollabprodacr.azurecr.io",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceStampLocations": [
+    "EastUS",
     "SoutheastAsia",
     "WestEurope",
-    "EastUS",
     "WestUs2"
   ],
   "instanceStampRegions": [
@@ -36,9 +94,12 @@
     "us-e",
     "us-w2"
   ],
+  "location": "EastUS",
+  "opsServiceConnector": "vscs-collab-prod-ops-sp",
   "plane": "ctl",
   "prefix": "vscs",
   "region": "us-e",
   "regionLocation": "EastUS",
-  "regionSuffix": "e"
+  "regionSuffix": "e",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

@@ -4,5 +4,7 @@
   "baseFileName": "codesp",
   "baseName": "vscs-codesp",
   "component": "codesp",
-  "prefix": "vscs"
+  "componentDisplayName": "Codespaces",
+  "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

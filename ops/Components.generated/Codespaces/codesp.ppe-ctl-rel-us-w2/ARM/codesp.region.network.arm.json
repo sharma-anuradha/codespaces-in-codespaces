@@ -1,0 +1,109 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "variables": {
+    "clusterNsgName": "vscs-codesp-ppe-rel-us-w2-cluster-v1-nsg",
+    "clusterVNetName": "vscs-codesp-ppe-rel-us-w2-cluster-v1-vnet",
+    "clusterIpAddressName": "vscs-codesp-ppe-rel-us-w2-cluster-v1-ip",
+    "clusterNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('clusterNsgName'))]",
+    "ddosProtectionPlanId": "[resourceId(subscription().subscriptionId,'vscs-codesp-ppe','Microsoft.Network/ddosProtectionPlans','vscs-codesp-ppe-ddos')]"
+  },
+
+  "resources": [
+    // Cluster Network Security Group
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('clusterNsgName')]",
+      "location": "WestUs2",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Http",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow HTTP",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80",
+              "direction": "Inbound",
+              "priority": 500,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "Internet",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "Https",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow HTTPS",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "443",
+              "direction": "Inbound",
+              "priority": 501,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "Internet",
+              "sourcePortRange": "*"
+            }
+          }
+        ]
+      }
+    },
+
+    // Cluster Virtual Network
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('clusterVNetName')]",
+      "apiVersion": "2020-05-01",
+      "location": "WestUs2",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/8"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.240.0.0/16",
+              "networkSecurityGroup": {
+                "id": "[variables('clusterNsgId')]"
+              }
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [],
+        "enableVmProtection": false,
+        "enableDdosProtection": true,
+        "ddosProtectionPlan": {
+          "id": "[variables('ddosProtectionPlanId')]"
+        }
+      },
+      "dependsOn": [
+        "[variables('clusterNsgId')]"
+      ]
+    },
+
+    // Cluster Static IP Address
+    {
+      "name": "[variables('clusterIpAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
+      "location": "WestUs2",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('clusterIpAddressName')]",
+          "fqdn": "[concat(variables('clusterIpAddressName'),'.WestUs2.cloudapp.azure.com')]"
+        },
+        "idleTimeoutInMinutes": 5
+      }
+    }
+  ]
+}

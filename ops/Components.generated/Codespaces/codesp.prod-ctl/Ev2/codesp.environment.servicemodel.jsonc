@@ -1,0 +1,96 @@
+// Auto-Generated From Template
+// "codesp.environment.servicemodel.jsonc"
+// with names file "codesp.prod-ctl.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "vscs-codesp-prod-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-codesp-prod-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-codesp-prod-env-identities-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl/ARM/codesp.environment.identities.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-env-keyvault-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl/ARM/codesp.environment.keyvault.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-env-keyvaults-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl/ARM/codesp.environment.keyvaults.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-env-acr-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl/ARM/codesp.environment.acr.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-prod-env-network-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.prod-ctl/ARM/codesp.environment.network.arm.json"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-codesp-prod",
+      "location": "WestUs2",
+      "instanceOf": "vscs-codesp-prod-rg-def",
+      "azureSubscriptionId": "babc8408-303e-4acc-9d13-194c075c1cce",
+      "serviceResources": [
+        {
+          "name": "vscs-codesp-prod-env-identities",
+          "instanceOf": "vscs-codesp-prod-env-identities-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-env-keyvault",
+          "instanceOf": "vscs-codesp-prod-env-keyvault-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-env-keyvaults",
+          "instanceOf": "vscs-codesp-prod-env-keyvaults-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-env-acr",
+          "instanceOf": "vscs-codesp-prod-env-acr-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-prod-env-network",
+          "instanceOf": "vscs-codesp-prod-env-network-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

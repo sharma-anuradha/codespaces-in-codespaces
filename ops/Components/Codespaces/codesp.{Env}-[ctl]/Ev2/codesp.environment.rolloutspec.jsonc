@@ -1,0 +1,58 @@
+{
+  //"$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "{{{basePlaneFileName}}}/Ev2/codesp.environment.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "{{{basePlaneName}}}-arm",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "{{{basePlaneName}}}-env-identities",
+      "targetType": "ServiceResource",
+      "targetName": "{{{basePlaneName}}}-env-identities",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{basePlaneName}}}-env-keyvault",
+      "targetType": "ServiceResource",
+      "targetName": "{{{basePlaneName}}}-env-keyvault",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{basePlaneName}}}-env-keyvaults",
+      "targetType": "ServiceResource",
+      "targetName": "{{{basePlaneName}}}-env-keyvaults",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{basePlaneName}}}-env-acr",
+      "targetType": "ServiceResource",
+      "targetName": "{{{basePlaneName}}}-env-acr",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{basePlaneName}}}-env-network",
+      "targetType": "ServiceResource",
+      "targetName": "{{{basePlaneName}}}-env-network",
+      "actions": [
+        "Deploy"
+      ]
+    }
+  ]
+}

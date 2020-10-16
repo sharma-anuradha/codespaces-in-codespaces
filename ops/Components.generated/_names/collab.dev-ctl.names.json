@@ -8,11 +8,33 @@
   "basePlaneFileName": "collab.dev-ctl",
   "basePlaneName": "vscs-collab-dev",
   "component": "collab",
+  "componentDisplayName": "Collaboration",
+  "containerRegistryName": "vscscollabdevacr",
+  "containerRegistryReplications": [
+    {
+      "name": "vscscollabdevacr/westus2",
+      "condition": "[not(equals(toLower(variables('location')),'westus2'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westus2",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscollabdevacr')]"
+      ]
+    }
+  ],
   "env": "dev",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestUs2"
   ],
+  "environmentTenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+  "imageRepositoryUrl": "vscscollabdevacr.azurecr.io",
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-collab-dev-ops-sp",
   "plane": "ctl",
-  "prefix": "vscs"
+  "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

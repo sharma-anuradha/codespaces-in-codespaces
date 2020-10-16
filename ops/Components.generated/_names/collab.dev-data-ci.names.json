@@ -10,11 +10,13 @@
   "basePlaneFileName": "collab.dev-data",
   "basePlaneName": "vscs-collab-dev-data",
   "component": "collab",
+  "componentDisplayName": "Collaboration",
   "env": "dev",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestUs2"
   ],
+  "environmentTenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceStampLocations": [
@@ -23,6 +25,9 @@
   "instanceStampRegions": [
     "us-w2"
   ],
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-collab-dev-data-ops-sp",
   "plane": "data",
-  "prefix": "vscs"
+  "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

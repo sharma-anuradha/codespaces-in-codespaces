@@ -33,7 +33,11 @@ export default abstract class FileHandler {
   }
 
   public static GetFile(filePath: string, options?: any): Buffer {
-      return readFileSync(filePath, options);
+    return readFileSync(filePath, options);
+  }
+
+  public static GetFileText(filePath: string, encoding: BufferEncoding = "utf8"): string {
+    return readFileSync(filePath, encoding);
   }
 
   public static GetFiles(inputDir: string): string[] {
@@ -53,6 +57,6 @@ export default abstract class FileHandler {
   }
 
   public static SaveFile(path: string, buffer: Buffer): void {
-      writeFileSync(path, buffer);
+    writeFileSync(path, buffer);
   }
 }

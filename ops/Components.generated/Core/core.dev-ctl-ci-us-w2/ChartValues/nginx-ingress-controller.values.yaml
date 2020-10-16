@@ -1,7 +1,0 @@
-image:
-  repositoryUrl: vscscoredevacr.azurecr.io
-ingress:
-  replicaCount: 1
-# This is used for nginx to set the x-servedby header
-# specified on the helm upgrade command-line
-clusterName: vscs-core-dev-ci-us-w2-cluster

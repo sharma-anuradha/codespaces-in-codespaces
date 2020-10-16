@@ -13,21 +13,23 @@
   "baseRegionName": "vscs-codesp-prod-data-rel-eu-w",
   "baseRegionStorageName": "codespproddatareleuw",
   "component": "codesp",
+  "componentDisplayName": "Codespaces",
   "env": "prod",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
+    "EastUS",
     "SoutheastAsia",
     "WestEurope",
-    "EastUS",
     "WestUs2"
   ],
+  "environmentTenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
   "geo": "eu",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceStampLocations": [
+    "EastUS",
     "SoutheastAsia",
     "WestEurope",
-    "EastUS",
     "WestUs2"
   ],
   "instanceStampRegions": [
@@ -36,9 +38,12 @@
     "us-e",
     "us-w2"
   ],
+  "location": "WestEurope",
+  "opsServiceConnector": "vscs-codesp-prod-data-ops-sp",
   "plane": "data",
   "prefix": "vscs",
   "region": "eu-w",
   "regionLocation": "WestEurope",
-  "regionSuffix": "w"
+  "regionSuffix": "w",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

@@ -1,4 +1,18 @@
 {
+  "acsKeyVaultAgentTag": "master_28",
+  "azSecPackAuditMoniker": "vsonlineprodaudit",
+  "azSecPackDiagnosticsMoniker": "vsonlineproddiag",
+  "azSecPackEventVersion": "1",
+  "azSecPackGcsAccount": "VsOnlineProd",
+  "azSecPackGcsCert": "/secrets/certs/vsclk-codesp-prod-monitoring",
+  "azSecPackGcsCertName": "vsclk-codesp-prod-monitoring",
+  "azSecPackGcsEnvironment": "DiagnosticsProd",
+  "azSecPackGcsKey": "/secrets/keys/vsclk-codesp-prod-monitoring",
+  "azSecPackNamespace": "VsOnlineProd",
+  "azSecPackRole": "vsonlineprodsecurity",
+  "azSecPackSecurityMoniker": "vsonlineprodsecurity",
+  "azSecPackTenant": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
+  "azSecPackTimestamp": "2018-05-07T00:00:00Z",
   "baseComponentFileName": "codesp",
   "baseComponentName": "vscs-codesp",
   "baseEnvironmentFileName": "codesp.prod",
@@ -8,16 +22,82 @@
   "basePlaneFileName": "codesp.prod-ctl",
   "basePlaneName": "vscs-codesp-prod",
   "component": "codesp",
+  "componentDisplayName": "Codespaces",
+  "containerRegistryName": "vscscodespprodacr",
+  "containerRegistryReplications": [
+    {
+      "name": "vscscodespprodacr/eastus",
+      "condition": "[not(equals(toLower(variables('location')),'eastus'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "eastus",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscodespprodacr')]"
+      ]
+    },
+    {
+      "name": "vscscodespprodacr/southeastasia",
+      "condition": "[not(equals(toLower(variables('location')),'southeastasia'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "southeastasia",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscodespprodacr')]"
+      ]
+    },
+    {
+      "name": "vscscodespprodacr/westeurope",
+      "condition": "[not(equals(toLower(variables('location')),'westeurope'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westeurope",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscodespprodacr')]"
+      ]
+    },
+    {
+      "name": "vscscodespprodacr/westus2",
+      "condition": "[not(equals(toLower(variables('location')),'westus2'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westus2",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscodespprodacr')]"
+      ]
+    }
+  ],
   "env": "prod",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
+    "EastUS",
     "SoutheastAsia",
     "WestEurope",
-    "EastUS",
     "WestUs2"
   ],
+  "environmentTenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
+  "genevaFluentdTdAgentTag": "master_148",
+  "genevaMdmAccount": "VsOnlineProd",
+  "genevaMdmTag": "master_48",
+  "genevaMdsdTag": "master_309",
+  "genevaSecpackInstallTag": "master_57",
+  "imageRepositoryUrl": "vscscodespprodacr.azurecr.io",
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-codesp-prod-ops-sp",
   "plane": "ctl",
   "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b",
   "subscriptionId": "babc8408-303e-4acc-9d13-194c075c1cce",
   "subscriptionName": "vscs-codesp-prod-ctl"
 }

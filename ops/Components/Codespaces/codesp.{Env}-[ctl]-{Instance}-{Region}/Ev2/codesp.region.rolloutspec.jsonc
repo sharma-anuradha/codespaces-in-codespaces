@@ -1,0 +1,109 @@
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "{{{baseRegionFileName}}}/Ev2/codesp.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "{{{baseRegionName}}}-arm",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "{{{baseRegionName}}}-region-network",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-network",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-cluster",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-cluster",
+      "actions": [
+        "Deploy"
+      ],
+      "dependsOn": [
+        "{{{baseRegionName}}}-region-network"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-batch",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-batch",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-databases",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-databases",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-servicebus",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-servicebus",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-storage-bl",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-storage-bl",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-storage-cq",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-storage-cq",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-storage-gh",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-storage-gh",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-storage-sa",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-storage-sa",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-storage-si",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-storage-si",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "{{{baseRegionName}}}-region-storage-vm",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-region-storage-vm",
+      "actions": [
+        "Deploy"
+      ]
+    }
+  ]
+}

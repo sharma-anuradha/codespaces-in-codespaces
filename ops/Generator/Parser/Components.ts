@@ -1,13 +1,15 @@
-import ResourceNames, { ComponentNames } from "./ResourceNames";
+import ResourceNames, { ComponentNames } from "../Values/ResourceNames";
 import { Environment } from "./Environments";
 
 export class ComponentsDeployment {
   globalPrefix: string;
+  serviceTreeId: string;
   components: Component[] = [];
   nameTemplate = /[^{\\}]+(?=})/g;
 
   constructor(components: any, subscriptions: Subscription[]) {
     this.globalPrefix = components.globalPrefix;
+    this.serviceTreeId = components.serviceTreeId;
     this.parseComponentsJson(components.components, subscriptions);
   }
 
@@ -16,6 +18,7 @@ export class ComponentsDeployment {
       const comp = new Component();
       const jsonComp = components[compName];
       comp.prefix = jsonComp.prefix;
+      comp.serviceTreeId = jsonComp.serviceTreeId || this.serviceTreeId;
       comp.displayName = jsonComp.displayName;
       comp.dependsOn = jsonComp.dependsOn;
       comp.environmentNames = jsonComp.environments;
@@ -27,6 +30,7 @@ export class ComponentsDeployment {
 
 export class Component {
   prefix: string;
+  serviceTreeId: string;
   displayName: string;
   dependsOn: string[];
   subscriptions: Subscription[] = [];
@@ -35,7 +39,7 @@ export class Component {
   outputNames: ComponentNames;
 
   generateNamesJson(prefix: string): ComponentNames {
-    this.outputNames = ResourceNames.sortKeys(new ComponentNames(prefix, this.prefix));
+    this.outputNames = ResourceNames.sortKeys(new ComponentNames(this.displayName, prefix, this.prefix, this.serviceTreeId));
     return this.outputNames;
   }
 
@@ -43,6 +47,17 @@ export class Component {
     env = env.toLowerCase()
     plane = plane.toLowerCase()
     return this.subscriptions.filter(s => s.environment === env && s.plane === plane && !s.serviceType)
+  }
+
+  getDataSubscriptions(env: string, region: string): Subscription[] {
+    env = env.toLowerCase();
+    region = region.toLowerCase();
+    const dataSubs = this.subscriptions.filter(s =>
+      s.environment === env &&
+      s.plane === 'data' &&
+      s.region === region &&
+      s.generation !== 'v1-legacy');
+    return dataSubs
   }
 }
 

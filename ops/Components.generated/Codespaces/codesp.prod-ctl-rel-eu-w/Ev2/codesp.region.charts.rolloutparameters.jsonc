@@ -1,0 +1,62 @@
+// Auto-Generated From Template
+// "codesp.region.charts.rolloutparameters.jsonc"
+// with names file "codesp.prod-ctl-rel-eu-w.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+    // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutParameters.json",
+    "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutParameters.json",
+    "contentVersion": "1.0.0.0",
+    "applications": [
+        {
+            "serviceResourceName": "vscs-codesp-prod-rel-eu-w-region-cluster-charts",
+            "applicationName": "vscs-codesp-prod-rel-eu-w-docker-image-cleanup-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "vscs-codesp-prod-rel-eu-w-region-cluster-charts",
+            "applicationName": "vscs-codesp-prod-rel-eu-w-geneva-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "vscs-codesp-prod-rel-eu-w-region-cluster-charts",
+            "applicationName": "vscs-codesp-prod-rel-eu-w-kubernetes-dashboard-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "vscs-codesp-prod-rel-eu-w-region-cluster-charts",
+            "applicationName": "vscs-codesp-prod-rel-eu-w-kured-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "vscs-codesp-prod-rel-eu-w-region-cluster-charts",
+            "applicationName": "vscs-codesp-prod-rel-eu-w-nginx-ingress-controller-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        }
+    ]
+}

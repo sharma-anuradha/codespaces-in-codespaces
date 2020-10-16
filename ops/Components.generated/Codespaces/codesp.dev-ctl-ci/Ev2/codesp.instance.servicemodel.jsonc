@@ -1,0 +1,87 @@
+// Auto-Generated From Template
+// "codesp.instance.servicemodel.jsonc"
+// with names file "codesp.dev-ctl-ci.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "vscs-codesp-dev-ci-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-codesp-dev-ci-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-codesp-dev-ci-instance-databases-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.dev-ctl-ci/ARM/codesp.instance.databases.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-dev-ci-instance-maps-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "codesp.dev-ctl-ci/ARM/codesp.instance.maps.arm.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-codesp-dev-ci-instance-trafficmanagerprofile-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "empty.arm.json"
+            },
+            "extension": {
+              "rolloutParametersPath": "codesp.dev-ctl-ci/Ev2/codesp.instance.scripts.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/deploy-instancetrafficmanagerprofile"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "deploy-instancetrafficmanagerprofile",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v14"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-codesp-dev-ci",
+      "location": "WestUs2",
+      "instanceOf": "vscs-codesp-dev-ci-rg-def",
+      "azureSubscriptionId": "b47d56d7-0429-47f0-a6cf-c32531f2aebe",
+      "serviceResources": [
+        {
+          "name": "vscs-codesp-dev-ci-instance-databases",
+          "instanceOf": "vscs-codesp-dev-ci-instance-databases-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-dev-ci-instance-maps",
+          "instanceOf": "vscs-codesp-dev-ci-instance-maps-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "vscs-codesp-dev-ci-instance-trafficmanagerprofile",
+          "instanceOf": "vscs-codesp-dev-ci-instance-trafficmanagerprofile-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

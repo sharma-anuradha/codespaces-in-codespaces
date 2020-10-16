@@ -230,21 +230,6 @@ function Get-ServicePrincipal(
   $sp
 }
 
-function Assert-SignedInUserIsOwner() {
-
-  $account = (Get-AzContext).Account
-  if ($account.Type -ne "User") {
-    throw "Signed-in account is not a User."
-  }
-
-  $owner = Get-AzRoleAssignment -SignInName $account.id | Where-Object -Property RoleDefinitionName -eq "Owner" | Select-Object -First 1
-  if (!$owner) {
-    throw "Signed-in user  is not an Owner."
-  }
-
-  $owner
-}
-
 function Assert-LastExitCodeSuccess([string]$Message) {
   if ($LASTEXITCODE -ne 0) {
     throw $Message

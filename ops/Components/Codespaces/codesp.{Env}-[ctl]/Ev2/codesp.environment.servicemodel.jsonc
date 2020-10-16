@@ -1,0 +1,91 @@
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "{{{basePlaneName}}}-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "{{{basePlaneName}}}-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "{{{basePlaneName}}}-env-identities-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{basePlaneFileName}}}/ARM/codesp.environment.identities.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{basePlaneName}}}-env-keyvault-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{basePlaneFileName}}}/ARM/codesp.environment.keyvault.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{basePlaneName}}}-env-keyvaults-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{basePlaneFileName}}}/ARM/codesp.environment.keyvaults.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{basePlaneName}}}-env-acr-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{basePlaneFileName}}}/ARM/codesp.environment.acr.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{basePlaneName}}}-env-network-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{basePlaneFileName}}}/ARM/codesp.environment.network.arm.json"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "{{{basePlaneName}}}",
+      "location": "{{{environmentLocation}}}",
+      "instanceOf": "{{{basePlaneName}}}-rg-def",
+      "azureSubscriptionId": "{{{subscriptionId}}}",
+      "serviceResources": [
+        {
+          "name": "{{{basePlaneName}}}-env-identities",
+          "instanceOf": "{{{basePlaneName}}}-env-identities-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{basePlaneName}}}-env-keyvault",
+          "instanceOf": "{{{basePlaneName}}}-env-keyvault-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{basePlaneName}}}-env-keyvaults",
+          "instanceOf": "{{{basePlaneName}}}-env-keyvaults-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{basePlaneName}}}-env-acr",
+          "instanceOf": "{{{basePlaneName}}}-env-acr-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{basePlaneName}}}-env-network",
+          "instanceOf": "{{{basePlaneName}}}-env-network-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

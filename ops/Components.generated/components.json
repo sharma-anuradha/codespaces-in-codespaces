@@ -1,24 +1,7 @@
 {
   "globalPrefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b",
   "components": {
-    "stub": {
-      "displayName": "Stub",
-      "prefix": "stub",
-      "environments": [
-        "test"
-      ],
-      "dependsOn": []
-    },
-    "core": {
-      "displayName": "Core",
-      "prefix": "core",
-      "environments": [
-        "dev",
-        "ppe",
-        "prod"
-      ],
-      "dependsOn": []
-    },
     "comm": {
       "displayName": "Communications",
       "prefix": "comm",
@@ -26,9 +9,6 @@
         "dev",
         "ppe",
         "prod"
-      ],
-      "dependsOn": [
-        "core"
       ]
     },
     "collab": {
@@ -40,7 +20,6 @@
         "prod"
       ],
       "dependsOn": [
-        "core",
         "comm"
       ],
       "subscriptions": []
@@ -54,7 +33,6 @@
       ],
       "prefix": "codesp",
       "dependsOn": [
-        "core",
         "collab"
       ]
     }

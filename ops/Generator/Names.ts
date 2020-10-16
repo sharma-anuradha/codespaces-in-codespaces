@@ -1,6 +1,7 @@
 import { Component } from "./Parser/Components";
 import FileHandler from "./Helpers/FileHandler";
 import { Environment } from "./Parser/Environments";
+import { IDataSubscription } from "./Values/ResourceNameDefs"
 
 export default abstract class Names {
 
@@ -23,7 +24,7 @@ export default abstract class Names {
 
           for (const plane of env.planes) {
 
-            if (plane.name !== "data") {
+            if (plane.name != 'data') {
               const subscriptions = comp.getSubscription(env.name, plane.name);
               const firstSub = subscriptions[0];
               if (firstSub) {
@@ -41,6 +42,22 @@ export default abstract class Names {
 
               for (const stamp of instance.stamps) {
                 const stampJson = stamp.location.generateNamesJson(instance.outputNames);
+
+                if (plane.name === 'data') {
+                  const dataSubs: IDataSubscription[] = comp
+                    .getDataSubscriptions(env.name, stampJson.region)
+                    .map(s => {
+                      const dataSub: IDataSubscription = {
+                        id: s.subscriptionId,
+                        name: s.subscriptionName,
+                        serviceType: s.serviceType.toLowerCase(),
+                      };
+                      return dataSub
+                    })
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                  stampJson.regionDataSubscriptions = () => dataSubs;
+                }
+
                 FileHandler.GenerateJson(outputDir, `${stampJson.baseFileName}.names.json`, stampJson);
               }
             }

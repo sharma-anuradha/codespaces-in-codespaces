@@ -1,0 +1,63 @@
+// Auto-Generated From Template
+// "codesp.environment.rolloutspec.jsonc"
+// with names file "codesp.prod-ctl.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  //"$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.prod-ctl/Ev2/codesp.environment.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-prod-arm",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-prod-env-identities",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-env-identities",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-env-keyvault",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-env-keyvault",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-env-keyvaults",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-env-keyvaults",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-env-acr",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-env-acr",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-env-network",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-env-network",
+      "actions": [
+        "Deploy"
+      ]
+    }
+  ]
+}

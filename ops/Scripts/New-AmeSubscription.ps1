@@ -26,12 +26,6 @@ if ($PSBoundParameters.ContainsKey('Verbose')) {
   $script:Verbose = $PsBoundParameters.Get_Item('Verbose')
 }
 
-# Global error handling
-trap {
-  Write-Error $_
-  exit 1
-}
-
 function Test-ArmClientResult($result) {
     if ($LASTEXITCODE -ne 0) {
         $message = $result | Out-String

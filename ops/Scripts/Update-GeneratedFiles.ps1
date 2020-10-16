@@ -12,12 +12,6 @@ param(
     [switch]$FailIfFilesModified
 )
 
-# Global error handling -- ensure non-zero exit code on failure
-trap {
-    Write-Error $_ -ErrorAction "Continue"
-    exit 1
-}
-
 # Preamble
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"

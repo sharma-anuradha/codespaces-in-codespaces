@@ -1,4 +1,0 @@
-image:
-  repositoryUrl:
-  kuredDaemonsetName: 'kured-modded'
-  kuredDaemonsetTag: '1'

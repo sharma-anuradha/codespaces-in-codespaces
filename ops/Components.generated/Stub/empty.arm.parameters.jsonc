@@ -1,9 +1,0 @@
-// Auto-Generated From Template
-// "empty.arm.parameters.jsonc"
-// Do not edit this generated file. Edit the source file and rerun the generator instead.
-
-{
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {}
-}

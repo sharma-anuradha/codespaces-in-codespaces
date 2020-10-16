@@ -1,0 +1,303 @@
+﻿{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Service Model",
+    "description": "The document representation of the Cloud Service Model of an Azure Service. ",
+    "type": "object",
+  "properties": {
+
+    "contentVersion": {
+      "description": "The version of the schema that a document conforms to.",
+      "type": "string",
+      "pattern": "^([0-9]+\\.)?([0-9]+\\.)?([0-9]+\\.)?([0-9]+){1}$"
+    },
+
+    "serviceMetadata": {
+      "description": "An entity that contains information that can be used to uniquely identify an Azure service.",
+      "type": "object",
+      "properties": {
+        "serviceIdentifier": {
+          "description": "The unique identifier for the service registered with Azure Deployment Manager.",
+          "type": "string",
+          "minLength": 1
+        },
+        "serviceGroup": {
+          "description": "The human-readable name of the current instance of this Azure service.",
+          "type": "string",
+          "minLength": 1
+        },
+        "environment": {
+          "description": "The environment that this particular service is operating in.",
+          "type": "string",
+          "enum": [ "Prod", "Test", "Dev" ]
+        }
+      },
+      "required": [ "serviceGroup", "environment" ]
+    },
+    "applicationDefinitions": {
+      "description": "The list of application definitions for application deployment.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "The application defintion.",
+        "properties": {
+          "name": {
+            "description": "The human-readable name of the application definition.",
+            "type": "string"
+          },
+          "azureKubernetesService": {
+            "description": "The AKS application properties.",
+            "type": "object",
+            "properties": {
+              "specPath": {
+                "description": "The AKS spec path.",
+                "type": "string"
+              },
+              "namespace": {
+                "description": "The AKS namespace.",
+                "type": "string"
+              }
+            },
+            "required": ["specPath"]
+          }
+        }
+      }
+    },
+    "serviceResourceGroupDefinitions": {
+      "description": "",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "The enumeration of the various resource group definitions that represent how to construct the resource groups that constitute this cloud service.",
+        "properties": {
+          "name": {
+            "description": "The human-readable name of the definition.",
+            "type": "string"
+          },
+          "policy": {
+            "description": "The policy information.",
+            "type": "object",
+            "properties": {
+              "skipSafeRolloutPolicyCheck": {
+                "description": "Determines if safe rollout policy should be applied on this resource group definition.",
+                "type": "boolean"
+              }
+            }
+          },
+          "serviceResourceDefinitions": {
+            "type": "array",
+            "description": "The enumeration of the various resource definitions that represent how to construct the resources that constitute this resource group definition.",
+            "items": {
+              "type": "object",
+              "description": "The object representation of the definition of a particular resource in the Cloud Service Model.",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The human-readable name of the definition."
+                },
+                "policy": {
+                  "description": "The policy information.",
+                  "type": "object",
+                  "properties": {
+                    "skipSafeRolloutPolicyCheck": {
+                      "description": "Determines if safe rollout policy should be applied on this resource definition.",
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "composedOf": {
+                  "type": "object",
+                  "description": "Resource composition parts which apply to this resource definition",
+                  "properties": {
+                    "arm": {
+                      "type": "object",
+                      "description": "Arm Composition Part",
+                      "properties": {
+                        "templatePath": {
+                          "type": "string",
+                          "description": "The path to the entity that contains the Azure Resource Model template for this particular definition."
+                        },
+                        "parametersPath": {
+                          "type": "string",
+                          "description": "The path to the entity that contains the parameterized Azure Resource Model parameters this resource requires in order to be deployed."
+                        }
+                      }
+                    },
+                    "extension": {
+                      "rolloutParametersPath": {
+                        "type": "string",
+                        "description": "The path to the entity that contains the parameterized rollout parameters for the resource deployment."
+                      },
+                      "type": "object",
+                      "description": "Extension Composition Part",
+                      "properties": {
+                        "allowedTypes": {
+                          "type": "array",
+                          "description": "Allowed Extension types",
+                          "items": {
+                            "type": "object",
+                            "description": "",
+                            "properties": {
+                              "Type": {
+                                "type": "string",
+                                "description": "Full extension name, e.g. 'ExtenionNamespace/ExtentionType'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "application": {
+                      "type": "object",
+                      "description": "The application details object.",
+                      "properties": {
+                        "names": {
+                          "description": "The list of application definition names.",
+                          "type": "array",
+                          "items": {
+                            "description": "The name of application definition.",
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": ["names"]
+                    }
+                  }
+                }
+              },
+              "required": [ "name" ]
+            },
+            "minLength": 1,
+            "uniqueItems": true
+          }
+        },
+        "required": [ "name", "serviceResourceDefinitions" ]
+      },
+      "minLength": 1,
+      "uniqueItems": true
+    },
+
+    "serviceResourceGroups": {
+      "description": "The various resource groups that constitute this service.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "The entity representation of a resource group in the Cloud Service Model.",
+        "properties": {
+          "azureResourceGroupName": {
+            "type": "string",
+            "description": "The string that uniquely identifies a particular resource group. This name must match the actual Resource Group name in the Azure subscription."
+          },
+          "location": {
+            "type": "string",
+            "description": "The location of the resource group instance."
+          },
+          "instanceOf": {
+            "type": "string",
+            "description": "The name of the template that defines how to construct this particular resource group. It must be declared in the Templates section of the Service Model. "
+          },
+          "azureSubscriptionId": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+            "description": "The Azure Subscription ID that this particular resource group is associated with. "
+          },
+          "scopeTags": {
+            "type": "array",
+            "description": "The list of scope tags for the service resource group.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The scope tag name."
+                }
+              }
+            }
+          },
+          "serviceResources": {
+            "type": "array",
+            "description": "The various resources that constitute this particular resource group.",
+            "items": {
+              "type": "object",
+              "description": "The entity representation of an individual resource in the Cloud Service Model.",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The string that uniquely identifies a particular resource. This must match the actual Resource name in the Azure subscription."
+                },
+                "instanceOf": {
+                  "title": "string",
+                  "description": "The name of the template that defines how to construct this particular resource. It must be declared in the Templates section of the Service Model. "
+                },
+                "armParametersPath": {
+                  "type": "string",
+                  "description": "The path to the entity that contains the Azure Resource Model parameters this resource group requires in order to be deployed.",
+                  "minLength": 1
+                },
+                "rolloutParametersPath": {
+                  "type": "string",
+                  "description": "The path to the entity that contains the rollout parameters for the resource deployment."
+                },
+                "scopeTags": {
+                  "type": "array",
+                  "description": "The list of scope tags for the service resource.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "The scope tag name."
+                      }
+                    }
+                  }
+                },
+                "applications": {
+                  "description": "The list of application instances.",
+                  "type": "array",
+                  "items": {
+                    "description": "The details of the application instance",
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "description": "The name of the application instance.",
+                        "type": "string"
+                      },
+                      "instanceOf": {
+                        "description": "The name of the application defintion to which this instance belongs.",
+                        "type": "string"
+                      },
+                      "armResourceName": {
+                        "description": "The AKS cluster name. It is required when using CertificateAuthentication",
+                        "type": "string"
+                      },
+                      "scopeTags": {
+                        "type": "array",
+                        "description": "The list of scope tags for the application.",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "The scope tag name."
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "required": ["name", "instanceOf"]
+                  }
+                }
+              },
+              "required": [ "name", "instanceOf", "armParametersPath" ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "required": [ "azureResourceGroupName", "location", "instanceOf", "azureSubscriptionId", "serviceResources" ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+    "required": ["contentVersion", "serviceMetadata", "serviceResourceGroupDefinitions", "serviceResourceGroups"]
+}

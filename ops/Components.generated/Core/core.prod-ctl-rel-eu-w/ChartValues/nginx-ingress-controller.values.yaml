@@ -1,7 +1,0 @@
-image:
-  repositoryUrl: vscscoreprodacr.azurecr.io
-ingress:
-  replicaCount: 3
-# This is used for nginx to set the x-servedby header
-# specified on the helm upgrade command-line
-clusterName: vscs-core-prod-rel-eu-w-cluster

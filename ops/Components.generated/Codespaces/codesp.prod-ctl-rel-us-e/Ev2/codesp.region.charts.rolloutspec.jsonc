@@ -1,0 +1,46 @@
+// Auto-Generated From Template
+// "codesp.region.charts.rolloutspec.jsonc"
+// with names file "codesp.prod-ctl-rel-us-e.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.prod-ctl-rel-us-e/Ev2/codesp.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-prod-rel-us-e-common-charts",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-prod-rel-us-e-common-charts",
+      "targetType": "Application",
+      "applications": {
+        "names": [
+          "vscs-codesp-prod-rel-us-e-docker-image-cleanup-chart",
+          "vscs-codesp-prod-rel-us-e-geneva-chart",
+          "vscs-codesp-prod-rel-us-e-kubernetes-dashboard-chart",
+          "vscs-codesp-prod-rel-us-e-kured-chart",
+          "vscs-codesp-prod-rel-us-e-nginx-ingress-controller-chart"
+        ],
+        "actions": [
+          "AppDeploy"
+        ],
+        "applyAcrossServiceResources": {
+          "definitionName": "vscs-codesp-prod-rel-us-e-region-cluster-charts-def",
+          "deployArmResources": false,
+          "names": [
+            "vscs-codesp-prod-rel-us-e-region-cluster-charts"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -10,11 +10,30 @@
   "basePlaneFileName": "comm.dev-ctl",
   "basePlaneName": "vscs-comm-dev",
   "component": "comm",
+  "componentDisplayName": "Communications",
+  "containerRegistryName": "vscscommdevacr",
+  "containerRegistryReplications": [
+    {
+      "name": "vscscommdevacr/westus2",
+      "condition": "[not(equals(toLower(variables('location')),'westus2'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westus2",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscommdevacr')]"
+      ]
+    }
+  ],
   "env": "dev",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestUs2"
   ],
+  "environmentTenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+  "imageRepositoryUrl": "vscscommdevacr.azurecr.io",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceStampLocations": [
@@ -23,6 +42,9 @@
   "instanceStampRegions": [
     "us-w2"
   ],
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-comm-dev-ops-sp",
   "plane": "ctl",
-  "prefix": "vscs"
+  "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b"
 }

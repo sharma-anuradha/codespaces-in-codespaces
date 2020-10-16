@@ -18,21 +18,8 @@
     }
   },
   "environments": {
-    "test": {
-      "pme": false,
-      "location": "us-w2",
-      "instances": {
-        "tst": {
-          "stamps": {
-            "us-w2": {
-              "location": "us-w2"
-            }
-          }
-        }
-      }
-    },
     "dev": {
-      "pme": false,
+      "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
       "location": "us-w2",
       "instances": {
         "ci": {
@@ -45,7 +32,7 @@
       }
     },
     "ppe": {
-      "pme": true,
+      "tenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
       "location": "us-w2",
       "instances": {
         "rel": {
@@ -61,7 +48,7 @@
       }
     },
     "prod": {
-      "pme": true,
+      "tenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
       "location": "us-w2",
       "instances": {
         "rel": {

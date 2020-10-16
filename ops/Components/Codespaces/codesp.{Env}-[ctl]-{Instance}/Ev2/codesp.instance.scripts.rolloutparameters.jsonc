@@ -1,0 +1,34 @@
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutParameters.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutParameters.json",
+  "contentVersion": "1.0.0.0",
+  "shellExtensions": [
+    {
+      "name": "deploy-instancetrafficmanagerprofile",
+      "type": "deploy-instancetrafficmanagerprofile",
+      "properties": {
+        "maxExecutionTime": "PT5M"
+      },
+      "package": {
+        "reference": { "path": "{{{baseInstanceFileName}}}/Scripts/scripts.zip" }
+      },
+      "launch": {
+        "command": [
+          "/bin/bash",
+          "-c",
+          "pwsh Deploy-InstanceTrafficManagerProfile.ps1"
+        ],
+        "environmentVariables": [
+        ],
+        "secretVolumes": [
+        ],
+        "fileVolumes": [
+        ],
+        "identity": {
+          "type": "UserAssigned",
+          "userAssignedIdentities": ["/subscriptions/{{{subscriptionId}}}/resourceGroups/{{{basePlaneName}}}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{{{basePlaneName}}}-ops-id"]
+        }
+      }
+    }
+  ]
+}

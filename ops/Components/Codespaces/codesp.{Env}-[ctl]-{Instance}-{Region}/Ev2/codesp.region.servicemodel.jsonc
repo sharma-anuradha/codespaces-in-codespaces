@@ -1,0 +1,346 @@
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/ServiceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "{{{baseRegionName}}}-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "{{{baseRegionName}}}-rg-def",
+      "serviceResourceDefinitions": [
+        {
+          "name": "{{{baseRegionName}}}-region-network-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.network.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-cluster-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.cluster.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-cluster-charts-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "empty.arm.json"
+            },
+            "application": {
+              "names": [
+                "{{{baseRegionName}}}-docker-image-cleanup-chart-def",
+                "{{{baseRegionName}}}-geneva-chart-def",
+                "{{{baseRegionName}}}-kubernetes-dashboard-chart-def",
+                "{{{baseRegionName}}}-kured-chart-def",
+                "{{{baseRegionName}}}-nginx-ingress-controller-chart-def"
+              ]
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-batch-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.batch.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-databases-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.databases.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-servicebus-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.servicebus.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-bl-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.storage.bl.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-cq-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.storage.cq.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-gh-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.storage.gh.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-sa-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.storage.sa.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-si-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.storage.si.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-vm-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/codesp.region.storage.vm.arm.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-trafficmanagerendpoint-def",
+          "composedOf": {
+            "arm": {
+              "templatePath": "empty.arm.json"
+            },
+            "extension": {
+              "rolloutParametersPath": "{{{baseRegionFileName}}}/Ev2/codesp.region.scripts.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/deploy-instancetrafficmanagerendpoint"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "deploy-instancetrafficmanagerendpoint",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v14"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "applicationDefinitions": [
+    {
+      "name": "{{{baseRegionName}}}-docker-image-cleanup-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "docker-image-cleanup-release",
+        "namespace": "kube-system",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "{{{baseRegionFileName}}}/charts/docker-image-cleanup/docker-image-cleanup.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    },
+    {
+      "name": "{{{baseRegionName}}}-geneva-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "geneva-release",
+        "namespace": "kube-system",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "{{{baseRegionFileName}}}/charts/geneva/geneva.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    },
+    {
+      "name": "{{{baseRegionName}}}-kubernetes-dashboard-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "kubernetes-dashboard-release",
+        "namespace": "kube-system",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "{{{baseRegionFileName}}}/charts/kubernetes-dashboard/kubernetes-dashboard.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    },
+    {
+      "name": "{{{baseRegionName}}}-kured-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "kured-release",
+        "namespace": "kube-system",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "{{{baseRegionFileName}}}/charts/kured/kured.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    },
+    {
+      "name": "{{{baseRegionName}}}-nginx-ingress-controller-chart-def",
+      "rollbackOnFailure": true,
+      "azureKubernetesService": {
+        "releaseName": "nginx-ingress-controller-release",
+        "namespace": "default",
+        "specPath": "",
+        "chart": {
+          "reference": {
+            "path": "{{{baseRegionFileName}}}/charts/nginx-ingress-controller/nginx-ingress-controller.zip"
+          }
+        },
+        "tools": {
+          "helm": {
+            "version": "3.3.0"
+          }
+        }
+      }
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "{{{baseRegionName}}}",
+      "location": "{{{regionLocation}}}",
+      "instanceOf": "{{{baseRegionName}}}-rg-def",
+      "azureSubscriptionId": "{{{subscriptionId}}}",
+      "serviceResources": [
+        {
+          "name": "{{{baseRegionName}}}-region-network",
+          "instanceOf": "{{{baseRegionName}}}-region-network-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-cluster",
+          "instanceOf": "{{{baseRegionName}}}-region-cluster-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-cluster-charts",
+          "instanceOf": "{{{baseRegionName}}}-region-cluster-charts-def",
+          "armParametersPath": "empty.arm.parameters.json",
+          "rolloutParametersPath": "{{{baseRegionFileName}}}/Ev2/codesp.region.charts.rolloutparameters.jsonc",
+          "applications": [
+            {
+              "name": "{{{baseRegionName}}}-docker-image-cleanup-chart",
+              "instanceOf": "{{{baseRegionName}}}-docker-image-cleanup-chart-def",
+              "armResourceName": "{{{clusterName}}}"
+            },
+            {
+              "name": "{{{baseRegionName}}}-geneva-chart",
+              "instanceOf": "{{{baseRegionName}}}-geneva-chart-def",
+              "armResourceName": "{{{clusterName}}}"
+            },
+            {
+              "name": "{{{baseRegionName}}}-kubernetes-dashboard-chart",
+              "instanceOf": "{{{baseRegionName}}}-kubernetes-dashboard-chart-def",
+              "armResourceName": "{{{clusterName}}}"
+            },
+            {
+              "name": "{{{baseRegionName}}}-kured-chart",
+              "instanceOf": "{{{baseRegionName}}}-kured-chart-def",
+              "armResourceName": "{{{clusterName}}}"
+            },
+            {
+              "name": "{{{baseRegionName}}}-nginx-ingress-controller-chart",
+              "instanceOf": "{{{baseRegionName}}}-nginx-ingress-controller-chart-def",
+              "armResourceName": "{{{clusterName}}}"
+            }
+          ]
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-batch",
+          "instanceOf": "{{{baseRegionName}}}-region-batch-def",
+          "armParametersPath": "{{{baseRegionFileName}}}/ARM/codesp.region.batch.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-databases",
+          "instanceOf": "{{{baseRegionName}}}-region-databases-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-servicebus",
+          "instanceOf": "{{{baseRegionName}}}-region-servicebus-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-bl",
+          "instanceOf": "{{{baseRegionName}}}-region-storage-bl-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-cq",
+          "instanceOf": "{{{baseRegionName}}}-region-storage-cq-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-gh",
+          "instanceOf": "{{{baseRegionName}}}-region-storage-gh-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-sa",
+          "instanceOf": "{{{baseRegionName}}}-region-storage-sa-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-si",
+          "instanceOf": "{{{baseRegionName}}}-region-storage-si-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-storage-vm",
+          "instanceOf": "{{{baseRegionName}}}-region-storage-vm-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        },
+        {
+          "name": "{{{baseRegionName}}}-region-trafficmanagerendpoint",
+          "instanceOf": "{{{baseRegionName}}}-region-trafficmanagerendpoint-def",
+          "armParametersPath": "empty.arm.parameters.json"
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,18 @@
 {
+  "acsKeyVaultAgentTag": "master_28",
+  "azSecPackAuditMoniker": "vsonlinedevaudit",
+  "azSecPackDiagnosticsMoniker": "vsonlinedevdiag",
+  "azSecPackEventVersion": "1",
+  "azSecPackGcsAccount": "VsOnlineDev",
+  "azSecPackGcsCert": "/secrets/certs/vsclk-codesp-dev-monitoring",
+  "azSecPackGcsCertName": "vsclk-codesp-dev-monitoring",
+  "azSecPackGcsEnvironment": "DiagnosticsProd",
+  "azSecPackGcsKey": "/secrets/keys/vsclk-codesp-dev-monitoring",
+  "azSecPackNamespace": "VsOnlineDev",
+  "azSecPackRole": "vsonlinedevsecurity",
+  "azSecPackSecurityMoniker": "vsonlinedevsecurity",
+  "azSecPackTenant": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+  "azSecPackTimestamp": "2018-05-07T00:00:00Z",
   "baseComponentFileName": "codesp",
   "baseComponentName": "vscs-codesp",
   "baseEnvironmentFileName": "codesp.dev",
@@ -10,11 +24,35 @@
   "basePlaneFileName": "codesp.dev-ctl",
   "basePlaneName": "vscs-codesp-dev",
   "component": "codesp",
+  "componentDisplayName": "Codespaces",
+  "containerRegistryName": "vscscodespdevacr",
+  "containerRegistryReplications": [
+    {
+      "name": "vscscodespdevacr/westus2",
+      "condition": "[not(equals(toLower(variables('location')),'westus2'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westus2",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscodespdevacr')]"
+      ]
+    }
+  ],
   "env": "dev",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestUs2"
   ],
+  "environmentTenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+  "genevaFluentdTdAgentTag": "master_148",
+  "genevaMdmAccount": "VsOnlineDev",
+  "genevaMdmTag": "master_48",
+  "genevaMdsdTag": "master_309",
+  "genevaSecpackInstallTag": "master_57",
+  "imageRepositoryUrl": "vscscodespdevacr.azurecr.io",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceStampLocations": [
@@ -23,8 +61,11 @@
   "instanceStampRegions": [
     "us-w2"
   ],
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-codesp-dev-ops-sp",
   "plane": "ctl",
   "prefix": "vscs",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b",
   "subscriptionId": "b47d56d7-0429-47f0-a6cf-c32531f2aebe",
   "subscriptionName": "vscs-codesp-dev-ctl"
 }

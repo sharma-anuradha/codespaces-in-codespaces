@@ -1,0 +1,114 @@
+// Auto-Generated From Template
+// "codesp.region.rolloutspec.jsonc"
+// with names file "codesp.dev-ctl-ci-us-w2.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.dev-ctl-ci-us-w2/Ev2/codesp.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-dev-ci-us-w2-arm",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-network",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-network",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-cluster",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-cluster",
+      "actions": [
+        "Deploy"
+      ],
+      "dependsOn": [
+        "vscs-codesp-dev-ci-us-w2-region-network"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-batch",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-batch",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-databases",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-databases",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-servicebus",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-servicebus",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-storage-bl",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-storage-bl",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-storage-cq",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-storage-cq",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-storage-gh",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-storage-gh",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-storage-sa",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-storage-sa",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-storage-si",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-storage-si",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-dev-ci-us-w2-region-storage-vm",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-dev-ci-us-w2-region-storage-vm",
+      "actions": [
+        "Deploy"
+      ]
+    }
+  ]
+}

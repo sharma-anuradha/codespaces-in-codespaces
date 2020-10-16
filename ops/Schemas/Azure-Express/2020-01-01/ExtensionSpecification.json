@@ -1,0 +1,69 @@
+﻿{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "Extension Specification Schema",
+    "description": "The document representation of the Rollout Extension Specification Model.",
+    "type": "object",
+
+    "properties": {
+        "contentVersion": {
+            "description": "The version of the schema that a document conforms to.",
+            "type": "string",
+            "pattern": "^([0-9]+\\.)?([0-9]+\\.)?([0-9]+\\.)?([0-9]+){1}$"
+        },
+
+        "extension": {
+            "type": "object",
+            "description": "Extension definition",
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "Extension Namespace, e.g. 'Microsoft.Azure'"
+                },
+
+                "type": {
+                    "type": "string",
+                    "description": "Extension Type, e.g. 'TestExtension'"
+                },
+
+                "description": {
+                    "type": "string",
+                    "description": "Extension Description"
+                },
+
+                "endpoints": {
+                    "type": "array",
+                    "description": "Extension Endpoints"
+                },
+
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Extension state, enable or disable"
+                },
+
+                "ownerGroupObjectId": {
+                    "type": "string",
+                    "description": "Extension Owner Group Azure Active Directory ObjectId"
+                },
+
+                "incidentEscalationAlias": {
+                    "type": "string",
+                    "description": "Extension Incident Escalation Alias"
+                },
+
+                "asyncPollInterval": {
+                    "type": "string",
+                    "description": " the default poll interval to query the extension result if it's not finished yet, in ISO 8601 format, ex: 'PT1M' for 1 minute"
+                },
+
+                "systemVersion": {
+                    "type": "string",
+                    "description": "Extension System Version, e.g. '2016-11-01'"
+                }
+            },
+
+            "required": [ "namespace", "type", "description", "endpoints", "ownerGroupObjectId", "incidentEscalationAlias",  "systemVersion" ]
+        }
+    },
+
+    "required": [ "extension" ]
+}

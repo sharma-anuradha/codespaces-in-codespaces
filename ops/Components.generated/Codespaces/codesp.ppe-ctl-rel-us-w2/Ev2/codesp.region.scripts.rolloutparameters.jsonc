@@ -1,0 +1,39 @@
+// Auto-Generated From Template
+// "codesp.region.scripts.rolloutparameters.jsonc"
+// with names file "codesp.ppe-ctl-rel-us-w2.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutParameters.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutParameters.json",
+  "contentVersion": "1.0.0.0",
+  "shellExtensions": [
+    {
+      "name": "deploy-instancetrafficmanagerendpoint",
+      "type": "deploy-instancetrafficmanagerendpoint",
+      "properties": {
+        "maxExecutionTime": "PT5M"
+      },
+      "package": {
+        "reference": { "path": "codesp.ppe-ctl-rel-us-w2/Scripts/scripts.zip" }
+      },
+      "launch": {
+        "command": [
+          "/bin/bash",
+          "-c",
+          "pwsh Deploy-InstanceTrafficManagerEndpointForRegion.ps1"
+        ],
+        "environmentVariables": [
+        ],
+        "secretVolumes": [
+        ],
+        "fileVolumes": [
+        ],
+        "identity": {
+          "type": "UserAssigned",
+          "userAssignedIdentities": ["/subscriptions/c57ef400-af62-4b47-a0b6-24ae55e7b8fd/resourceGroups/vscs-codesp-ppe/providers/Microsoft.ManagedIdentity/userAssignedIdentities/vscs-codesp-ppe-ops-id"]
+        }
+      }
+    }
+  ]
+}

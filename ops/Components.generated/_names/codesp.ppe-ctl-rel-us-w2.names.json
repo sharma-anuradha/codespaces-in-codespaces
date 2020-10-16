@@ -1,4 +1,18 @@
 {
+  "acsKeyVaultAgentTag": "master_28",
+  "azSecPackAuditMoniker": "vsonlineppeaudit",
+  "azSecPackDiagnosticsMoniker": "vsonlineppediag",
+  "azSecPackEventVersion": "1",
+  "azSecPackGcsAccount": "VsOnlinePpe",
+  "azSecPackGcsCert": "/secrets/certs/vsclk-codesp-ppe-monitoring",
+  "azSecPackGcsCertName": "vsclk-codesp-ppe-monitoring",
+  "azSecPackGcsEnvironment": "DiagnosticsProd",
+  "azSecPackGcsKey": "/secrets/keys/vsclk-codesp-ppe-monitoring",
+  "azSecPackNamespace": "VsOnlinePpe",
+  "azSecPackRole": "vsonlineppesecurity",
+  "azSecPackSecurityMoniker": "vsonlineppesecurity",
+  "azSecPackTenant": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
+  "azSecPackTimestamp": "2018-05-07T00:00:00Z",
   "baseComponentFileName": "codesp",
   "baseComponentName": "vscs-codesp",
   "baseEnvironmentFileName": "codesp.ppe",
@@ -12,14 +26,55 @@
   "baseRegionFileName": "codesp.ppe-ctl-rel-us-w2",
   "baseRegionName": "vscs-codesp-ppe-rel-us-w2",
   "baseRegionStorageName": "codesppperelusw2",
+  "clusterIngressReplicaCount": 3,
+  "clusterKubernetesVersion": "1.18.6",
+  "clusterName": "vscs-codesp-ppe-rel-us-w2-cluster-v1",
+  "clusterVersionSuffix": "v1",
   "component": "codesp",
+  "componentDisplayName": "Codespaces",
+  "containerRegistryName": "vscscodespppeacr",
+  "containerRegistryReplications": [
+    {
+      "name": "vscscodespppeacr/westeurope",
+      "condition": "[not(equals(toLower(variables('location')),'westeurope'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westeurope",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscodespppeacr')]"
+      ]
+    },
+    {
+      "name": "vscscodespppeacr/westus2",
+      "condition": "[not(equals(toLower(variables('location')),'westus2'))]",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "westus2",
+      "properties": {
+        "regionEndpointEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscodespppeacr')]"
+      ]
+    }
+  ],
   "env": "ppe",
   "environmentLocation": "WestUs2",
   "environmentStampLocations": [
     "WestEurope",
     "WestUs2"
   ],
+  "environmentTenantId": "33e01921-4d64-4f8c-a055-5bdaffd5e33d",
+  "genevaFluentdTdAgentTag": "master_148",
+  "genevaMdmAccount": "VsOnlinePpe",
+  "genevaMdmTag": "master_48",
+  "genevaMdsdTag": "master_309",
+  "genevaSecpackInstallTag": "master_57",
   "geo": "us",
+  "imageRepositoryUrl": "vscscodespppeacr.azurecr.io",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceStampLocations": [
@@ -30,11 +85,15 @@
     "eu-w",
     "us-w2"
   ],
+  "location": "WestUs2",
+  "opsServiceConnector": "vscs-codesp-ppe-ops-sp",
   "plane": "ctl",
   "prefix": "vscs",
   "region": "us-w2",
   "regionLocation": "WestUs2",
   "regionSuffix": "w2",
+  "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b",
   "subscriptionId": "c57ef400-af62-4b47-a0b6-24ae55e7b8fd",
-  "subscriptionName": "vscs-codesp-ppe-ctl"
+  "subscriptionName": "vscs-codesp-ppe-ctl",
+  "trafficManagerEndpointGeoMappings": "WORLD GEO-NA GEO-SA GEO-EU GEO-AN"
 }

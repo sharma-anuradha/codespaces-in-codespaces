@@ -41,13 +41,13 @@
     },
     "appSpId": {
       "type": "string",
-      "minLength": 36,
+      "minLength": 0,
       "maxLength": 36,
       "defaultValue": ""
     },
     "firstPartyAppSpId": {
       "type": "string",
-      "minLength": 36,
+      "minLength": 0,
       "maxLength": 36,
       "defaultValue": ""
     },
@@ -99,13 +99,13 @@
     "readersGroup": "[parameters('readersGroup')]",
     "skipResources": "[parameters('skipResources')]",
     // Resource names
-    "baseName": "[concat(variables('prefix'),'-',variables('component'),'-',variables('env'),'-',variables('plane'))]",
+    "planeExt": "[if(not(equals(variables('plane'),'ctl')),concat('-',variables('plane')),'')]",
+    "baseName": "[concat(variables('prefix'),'-',variables('component'),'-',variables('env'),variables('planeExt'))]",
     "defaultResourceGroupName": "[variables('baseName')]",
     "keyVaultExtension": "[if(equals(variables('baseName'),'vscs-core-test-ops'),'-kv2','-kv')]",
     "keyVaultName": "[concat(variables('baseName'),variables('keyVaultExtension'))]",
     "containerRegistryName": "[replace(concat(variables('baseName'),'-acr'),'-','')]",
     // Key Vault Access Policies
-    "isProduction": "[or(equals(variables('env'),'prod'),equals(variables('env'),'ppe'))]",
     "listOnlyPermissions": {
       "keys": [
         "List"
@@ -368,6 +368,19 @@
               "properties": {
                 "roleDefinitionId": "[variables('acrPullRoleId')]",
                 "principalId": "[variables('opsSpId')]",
+                "principalType": "ServicePrincipal",
+                "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups/',variables('defaultResourceGroupName'))]"
+              }
+            },
+            // Assign AcrPull to the app service principal
+            {
+              "condition": "[not(empty(variables('appSpId')))]",
+              "name": "[guid(subscription().id,variables('appSpId'),variables('acrPullRoleId'),variables('defaultResourceGroupName'))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-03-01-preview",
+              "properties": {
+                "roleDefinitionId": "[variables('acrPullRoleId')]",
+                "principalId": "[variables('appSpId')]",
                 "principalType": "ServicePrincipal",
                 "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups/',variables('defaultResourceGroupName'))]"
               }

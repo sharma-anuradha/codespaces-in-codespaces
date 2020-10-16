@@ -1,0 +1,114 @@
+// Auto-Generated From Template
+// "codesp.region.rolloutspec.jsonc"
+// with names file "codesp.prod-ctl-rel-us-e.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  // "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "$schema": "../../../../Schemas/Azure-Express/2020-01-01/RolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+  "rolloutMetadata": {
+    "serviceModelPath": "codesp.prod-ctl-rel-us-e/Ev2/codesp.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-codesp-prod-rel-us-e-arm",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-network",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-network",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-cluster",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-cluster",
+      "actions": [
+        "Deploy"
+      ],
+      "dependsOn": [
+        "vscs-codesp-prod-rel-us-e-region-network"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-batch",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-batch",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-databases",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-databases",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-servicebus",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-servicebus",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-storage-bl",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-storage-bl",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-storage-cq",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-storage-cq",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-storage-gh",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-storage-gh",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-storage-sa",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-storage-sa",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-storage-si",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-storage-si",
+      "actions": [
+        "Deploy"
+      ]
+    },
+    {
+      "name": "vscs-codesp-prod-rel-us-e-region-storage-vm",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-codesp-prod-rel-us-e-region-storage-vm",
+      "actions": [
+        "Deploy"
+      ]
+    }
+  ]
+}
