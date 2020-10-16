@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentMetricsManager.cs" company="Microsoft">
+// <copyright file="EnvironmentMetricsManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

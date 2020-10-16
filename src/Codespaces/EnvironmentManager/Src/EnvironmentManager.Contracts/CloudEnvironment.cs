@@ -409,6 +409,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public SystemStatusInfo SystemStatusInfo { get; set; }
 
         /// <summary>
+        /// Gets or sets whether codespace is assigned.
+        /// </summary>
+        [JsonProperty(PropertyName = "isAssigned")]
+        public bool? IsAssigned { get; set; }
+
+        /// <summary>
+        /// Gets or sets when was codespace assigned to user.
+        /// </summary>
+        [JsonProperty(PropertyName = "assigned")]
+        public DateTime? Assigned { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether codespace is ready to be assigned.
+        /// </summary>
+        [JsonProperty(PropertyName = "isReady")]
+        public bool? IsReady { get; set; }
+
+        /// <summary>
+        /// Gets or sets when was codespace got ready.
+        /// </summary>
+        [JsonProperty(PropertyName = "ready")]
+        public DateTime? Ready { get; set; }
+
+        /// <summary>
         /// Indicates whether the environment is in a shutdown state.
         /// </summary>
         /// <returns>Whether it is shutdown.</returns>

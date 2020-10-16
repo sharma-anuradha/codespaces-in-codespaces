@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Kusto.Cloud.Platform.Utils;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
@@ -81,6 +82,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task CreatePoolResourceAsync(
+            string skuName,
+            AzureLocation location,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            var environmentId = Guid.NewGuid();
+            var loggingProperties = BuildLoggingProperties(environmentId, reason);
+
+            await JobQueueProducerFactory
+                .GetOrCreate(CreateEnvironmentResourceJobHandler.DefaultQueueId)
+                .AddJobAsync(
+                new CreateEnvironmentResourceJobHandler.Payload()
+                {
+                    EntityId = environmentId,
+                    SkuName = skuName,
+                    Location = location,
+                    Reason = reason,
+                    LoggerProperties = loggingProperties.CreateLoggerProperties(),
+                    CurrentState = CreateEnvironmentResourceJobHandler.JobState.AllocateResource,
+                }.Initialize(),
+                null,
+                logger,
+                CancellationToken.None);
         }
 
         /// <inheritdoc/>

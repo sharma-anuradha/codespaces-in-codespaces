@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -109,5 +110,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
           ExportCloudEnvironmentParameters exportCloudEnvironmentParameters,
           string reason,
           IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Creates codespace for codespace hot pool.
+        /// </summary>
+        /// <param name="skuName">codespace sku name.</param>
+        /// <param name="location">codespace pool location.</param>
+        /// <param name="reason">Reason.</param>
+        /// <param name="logger">Logger.</param>
+        /// <returns></returns>
+        Task CreatePoolResourceAsync(
+            string skuName,
+            AzureLocation location,
+            string reason,
+            IDiagnosticsLogger logger);
     }
 }

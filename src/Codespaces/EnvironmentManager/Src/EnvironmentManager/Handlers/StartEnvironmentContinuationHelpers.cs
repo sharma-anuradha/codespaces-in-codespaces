@@ -306,7 +306,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     // Continue on failure to delete shadow record, as it is best effort.
                     logger.LogException($"{operationBaseName}_delete_shadow_record_error", ex);
                 }
+            }
 
+            var resourcesReady = statusResponse.All(status => status.IsReady);
+
+            if (resourcesReady || updatedResourceList.Count != 0)
+            {
                 // Queued allocation request is completed, so update resource information in environment record.
                 var didUpdate = await UpdateResourceInfoAsync(operationInput, cloudEnvironmentRepository, record, logger.NewChildLogger(), operationBaseName);
                 if (!didUpdate)
@@ -316,7 +321,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 }
             }
 
-            if (statusResponse.All(status => status.IsReady))
+            if (resourcesReady)
             {
                 operationInput.CurrentState = StartEnvironmentContinuationInputState.StartCompute;
                 return ContinuationResultHelpers.ReturnInProgress(operationInput);
@@ -375,17 +380,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 }
             }
 
+            // Update state from queued
+            var targetState = GetTargetState(operationInput.ActionState);
+
             if (record.Value.State != CloudEnvironmentState.Queued)
             {
                 logger.AddCloudEnvironmentState(record.Value.State)
                     .LogErrorWithDetail($"{operationBaseName}_invalid_state_error", $"Found invalid state {record.Value.State} instead of {CloudEnvironmentState.Queued}");
 
                 // Return success to cancel this continuation, as another continuation is already operating on this environment.
-                return new ContinuationResult { Status = OperationState.Cancelled, ErrorReason = $"InvalidState_{record.Value.State}" };
+                return new ContinuationResult { Status = OperationState.Succeeded, ErrorReason = $"InvalidState_{record.Value.State}" };
             }
-
-            // Update state from queued
-            var targetState = GetTargetState(operationInput.ActionState);
 
             var didUpdate = await cloudEnvironmentRepository.UpdateRecordAsync(
                     operationInput.EnvironmentId,
@@ -401,7 +406,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                         await environmentStateManager.SetEnvironmentStateAsync(
                             environment,
                             targetState,
-                            CloudEnvironmentStateUpdateTriggers.CreateEnvironment,
+                            string.Empty,
                             string.Empty,
                             null,
                             logger.NewChildLogger());

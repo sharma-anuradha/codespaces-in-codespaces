@@ -16,6 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         public CloudEnvironmentTransitions()
         {
+            Creating = new TransitionState();
             Archiving = new TransitionState();
             Provisioning = new TransitionState();
             Resuming = new TransitionState();
@@ -29,6 +30,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(PropertyName = "archiving")]
         public TransitionState Archiving { get; set; }
+
+        /// <summary>
+        /// Gets or sets the create environment transitions.
+        /// </summary>
+        [JsonProperty(PropertyName = "createEnvironmentResource")]
+        public TransitionState Creating { get; set; }
 
         /// <summary>
         /// Gets or sets the create environment transitions.

@@ -15,6 +15,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
     /// </summary>
     public class MockResourceBrokerClient : IResourceBrokerResourcesExtendedHttpContract
     {
+        private IDictionary<Guid, StatusResponseBody> resourceStatus;
+
+        public MockResourceBrokerClient()
+        {
+            resourceStatus = new Dictionary<Guid, StatusResponseBody>();
+        }
+
         /// <inheritdoc/>
         public Task<ResourceBrokerResource> GetAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
@@ -31,7 +38,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
                 Location = resource.Location,
                 SkuName = resource.SkuName,
                 Type = resource.Type,
+                IsReady = true,
             };
+
+            resourceStatus.Add(
+                result.ResourceId,
+                new StatusResponseBody()
+                {
+                    ResourceId = result.ResourceId,
+                    Created = DateTime.UtcNow,
+                    Location = resource.Location,
+                    SkuName = resource.SkuName,
+                    Type = resource.Type,
+                    IsReady = true,
+                });
 
             return Task.FromResult(result);
         }
@@ -87,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         /// <inheritdoc/>
         public Task<StatusResponseBody> StatusAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
         {
-            var result = new StatusResponseBody { ResourceId = resourceId };
+            var result = resourceStatus[resourceId];
 
             return Task.FromResult(result);
         }
