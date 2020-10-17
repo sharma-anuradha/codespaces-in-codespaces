@@ -314,7 +314,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var consolidatedloggerProperties = await BuildLoggingProperties(blobResourceId, reason, logger, loggingProperties);
 
-            if (await IsJobContinuationHandlerEnabledAsync(logger, false, nameof(StartArchiveContinuationJobHandler)))
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
                 await JobQueueProducerFactory.GetOrCreate(StartArchiveContinuationJobHandler.DefaultQueueId).AddJobAsync(
                    new StartArchiveContinuationJobHandler.Payload()
@@ -525,10 +525,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             return consolidatedloggerProperties;
         }
 
-        private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger, bool defaultEnabled = true, string handlerName = null)
+        private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger)
         {
-            var featureFlagName = (handlerName != null) ? $"job-continuation-handler-{handlerName}" : "job-continuation-handler";
-            return ConfigurationReader.ReadFeatureFlagAsync(featureFlagName, logger, defaultEnabled);
+            return ConfigurationReader.ReadFeatureFlagAsync("job-continuation-handler", logger, true);
         }
     }
 }

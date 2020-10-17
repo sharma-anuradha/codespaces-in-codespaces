@@ -130,6 +130,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 return ReturnFailed("StateNoLongerShutdown");
             }
 
+            // Note: initialize from the payload the Archive status since we ignore the json serialization
+            payload.ArchiveStatus = payload.CurrentState;
+
             switch (payload.CurrentState)
             {
                 case ArchiveEnvironmentContinuationInputState.AllocateStorageBlob:
