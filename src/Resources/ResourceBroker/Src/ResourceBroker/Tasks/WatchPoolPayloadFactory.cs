@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IResourcePoolDefinitionStore ResourceScalingStore { get; }
 
         /// <inheritdoc/>
-        public async Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadCreatedDelegate onPayloadCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        public async Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadsCreatedDelegateAsync onPayloadCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             // Get current catalog
             var resourceUnits = await RetrieveResourceSkus();
@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private Task CreateResourcePoolJobsAsync(
             ResourcePool resourcePool,
             Func<TimeSpan> payloadVisibilitCallback,
-            OnPayloadCreatedDelegate onPayloadCreated,
+            OnPayloadsCreatedDelegateAsync onPayloadCreated,
             IDiagnosticsLogger logger)
         {
             var loggerProperties = new Dictionary<string, string>()
@@ -99,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private Task CreateResourcePoolJobAsync<TJobHandlerType>(
             ResourcePool resourcePool,
             Func<TimeSpan> payloadVisibilitCallback,
-            OnPayloadCreatedDelegate onPayloadCreated,
+            OnPayloadsCreatedDelegateAsync onPayloadCreated,
             IDictionary<string, string> loggerProperties)
             where TJobHandlerType : class
         {
@@ -110,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,
             };
 
-            return onPayloadCreated(jobPayload, jobPayloadOptions);
+            return onPayloadCreated.AddPayloadAsync(jobPayload, jobPayloadOptions, default);
         }
 
         private async Task<IEnumerable<ResourcePool>> RetrieveResourceSkus()

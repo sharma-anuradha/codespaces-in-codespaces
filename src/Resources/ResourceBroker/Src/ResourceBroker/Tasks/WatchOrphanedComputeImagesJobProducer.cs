@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.WatchOrphanedComputeImagesJobSchedule;
 
         /// <inheritdoc/>
-        public async Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadCreatedDelegate onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        public async Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadsCreatedDelegateAsync onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             await logger.OperationScopeAsync(
                 $"{JobName}_produce_payload",

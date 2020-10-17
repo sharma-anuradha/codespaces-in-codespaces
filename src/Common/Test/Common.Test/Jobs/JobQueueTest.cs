@@ -614,6 +614,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 Assert.IsType<Data2>(payloadReceived.CustomData);
             });
         }
+        [Fact]
+        public Task AddJobsAsync()
+        {
+            return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
+            {
+                var payloadsProcessed = new BufferBlock<JobContentPayload<int>>();
+                jobQueueConsumer.RegisterJobHandler<JobContentPayload<int>>(
+                    async (job, logger, ct) =>
+                    {
+                        await payloadsProcessed.SendAsync(job.Payload);
+                    });
+
+                var jobPayloads = new List<JobPayload>();
+                for (int i = 0;i < 100; ++i)
+                {
+                    jobPayloads.Add(new JobContentPayload<int>(i));
+                }
+
+                await jobQueueProducer.AddJobsAsync(jobPayloads, jobPayloadOptions: null, NullLogger, default);
+
+                for (int i = 0; i < 100; ++i)
+                {
+                    await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
+                }
+            });
+        }
 
         protected Task RunJobQueueTest(Func<JobQueueProducer, JobQueueConsumer, IQueue, Task> testCallback,
             QueueMessageProducerSettings queueMessageProducerSettings = null)

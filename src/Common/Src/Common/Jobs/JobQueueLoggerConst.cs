@@ -20,6 +20,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         public const string JobType = "JobType";
 
         /// <summary>
+        /// The job add duration column.
+        /// </summary>
+        public const string JobAddDuration = "JobAddDuration";
+
+        /// <summary>
         /// The job payload column.
         /// </summary>
         public const string JobPayload = "JobPayload";
@@ -93,6 +98,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// Number of jobs processed.
         /// </summary>
         public const string JobProcessedCount = "JobProcessedCount";
+
+        /// <summary>
+        /// Job average process time.
+        /// </summary>
+        public const string JobAverageAddTime = "JobAverageAddTime";
 
         /// <summary>
         /// Job average process time.

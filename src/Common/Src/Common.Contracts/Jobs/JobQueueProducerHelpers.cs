@@ -3,12 +3,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts.Jobs
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
     /// <summary>
     /// Helper extension for a job queue producer.
@@ -62,6 +64,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts.Jobs
         public static Task<QueueMessage> AddJobWithTargetAsync(this IJobQueueProducer jobQueueProducer, JobPayload jobPayload, DateTime targetTime, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             return AddJobWithTargetAsync(jobQueueProducer, jobPayload, (now) => targetTime, logger, cancellationToken);
+        }
+
+        /// <summary>
+        /// Add multiple job payloads to a queue producer
+        /// </summary>
+        /// <param name="jobQueueProducer">The job queue producer.</param>
+        /// <param name="jobPayloads">List of job payloads.</param>
+        /// <param name="jobPayloadOptions">Optional job payload options.</param>
+        /// <param name="logger">The logger diagnostic instance.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Completion task.</returns>
+        public static Task<QueueMessage[]> AddJobsAsync(this IJobQueueProducer jobQueueProducer, IEnumerable<JobPayload> jobPayloads, JobPayloadOptions jobPayloadOptions, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        {
+            return AddJobsAsync(jobQueueProducer, jobPayloads.Select(payload => (payload, jobPayloadOptions)), logger, cancellationToken);
+        }
+
+        /// <summary>
+        /// Add multiple job payloads to a queue producer
+        /// </summary>
+        /// <param name="jobQueueProducer">The job queue producer.</param>
+        /// <param name="jobPayloads">List of job payloads with options.</param>
+        /// <param name="logger">The logger diagnostic instance.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Completion task.</returns>
+        public static async Task<QueueMessage[]> AddJobsAsync(this IJobQueueProducer jobQueueProducer, IEnumerable<(JobPayload payload, JobPayloadOptions options)> jobPayloads, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        {
+            Requires.NotNull(jobQueueProducer, nameof(jobQueueProducer));
+
+            var queueMessages = new List<QueueMessage>();
+            await jobPayloads.RunConcurrentItemsAsync(
+                async (jobPayload, childLogger, ct) =>
+                {
+                    var queueMessage = await jobQueueProducer.AddJobAsync(jobPayload.payload, jobPayload.options, childLogger, cancellationToken);
+                    queueMessages.Add(queueMessage);
+                },
+                errItemCallback: null,
+                logger,
+                cancellationToken);
+            return queueMessages.ToArray();
         }
     }
 }

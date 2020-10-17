@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,5 +67,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets the number of failures.
         /// </summary>
         public int Failures { get; }
+
+        /// <summary>
+        /// total process time.
+        /// </summary>
+        public TimeSpan ProcessTime { get; }
     }
 }

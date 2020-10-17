@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -10,7 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
-    public delegate Task JobPayloadInfoFactoryDelegate(string jobRunId, DateTime dt, IServiceProvider provider, OnPayloadCreatedDelegate onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken);
+    public delegate Task JobPayloadInfoFactoryDelegate(string jobRunId, DateTime dt, IServiceProvider provider, OnPayloadsCreatedDelegateAsync onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken);
 
     /// <summary>
     /// Helper extension for the IJobScheduler interface.
@@ -88,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             JobPayload jobPayload,
             JobPayloadOptions jobPayloadOptions = null)
         {
-            return jobScheduler.AddDelayedJobPayload(delay, jobName, jobQueueProducer, (jobRunId, dt, srvcProvider, onCreated, logger, ct) => onCreated(jobPayload, jobPayloadOptions));
+            return jobScheduler.AddDelayedJobPayload(delay, jobName, jobQueueProducer, (jobRunId, dt, srvcProvider, onCreated, logger, ct) => onCreated(new[] { (jobPayload, jobPayloadOptions) }, ct));
         }
 
         /// <summary>
@@ -172,7 +173,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             JobPayload jobPayload,
             JobPayloadOptions jobPayloadOptions = null)
         {
-            return jobScheduler.AddRecurringJobPayload(expression, jobName, jobQueueProducer, (jobRunId, dt, srvcProvider, onCreated, logger, ct) => onCreated(jobPayload, jobPayloadOptions));
+            return jobScheduler.AddRecurringJobPayload(expression, jobName, jobQueueProducer, (jobRunId, dt, srvcProvider, onCreated, logger, ct) => onCreated(new[] { (jobPayload, jobPayloadOptions) }, ct));
         }
 
         /// <summary>
@@ -202,15 +203,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         {
             return async (jobRunId, dt, srvc, logger, ct) =>
             {
-                Task OnPayloadCreated(JobPayload payload, JobPayloadOptions options)
+                Task OnPayloadsCreatedAsync(IEnumerable<(JobPayload payload, JobPayloadOptions options)> jobPayloads, CancellationToken cancellationToken)
                 {
-                    payload.LoggerProperties.Add("JobRunId", jobRunId);
-                    payload.LoggerProperties.Add("JobScheduleRun", dt);
+                    foreach (var jobPayload in jobPayloads)
+                    {
+                        jobPayload.payload.LoggerProperties.Add("JobRunId", jobRunId);
+                        jobPayload.payload.LoggerProperties.Add("JobScheduleRun", dt);
+                    }
 
-                    return jobQueueProducer.AddJobAsync(payload, options, logger, ct);
+                    return jobQueueProducer.AddJobsAsync(jobPayloads, logger, cancellationToken);
                 }
 
-                await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvc, OnPayloadCreated, logger, ct);
+                await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvc, OnPayloadsCreatedAsync, logger, ct);
             };
         }
 
@@ -223,7 +227,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 this.callback = callback;
             }
 
-            public Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadCreatedDelegate onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            public Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadsCreatedDelegateAsync onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
             {
                 return this.callback(jobRunId, scheduleRun, serviceProvider, onCreated, logger, cancellationToken);
             }

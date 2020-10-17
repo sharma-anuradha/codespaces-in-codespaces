@@ -3,13 +3,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
-    public delegate Task OnPayloadCreatedDelegate(JobPayload payload, JobPayloadOptions options);
+    public delegate Task OnPayloadsCreatedDelegateAsync(IEnumerable<(JobPayload payload, JobPayloadOptions options)> jobPayloads, CancellationToken cancellationToken);
 
     /// <summary>
     /// Contract to define a job scheduler payload factory.
@@ -30,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             string jobRunId,
             DateTime scheduleRun,
             IServiceProvider serviceProvider,
-            OnPayloadCreatedDelegate onCreated,
+            OnPayloadsCreatedDelegateAsync onCreated,
             IDiagnosticsLogger logger,
             CancellationToken cancellationToken);
     }

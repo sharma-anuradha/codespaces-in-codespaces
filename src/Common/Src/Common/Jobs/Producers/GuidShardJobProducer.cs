@@ -48,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Producers
             }
         }
 
-        private async Task CreatePayloadsAsync(IGuidShardJobScheduleDetails handler, OnPayloadCreatedDelegate onPayloadCreated)
+        private async Task CreatePayloadsAsync(IGuidShardJobScheduleDetails handler, OnPayloadsCreatedDelegateAsync onPayloadCreated)
         {
             await onPayloadCreated.AddAllPayloadsAsync(ScheduledTaskHelpers.GetIdShards(), (shard) =>
             {

@@ -3,12 +3,10 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 
@@ -215,8 +213,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         .FluentAddBaseValue("TasksRunName", name);
 
                     // Trigger core runner
-                    await RunConcurrentEnumerableCoreAsync(
-                        name, list, callback, childLogger, obtainLease, errItemCallback, concurrentLimit, successDelay);
+                    await list.RunConcurrentItemsAsync(
+                        (item, childLogger, ct) => RunEnumerableItemCoreAsync(
+                                    name, item, callback, childLogger, obtainLease, successDelay),
+                        (item, error, childLogger, ct) =>
+                        {
+                            errItemCallback?.Invoke(item, error, childLogger);
+                            return Task.CompletedTask;
+                        },
+                        new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = concurrentLimit },
+                        logger,
+                        default);
                 });
         }
 
@@ -364,78 +371,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         return Task.CompletedTask;
                     }
                 };
-            }
-        }
-
-        private async Task RunConcurrentEnumerableCoreAsync<T>(
-           string name,
-           IEnumerable<T> list,
-           Func<T, IDiagnosticsLogger, Task> callback,
-           IDiagnosticsLogger logger,
-           Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease,
-           Action<T, Exception, IDiagnosticsLogger> errItemCallback,
-           int concurrentLimit,
-           int successDelay)
-        {
-            var semaphore = new SemaphoreSlim(concurrentLimit);
-            var completion = new TaskCompletionSource<object>();
-            var exceptions = new ConcurrentBag<Exception>();
-            var completed = false;
-            var index = 0;
-
-            foreach (var item in list)
-            {
-                // Pause till we have a slot
-                var semaphoreWait = Stopwatch.StartNew();
-                await semaphore.WaitAsync();
-                semaphoreWait.Stop();
-
-                // Run action
-                _ = logger.OperationScopeAsync(
-                    "task_helper_run_background_enumerable_item",
-                    (childLogger) =>
-                    {
-                        childLogger.FluentAddBaseValue("TaskItemRunId", Guid.NewGuid())
-                            .FluentAddValue("IterateItemIndex", index++)
-                            .FluentAddValue("LockConcurrentLimit", concurrentLimit)
-                            .FluentAddValue("LockConcurrentSemaphoreCount", semaphore.CurrentCount)
-                            .FluentAddDuration("LockConcurrentSemaphore", semaphoreWait);
-
-                        return RunEnumerableItemCoreAsync(
-                            name, item, callback, childLogger, obtainLease, successDelay);
-                    })
-                    .ContinueWith(t =>
-                    {
-                        // Release reserved slot
-                        semaphore.Release();
-
-                        // Store exceptions
-                        if (t.Exception != null)
-                        {
-                            exceptions.Add(t.Exception);
-
-                            errItemCallback?.Invoke(item, t.Exception, logger.NewChildLogger());
-                        }
-
-                        // Release completion
-                        if (Volatile.Read(ref completed) && semaphore.CurrentCount == concurrentLimit)
-                        {
-                            completion.SetResult(null);
-                        }
-                    });
-            }
-
-            // Trigger release
-            Volatile.Write(ref completed, true);
-            await completion.Task;
-
-            logger.FluentAddValue("IterateItemCount", index)
-                .FluentAddValue("IterateExceptionCount", exceptions.Count());
-
-            // Throw if we had exceptions
-            if (exceptions.Count > 0)
-            {
-                throw new AggregateException(exceptions);
             }
         }
 

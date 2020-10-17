@@ -100,7 +100,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                                 .FluentAddValue("Location", kvp.Key.Item2)
                                                 .FluentAddValue(JobQueueLoggerConst.JobType, jobQueueProducerMetricsKvp.Key)
                                                 .FluentAddValue(JobQueueLoggerConst.JobProcessedCount, jobQueueProducerMetrics.Processed)
-                                                .FluentAddValue(JobQueueLoggerConst.JobFailuresCount, jobQueueProducerMetrics.Failures);
+                                                .FluentAddValue(JobQueueLoggerConst.JobFailuresCount, jobQueueProducerMetrics.Failures)
+                                                .FluentAddValue(JobQueueLoggerConst.JobAverageAddTime, jobQueueProducerMetrics.Processed == 0 ? string.Empty : Math.Round(jobQueueProducerMetrics.ProcessTime.TotalMilliseconds / jobQueueProducerMetrics.Processed, 2).ToString());
+
                                             return Task.CompletedTask;
                                         });
                                 }

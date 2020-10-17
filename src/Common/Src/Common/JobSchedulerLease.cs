@@ -59,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                             logger.AddValue("jobRunLeaseObtaioned", (lease != null).ToString());
                             if (lease != null)
                             {
-                                await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvcProvider, onCreated, logger, ct);                                
+                                await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvcProvider, onCreated, logger, ct);
                             }
                         }
                     }

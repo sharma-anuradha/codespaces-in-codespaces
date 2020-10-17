@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -38,13 +39,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             Requires.NotNull(job, nameof(job));
             Requires.NotNull(logger, nameof(logger));
 
+            var start = Stopwatch.StartNew();
+            Action<JobQueueProducerMetrics> updateCallback = (metrics) =>
+            {
+                ++metrics.Processed;
+                metrics.ProcessTime += start.Elapsed;
+            };
+
             var tagType = JobPayloadHelpers.GetTypeTag(job.GetType());
             var payloadJson = job.ToJson();
             return logger.OperationScopeAsync(
                 "job_queue_producer",
                 async (childLogger) =>
                 {
-                    UpdateMetrics(tagType, m => ++m.Processed);
+                    UpdateMetrics(tagType, updateCallback);
                     var json = new JobPayloadInfo(tagType, payloadJson, DateTime.UtcNow) { PayloadOptions = jobPayloadOptions }.ToJson();
 
                     childLogger
@@ -59,12 +67,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
                     var cloudMessage = await this.queueMessage.AddMessageAsync(Encoding.UTF8.GetBytes(json), jobPayloadOptions?.InitialVisibilityDelay, cancellationToken);
                     childLogger.FluentAddValue(JobQueueLoggerConst.JobId, cloudMessage.Id);
-                    
+                    childLogger.FluentAddValue(JobQueueLoggerConst.JobAddDuration, start.Elapsed);
+
                     return cloudMessage;
                 },
                 errCallback: (err, logger) =>
                 {
-                    UpdateMetrics(tagType, m => ++m.Failures);
+                    UpdateMetrics(tagType, updateCallback);
                     return Task.FromResult<QueueMessage>(null);
                 });
         }
@@ -100,6 +109,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             public int Processed { get; set; }
 
             public int Failures { get; set; }
+
+            public TimeSpan ProcessTime { get; set; }
         }
     }
 }
