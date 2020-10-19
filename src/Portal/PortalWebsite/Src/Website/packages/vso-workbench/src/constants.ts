@@ -24,7 +24,7 @@ export const CONNECT_ATTEMPT_COUNT_LS_KEY = 'vscs-oauth-flow-attmept-count';
 export enum PlatformQueryParams {
     // incoming / util params
     AutoStart = 'autoStart',
-    AutoAuthorize = 'autoConnect',
+    AutoAuthRedirect = 'autoConnect',
     VSCodeChannel = 'vscodeChannel',
     // outgoing params
     CodespaceId = 'codespaceId',

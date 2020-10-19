@@ -12,6 +12,8 @@ import {
 
 import { EnvConnector } from './envConnector';
 import { sendTelemetry } from '../telemetry/sendTelemetry';
+import { PlatformQueryParams } from '../constants';
+import { setQueryParamFlag } from '../utils/queryParamFlag';
 
 export interface IWebSocket {
     readonly onData: Event<ArrayBuffer>;
@@ -268,10 +270,7 @@ export class VSLSWebSocket implements IWebSocket {
                     retry,
                 });
 
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('autoStart', 'false');
-
-                window.location.replace(currentUrl.toString());
+                setQueryParamFlag(PlatformQueryParams.AutoStart, false);
             }
 
             this.envConnector.cleanCachedConnection();

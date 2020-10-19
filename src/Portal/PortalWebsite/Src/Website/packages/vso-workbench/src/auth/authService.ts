@@ -142,11 +142,6 @@ export class AuthService {
                 : tryGetCurrentEnvironmentId();
 
         if (codespaceId) {
-            /**
-             * For legacy reasons we have to support the old `environmentId` name,
-             * the query param is only used by Salesforce at the moment.
-             */
-            redirectUrl.searchParams.append('environmentId', codespaceId);
             redirectUrl.searchParams.append(PlatformQueryParams.CodespaceId, codespaceId);
         }
 
@@ -189,7 +184,7 @@ export class AuthService {
 
     public keepUserAuthenticated = debounceInterval(
         this.makeTokenRequest,
-        5 * timeConstants.MINUTE_MS
+        5 * timeConstants.MINUTE_MS,
     );
 
     public getSettingsSyncSession = async (): Promise<VSCodeDefaultAuthSession | null> => {

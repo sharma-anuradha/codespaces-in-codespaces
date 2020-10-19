@@ -12,6 +12,7 @@ import { credentialsProvider } from '../../../vscode/providers/credentialsProvid
 import { ServerlessSplashscreen } from '../ServerlessSplashscreen/ServerlessSplashscreen';
 import { featureFlags, FeatureFlags } from '../../../config/featureFlags';
 import { authService } from '../../../auth/authService';
+import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
 
 export interface IWorkbenchPageRenderProps {
     className?: string;
@@ -107,15 +108,24 @@ export class WorkbenchPageRender extends React.Component<
     };
 
     private getSplashScreen = () => {
+        const { isMounted, isServerlessSplashScreenShown } = this.state;
+        const { environmentInfo, environmentState } = this.props;
+
+        // When user gets signed out on the workbench page, we expect to transition back
+        // to the splash screen which will render the `Signed Out` screen. As an alternative
+        // we could reset the `isMounted` flag but current vscode workbench cannot be mounted
+        // twice, so we will need a page reload anyways.
+        // Note: other workbench states mgiht also need same level of treatment in the future.
+        const isSignedOut = (environmentState === EnvironmentWorkspaceState.SignedOut);
         // hide the splash screen when the workbench gets mounted
-        if (this.state.isMounted) {
+        if (isMounted && !isSignedOut) {
             return null;
         }
 
-        if (this.state.isServerlessSplashScreenShown) {
+        if (isServerlessSplashScreenShown) {
             return (
                 <ServerlessSplashscreen
-                    environment={this.props.environmentInfo}
+                    environment={environmentInfo}
                     credentialsProvider={credentialsProvider}
                     getGithubToken={authService.getCachedGithubToken}
                 />

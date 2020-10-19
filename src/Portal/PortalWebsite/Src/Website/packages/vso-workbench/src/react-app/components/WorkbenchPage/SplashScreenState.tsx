@@ -170,7 +170,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
                 />
             );
         }
-        case EnvironmentStateInfo.Failed: 
+        case EnvironmentStateInfo.Failed:
         case EnvironmentStateInfo.Provisioning: {
             if (!environmentInfo) {
                 return (

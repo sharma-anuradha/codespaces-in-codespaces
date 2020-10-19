@@ -22,7 +22,7 @@ import { getWelcomeMessage } from '../../../utils/getWelcomeMessage';
 import { vsoAPI } from '../../../api/vsoAPI';
 import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 import { PlatformQueryParams, CONNECT_ATTEMPT_COUNT_LS_KEY } from '../../../constants';
-import { getPlatformQueryParam } from '../../../utils/getPlatformQueryParam';
+import { getQueryParamFlag, setQueryParamFlag } from '../../../utils/queryParamFlag';
 import { MaybeDevPanel } from './DevPanel';
 
 import { LOADING_ENVIRONMENT_STAGE } from './DevPanelHeader';
@@ -166,7 +166,7 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
              * Check if we need to auto authorize to the environment.
              */
             const isAuthorized = !!(await authService.getPartnerInfo());
-            if ((await getPlatformQueryParam(PlatformQueryParams.AutoAuthorize)) && !isAuthorized) {
+            if ((await getQueryParamFlag(PlatformQueryParams.AutoAuthRedirect)) && !isAuthorized) {
                 /**
                  * Since we redirect for the credentials to external partners,
                  * if something unexpected happens, there is a potential to stuck in an infinite loop.
@@ -194,6 +194,9 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
 
             authService.onEvent((event) => {
                 if (event === 'signed-out') {
+                    // if the Codespace is inactive, set the flag
+                    // to prevent auto redirection to auth endoint
+                    setQueryParamFlag(PlatformQueryParams.AutoAuthRedirect, false);
                     this.setState({ value: EnvironmentWorkspaceState.SignedOut });
                 }
             });
@@ -220,7 +223,7 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
              * Check if we need to auto start the environment.
              */
             const isShutdown = this.environmentInfo.state === EnvironmentStateInfo.Shutdown;
-            const isAutoStart = await getPlatformQueryParam(PlatformQueryParams.AutoStart);
+            const isAutoStart = await getQueryParamFlag(PlatformQueryParams.AutoStart);
             if (isAutoStart && isShutdown) {
                 return await this.startCodespace();
             }
