@@ -77,13 +77,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <summary>
         /// Increment Retries property.
         /// </summary>
-        /// <param name="logger">A logger instance.</param>
-        public void NextRetry(IDiagnosticsLogger logger)
+        public void NextRetry()
         {
-            Requires.NotNull(logger, nameof(logger));
-
             ++Retries;
-            logger.FluentAddValue(JobQueueLoggerConst.JobRetries, Retries);
         }
     }
 }

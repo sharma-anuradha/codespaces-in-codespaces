@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(CreateResourceContinuationJobHandlerV2.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(CreateResourceContinuationJobHandlerV2.DefaultQueueId).AddJobContinuationAsync(
                     new CreateResourceContinuationJobHandlerV2.Payload()
                     {
                         Type = type,
@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         IsAssigned = false,
                         Options = options,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);
@@ -145,7 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(CreateResourceContinuationJobHandlerV2.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(CreateResourceContinuationJobHandlerV2.DefaultQueueId).AddJobContinuationAsync(
                     new CreateResourceContinuationJobHandlerV2.Payload()
                     {
                         Type = type,
@@ -155,7 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         Options = options,
                         IsAssigned = true,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);
@@ -203,7 +203,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(ResumeEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(ResumeEnvironmentContinuationJobHandler.DefaultQueueId).AddJobContinuationAsync(
                     new ResumeEnvironmentContinuationJobHandler.Payload()
                     {
                         EnvironmentId = environmentId,
@@ -216,7 +216,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         DevContainer = devcontainerJson,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);
@@ -263,7 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(ExportEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(ExportEnvironmentContinuationJobHandler.DefaultQueueId).AddJobContinuationAsync(
                     new ExportEnvironmentContinuationJobHandler.Payload()
                     {
                         EnvironmentId = environmentId,
@@ -275,7 +275,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         UserSecrets = userSecrets,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);
@@ -316,7 +316,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(StartArchiveContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(StartArchiveContinuationJobHandler.DefaultQueueId).AddJobContinuationAsync(
                    new StartArchiveContinuationJobHandler.Payload()
                    {
                        EnvironmentId = environmentId,
@@ -324,7 +324,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                        FileShareResourceId = fileResourceId,
                        Reason = reason,
                        LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                   }.Initialize(),
+                   },
                    null,
                    logger,
                    CancellationToken.None);
@@ -357,14 +357,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(DeleteResourceContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(DeleteResourceContinuationJobHandler.DefaultQueueId).AddJobContinuationAsync(
                     new DeleteResourceContinuationJobHandler.Payload()
                     {
                         EnvironmentId = environmentId,
                         EntityId = resourceId,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);
@@ -396,14 +396,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(CleanupResourceContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(CleanupResourceContinuationJobHandler.DefaultQueueId).AddJobContinuationAsync(
                     new CleanupResourceContinuationJobHandler.Payload()
                     {
                         EnvironmentId = environmentId,
                         EntityId = resourceId,
                         Reason = reason,
                         LoggerProperties = consolidatedloggerProperties.CreateLoggerProperties(),
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);

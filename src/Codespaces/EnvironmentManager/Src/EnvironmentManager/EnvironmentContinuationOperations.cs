@@ -57,14 +57,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var loggingProperties = BuildLoggingProperties(environmentId, reason);
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(ArchiveEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(ArchiveEnvironmentContinuationJobHandler.DefaultQueueId).AddJobContinuationAsync(
                     new ArchiveEnvironmentContinuationJobHandler.ArchiveContinuationInput()
                     {
                         EntityId = environmentId,
                         LastStateUpdated = lastStateUpdated,
                         Reason = reason,
                         LoggerProperties = loggingProperties.CreateLoggerProperties(),
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);
@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             await JobQueueProducerFactory
                 .GetOrCreate(CreateEnvironmentResourceJobHandler.DefaultQueueId)
-                .AddJobAsync(
+                .AddJobContinuationAsync(
                 new CreateEnvironmentResourceJobHandler.Payload()
                 {
                     EntityId = environmentId,
@@ -105,7 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     Reason = reason,
                     LoggerProperties = loggingProperties.CreateLoggerProperties(),
                     CurrentState = CreateEnvironmentResourceJobHandler.JobState.AllocateResource,
-                }.Initialize(),
+                },
                 null,
                 logger,
                 CancellationToken.None);
@@ -145,14 +145,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(ShutdownEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(ShutdownEnvironmentContinuationJobHandler.DefaultQueueId).AddJobContinuationAsync(
                     new ShutdownEnvironmentContinuationJobHandler.ShutdownEnvironmentContinuationInput()
                     {
                         EntityId = environmentId,
                         Reason = reason,
                         Force = forceSuspend,
                         LoggerProperties = loggingProperties.CreateLoggerProperties(),
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);
@@ -196,7 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                await JobQueueProducerFactory.GetOrCreate(StartEnvironmentContinuationJobHandlerV2.DefaultQueueId).AddJobAsync(
+                await JobQueueProducerFactory.GetOrCreate(StartEnvironmentContinuationJobHandlerV2.DefaultQueueId).AddJobContinuationAsync(
                     new StartEnvironmentContinuationJobHandlerV2.StartEnvironmentContinuationInput()
                     {
                         CloudEnvironmentOptions = cloudEnvironmentOptions,
@@ -207,7 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         Reason = reason,
                         LoggerProperties = loggingProperties.CreateLoggerProperties(),
                         CurrentState = StartEnvironmentContinuationInputState.StartQueuedStateMonitor,
-                    }.Initialize(),
+                    },
                     null,
                     logger,
                     CancellationToken.None);

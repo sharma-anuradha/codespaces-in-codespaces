@@ -228,7 +228,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             var utcCreated = job.Payload.UtcCreated;
             if (utcCreated != default && ((DateTime.UtcNow - utcCreated) > expireTimeout))
             {
-                logger.FluentAddValue("ContinuationIsRunningTimeValid", false);
+                logger.FluentAddValue(ContinuationJobConst.JobContinuationIsRunningTimeValid, false);
                 await CompleteJobAsync(job, new ContinuationJobResult<TState, TResult>(ContinuationJobPayloadResultState.Expired), logger, cancellationToken);
                 return;
             }
@@ -236,20 +236,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             int currentStateIndex = Array.IndexOf(ContinuationStates, job.Payload.CurrentState);
 
             var continueJobResult = await logger.OperationScopeAsync(
-                "job_continuation_handler_continue",
+                ContinuationJobConst.JobContinuationHandlerContinueMessage,
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddValue("JobContinuationState", job.Payload.CurrentState.ToString());
+                    childLogger.FluentAddValue(ContinuationJobConst.JobContinuationState, job.Payload.CurrentState.ToString());
                     var result = await ContinueAsync(job, childLogger, cancellationToken);
                     if (result != null)
                     {
-                        childLogger.FluentAddValue("JobContinuationResultState", result.ResultState)
-                            .FluentAddValue("JobContinuationHasResult", result.Result != null)
-                            .FluentAddValue("JobContinuationNextState", result.NextState);
+                        childLogger.FluentAddValue(ContinuationJobConst.JobContinuationResultState, result.ResultState)
+                            .FluentAddValue(ContinuationJobConst.JobContinuationHasResult, result.Result != null)
+                            .FluentAddValue(ContinuationJobConst.JobContinuationNextState, result.NextState);
                     }
                     else
                     {
-                        childLogger.FluentAddValue("JobContinuationResultIsNull", true);
+                        childLogger.FluentAddValue(ContinuationJobConst.JobContinuationResultIsNull, true);
                     }
 
                     return result;
@@ -356,7 +356,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         private Task CompleteJobAsync(IJob<T> job, ContinuationJobResult<TState, TResult> continueJobResult, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             return logger.OperationScopeAsync(
-                "job_continuation_complete",
+                ContinuationJobConst.JobContinuationCompleteMessage,
                 (childLogger) =>
                 {
                     var resultPayload = new ContinuationJobPayloadResult<TState, TResult>()

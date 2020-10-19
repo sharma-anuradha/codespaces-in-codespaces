@@ -202,6 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 #if DEBUG
                             .FluentAddBaseValue(JobQueueLoggerConst.JobPayload, jobInstance.JobPayloadInfo.Payload)
 #endif
+                            .FluentAddValue(JobQueueLoggerConst.JobRetries, jobInstance.JobPayloadInfo.Retries)
                             .FluentAddValue(JobQueueLoggerConst.JobDequeuedDuration, nowUtc - jobInstance.DequeueTime);
 
                         // pass deserialized logger properties from the producer.
@@ -244,7 +245,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                     if (jobInstance.RetryTimeout.HasValue)
                                     {
                                         // keep this job message queue but retry again.
-                                        jobInstance.JobPayloadInfo.NextRetry(logger);
+                                        jobInstance.JobPayloadInfo.NextRetry();
                                         jobInstance.VisibilityTimeout = jobInstance.RetryTimeout.Value;
                                     }
                                     else
@@ -276,7 +277,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                             status = status | JobCompletedStatus.Cancelled;
                         }
 
-                        jobInstance.JobPayloadInfo.NextRetry(logger);
+                        jobInstance.JobPayloadInfo.NextRetry();
 
                         // Note: we will start by allowing 'custom' defined error handlers to handle the job error and decide
                         // what completion status is returned

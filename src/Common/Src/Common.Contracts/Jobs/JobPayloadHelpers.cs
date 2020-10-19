@@ -84,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <typeparam name="T">Type of the payload.</typeparam>
         /// <param name="jobContinuationPayload">The job continuation payload instance.</param>
         /// <returns>Reference to the job payload.</returns>
-        public static T Initialize<T>(this T jobContinuationPayload)
+        public static T InitializeContinuationPayload<T>(this T jobContinuationPayload)
             where T : ContinuationJobPayload
         {
             jobContinuationPayload.UtcCreated = DateTime.UtcNow;

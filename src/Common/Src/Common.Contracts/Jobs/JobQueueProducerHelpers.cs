@@ -104,5 +104,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 cancellationToken);
             return queueMessages.ToArray();
         }
+
+        /// <summary>
+        /// Add a job continuation paylod into the the job queue producer.
+        /// </summary>
+        /// <typeparam name="T">Type of the continutaion payload.</typeparam>
+        /// <param name="jobQueueProducer">The job queue producer.</param>
+        /// <param name="jobContinuationPayload">The job continuation payload instance.</param>
+        /// <param name="jobPayloadOptions">Optional job payload options.</param>
+        /// <param name="logger">The logger diagnostic instance.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Completion task.</returns>
+        public static Task<QueueMessage> AddJobContinuationAsync<T>(this IJobQueueProducer jobQueueProducer, T jobContinuationPayload, JobPayloadOptions jobPayloadOptions, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            where T : ContinuationJobPayload
+        {
+            Requires.NotNull(jobQueueProducer, nameof(jobQueueProducer));
+            Requires.NotNull(jobContinuationPayload, nameof(jobContinuationPayload));
+            Requires.NotNull(logger, nameof(logger));
+
+            return jobQueueProducer.AddJobAsync(
+                jobContinuationPayload.InitializeContinuationPayload(),
+                jobPayloadOptions,
+                logger.WithValue(ContinuationJobConst.JobContinuationPayloadStarted, "true"),
+                cancellationToken);
+        }
     }
 }
