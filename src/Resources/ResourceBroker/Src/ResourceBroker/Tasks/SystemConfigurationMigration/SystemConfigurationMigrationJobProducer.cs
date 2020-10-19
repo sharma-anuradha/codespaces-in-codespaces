@@ -1,4 +1,4 @@
-// <copyright file="LogSystemResourceStateJobProducer.cs" company="Microsoft">
+// <copyright file="SystemConfigurationMigrationJobProducer.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,36 +11,36 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks.SystemConfigurationMigration
 {
     /// <summary>
     /// A class that implements IJobSchedulePayloadFactory and able to produce job payloads
     /// for logging system resource state
     /// </summary>
-    public class LogSystemResourceStateJobProducer : IJobSchedulePayloadFactory, IJobSchedulerRegister
+    public class SystemConfigurationMigrationJobProducer : IJobSchedulePayloadFactory, IJobSchedulerRegister
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LogSystemResourceStateJobProducer"/> class.
         /// <param name="jobSchedulerFeatureFlags">Job scheduler feature flags</param>
         /// </summary>
-        public LogSystemResourceStateJobProducer(IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
+        public SystemConfigurationMigrationJobProducer(IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
         {
             JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
         }
 
-        private string JobName => "log_system_resource_state_task";
+        private string JobName => "system_configuration_migration_task";
 
         // Run once every 10 minutes
-        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.LogSystemResourceStateJobSchedule;
+        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.SystemConfigurationMigrationJobSchedule;
 
         private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
         public Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadsCreatedDelegateAsync onPayloadCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
-            var jobPayload = new LogSystemResourceStatePayload();
+            var jobPayload = new SystemConfigurationMigrationPayload();
             var jobPayloadOptions = new JobPayloadOptions()
             {
-                ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,
+                ExpireTimeout = TimeSpan.FromMinutes(20),
             };
 
             return onPayloadCreated.AddPayloadAsync(jobPayload, jobPayloadOptions);
@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <summary>
         /// A log system resource state payload.
         /// </summary>
-        public class LogSystemResourceStatePayload : JobPayload
+        public class SystemConfigurationMigrationPayload : JobPayload
         {
         }
     }

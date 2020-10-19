@@ -25,6 +25,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks.SystemConfigurationMigration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
 
@@ -93,6 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobHandler, WatchOrphanedPoolJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedSystemResourceJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedComputeImagesJobHandler>();
+            services.AddSingleton<IJobHandler, SystemConfigurationMigrationJobHandler>();
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
@@ -156,6 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedPoolJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, GuidShardJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedComputeImagesJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, SystemConfigurationMigrationJobProducer>();
 
             services.AddSingleton<IGuidShardJobScheduleDetails, WatchOrphanedSystemResourceJobHandler>();
 

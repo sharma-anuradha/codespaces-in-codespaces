@@ -33,5 +33,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         // WatchOrphanedComputeImages jobs run every day at 00:00 ("0 0 * * *") with 1 day lease
         public static readonly (string CronExpression, TimeSpan Interval) WatchOrphanedComputeImagesJobSchedule = ("0 0 * * *", TimeSpan.FromDays(1));
+
+        // SystemConfigurationMigration jobs run every hour ("0 * * * *") with 1 hour lease
+        public static readonly (string CronExpression, TimeSpan Interval) SystemConfigurationMigrationJobSchedule = ("0 * * * *", TimeSpan.FromHours(1));
     }
 }

@@ -220,5 +220,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Watch orphan pool Task.
         /// </summary>
         public const string WatchOrphanedPoolTask = "watch_orphaned_pool_task";
+
+        /// <summary>
+        /// System configuration migration Job Handler
+        /// </summary>
+        public const string SystemConfigurationMigrationJobHandler = "system_configuration_migration_job_handler";
     }
 }

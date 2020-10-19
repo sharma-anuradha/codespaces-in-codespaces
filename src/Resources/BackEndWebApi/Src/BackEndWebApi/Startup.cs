@@ -32,6 +32,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
@@ -43,6 +44,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ManagedIdentityProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks.SystemConfigurationMigration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider;
@@ -242,11 +244,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddVsoDocumentDbCollection<SystemConfigurationRecord, IRegionalSystemConfigurationRepository, RegionalSystemConfigurationRepository>(
                 RegionalSystemConfigurationRepository.ConfigureOptions);
 
+            services.AddVsoDocumentDbCollection<SystemConfigurationMigrationRecord, IRegionalSystemConfigurationMigrationRepository, RegionalSystemConfigurationMigrationRepository>(
+                RegionalSystemConfigurationMigrationRepository.ConfigureOptions);
+
             services.AddVsoDocumentDbCollection<SystemConfigurationRecord, IGlobalSystemConfigurationRepository, GlobalSystemConfigurationRepository>(
                 GlobalSystemConfigurationRepository.ConfigureOptions);
 
             services.AddSystemConfigurationRepository(appSettings.BackEnd.SystemConfigurationMigrationSettings);
-
+   
             // Add the cache system configuration warmup task
             services.AddCacheSystemConfigurationWarmupTask();
 
