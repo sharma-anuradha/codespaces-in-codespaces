@@ -14,10 +14,8 @@ do
     shift # next argument
 done
 
-# Setup dirs
+# Setup root directory
 mkdir -p $root_out
-mkdir -p ${root_out}/containerTmp
-mkdir -p ${root_out}/docker
 
 # Sys logs
 [[ -e /var/log/syslog ]] && cp /var/log/syslog ${root_out}/syslog
@@ -25,9 +23,15 @@ mkdir -p ${root_out}/docker
 journalctl -k > ${root_out}/journal.log
 
 # Docker logs
+mkdir -p ${root_out}/docker
 docker ps -aq | while read id ; do docker inspect $id > ${root_out}/docker/${id}.inspect.json ; done
 
+# Audit logs
+mkdir -p ${root_out}/auditd
+ausearch -k audit_kill > ${root_out}/auditd/kill.txt
+
 # Codespaces logs
+mkdir -p ${root_out}/containerTmp
 [[ -e /mnt/containerTmp/VSFeedbackVSRTCLogs ]] && cp -r /mnt/containerTmp/VSFeedbackVSRTCLogs ${root_out}/containerTmp/VSFeedbackVSRTCLogs
 [[ -e /mnt/containerTmp/vsls-agent ]] && cp -r /mnt/containerTmp/vsls-agent ${root_out}/containerTmp/vsls-agent
 
