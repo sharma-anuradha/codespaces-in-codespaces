@@ -150,15 +150,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         "billSummaryGenerator_partner_bill_submission",
                         async (childLogger) =>
                         {
-                            var storageClient = await PartnerCloudStorageFactory.CreatePartnerCloudStorage(billSummary.Plan.Location, "gh");
                             var partnerSubmission = new PartnerQueueSubmission(billSummary);
                             childLogger.FluentAddValue("billEndTime", billSummary.PeriodEnd.ToString())
                                .FluentAddValue("PartnerId", "gh")
                                .FluentAddValue("ComputeTime", partnerSubmission.TotalComputeTime)
                                .FluentAddValue("StorageTime", partnerSubmission.TotalStorageTime);
 
-                            await storageClient.PushPartnerQueueSubmission(partnerSubmission);
-                            childLogger.FluentAddValue("SubmittedPartnerBill", true);
+                            if (!partnerSubmission.IsEmpty())
+                            {
+                                var storageClient = await PartnerCloudStorageFactory.CreatePartnerCloudStorage(billSummary.Plan.Location, "gh");
+
+                                await storageClient.PushPartnerQueueSubmission(partnerSubmission);
+                                childLogger.FluentAddValue("SubmittedPartnerBill", true);
+                            }
+                            else
+                            {
+                                childLogger.FluentAddValue("SubmittedPartnerBill", false);
+                            }
                         });
                 }
             }

@@ -34,6 +34,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         public bool EnableV1Transmission { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether transmission to push agent is enabled.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool EnableV1PartnerTransmission { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether state changes are persisted in V1.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool EnableV1StateChanges { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether billing V2 workers are enabled.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
@@ -49,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// Gets or sets a value indicating whether V2 partner submission is on or off.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public bool EnableV2PartnerSubmission { get; set; }
+        public bool EnableV2PartnerTransmission { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether transmission to push agent is enabled.
@@ -119,6 +131,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
+        public virtual Task<bool> V1StateChangesAreEnabledAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v1-state-changes", logger, EnableV1StateChanges);
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
         public virtual Task<bool> V2WorkersAreEnabledAsync(IDiagnosticsLogger logger)
         {
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
@@ -136,6 +160,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
 
             return systemConfiguration.GetValueAsync("featureflag:enable-billing-v1-transmission", logger, EnableV1Transmission);
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public virtual Task<bool> V1PartnerTransmissionIsEnabledAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v1-partner-transmission", logger, EnableV1PartnerTransmission);
         }
 
         /// <summary>
@@ -171,7 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         {
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
 
-            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v2-partner-transmission", logger, EnableV2PartnerSubmission);
+            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v2-partner-transmission", logger, EnableV2PartnerTransmission);
         }
 
         /// <summary>

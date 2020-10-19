@@ -1,6 +1,7 @@
-﻿using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
@@ -593,13 +594,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         public BillingServiceTests()
         {
             var mockSkuCatelog = GetMockSKuCatalog();
-            billingService = new BillingService(manager,
-                                            new Mock<IControlPlaneInfo>().Object,
-                                            mockSkuCatelog.Object,
-                                            logger,
-                                            new Mock<IClaimedDistributedLease>().Object,
-                                            new MockTaskHelper(),
-                                            planManager);
+            billingService = new BillingService(
+                new Mock<BillingSettings>().Object,
+                manager,
+                new Mock<IControlPlaneInfo>().Object,
+                mockSkuCatelog.Object,
+                logger,
+                new Mock<IClaimedDistributedLease>().Object,
+                new MockTaskHelper(),
+                planManager);
         }
 
         [Fact]
@@ -1200,11 +1203,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             // Setup a fake lease
             Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
-            BillingService sut = new BillingService(billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
+            BillingService sut = new BillingService(new Mock<BillingSettings>().Object, billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
-            await sut.BeginAccountCalculations(plan, start, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+            await sut.BeginAccountCalculations(plan, start, endTime, AzureLocation.WestUs2, shardTimes, true, true, logger.Object);
 
             BillingSummary resultSummary = argsInput as BillingSummary;
 
@@ -1304,11 +1307,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             // Setup a fake lease
             Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
-            BillingService sut = new BillingService(billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
+            BillingService sut = new BillingService(new Mock<BillingSettings>().Object, billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
-            await sut.BeginAccountCalculations(plan, start, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+            await sut.BeginAccountCalculations(plan, start, endTime, AzureLocation.WestUs2, shardTimes, true, true, logger.Object);
 
             BillingSummary resultSummary = argsInput as BillingSummary;
 
@@ -1738,11 +1741,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             // Setup a fake lease
             Mock<IClaimedDistributedLease> lease = new Mock<IClaimedDistributedLease>();
-            BillingService sut = new BillingService(billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
+            BillingService sut = new BillingService(new Mock<BillingSettings>().Object, billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
-            await sut.BeginAccountCalculations(plan, startTime, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+            await sut.BeginAccountCalculations(plan, startTime, endTime, AzureLocation.WestUs2, shardTimes, true, true, logger.Object);
 
             BillingSummary resultSummary = argsInput as BillingSummary;
 
@@ -1772,11 +1775,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             // Setup a fake lease
             var lease = new Mock<IClaimedDistributedLease>();
-            var sut = new BillingService(billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
+            var sut = new BillingService(new Mock<BillingSettings>().Object, billingEventManager.Object, controlPlane.Object, mockSkuCatelog.Object, logger.Object, lease.Object, new MockTaskHelper(), planManager.Object);
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
-            await sut.BeginAccountCalculations(plan, start, endBillingTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+            await sut.BeginAccountCalculations(plan, start, endBillingTime, AzureLocation.WestUs2, shardTimes, true, true, logger.Object);
 
             var resultSummary = argsInput as BillingSummary;
 

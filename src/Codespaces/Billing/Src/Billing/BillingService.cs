@@ -35,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private readonly IPlanManager planManager;
         private readonly string billingSummaryType = BillingEventTypes.BillingSummary;
         private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> skuDictionary;
+        private readonly BillingSettings billingSettings;
 
         // TODO: move the meter Dictionary to AppSettings
         private readonly IDictionary<AzureLocation, string> meterDictionary = new Dictionary<AzureLocation, string>
@@ -56,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="claimedDistributedLease">used to get a lease.</param>
         /// <param name="taskHelper">Used to run multiple workers in parallel.</param>
         public BillingService(
+            BillingSettings billingSettings,
             IBillingEventManager billingEventManager,
             IControlPlaneInfo controlPlaneInfo,
             ISkuCatalog skuCatalog,
@@ -70,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Requires.NotNull(skuCatalog, nameof(skuCatalog));
             Requires.NotNull(diagnosticsLogger, nameof(diagnosticsLogger));
             Requires.NotNull(claimedDistributedLease, nameof(claimedDistributedLease));
-
+            this.billingSettings = billingSettings;
             this.billingEventManager = billingEventManager;
             this.skuCatalog = skuCatalog;
             this.planManager = planManager;
@@ -97,11 +99,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="plan">the current plan being billed.</param>
         /// <param name="start">the start time for the billing period.</param>
         /// <param name="desiredBillEndTime">the end time for the billing period.</param>
-        /// <param name="logger">the logger.</param>
         /// <param name="region">The region this bill applies to.</param>
         /// <param name="shardUsageTimes">used to store calculation on the usage for a particular shard.</param>
+        /// <param name="enablePushAgentSubmission">Whether to submit bills to push agent.</param>
+        /// <param name="enablePartnerSubmission">Whether to submit bills to partners.</param>
+        /// <param name="logger">the logger.</param>
         /// <returns>Task indicating when the bill has been generated.</returns>
-        public async Task BeginAccountCalculations(VsoPlan plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes)
+        public async Task BeginAccountCalculations(VsoPlan plan, DateTime start, DateTime desiredBillEndTime, AzureLocation region, Dictionary<string, double> shardUsageTimes, bool enablePushAgentSubmission, bool enablePartnerSubmission, IDiagnosticsLogger logger)
         {
             logger.AddVsoPlan(plan)
                 .FluentAddBaseValue("startCalculationTime", start)
@@ -169,6 +173,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                         // If the last (most recently submitted) billing summary also noted that the plan had been deleted, then this is the final bill.
                         totalBillingSummary.IsFinalBill = latestBillingSummary.PlanIsDeleted;
+                    }
+
+                    // if the flag is disabled, prevent this bill from ever being submitted retroactively
+                    if (!enablePushAgentSubmission)
+                    {
+                        totalBillingSummary.SubmissionState = BillingSubmissionState.NeverSubmit;
+                    }
+
+                    // if the flag is disabled, prevent this bill from ever being submitted retroactively
+                    if (!enablePartnerSubmission)
+                    {
+                        totalBillingSummary.SubmissionState = BillingSubmissionState.NeverSubmit;
                     }
 
                     // Write out the summary as the last action. This should always be the last action.
@@ -501,6 +517,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                $"{ServiceName}_begin_shard_calculations",
                async (childLogger) =>
                {
+                   var enablePushAgentSubmission = await billingSettings.V1TransmissionIsEnabledAsync(logger);
+                   var enablePartnerSubmission = await billingSettings.V1PartnerTransmissionIsEnabledAsync(logger);
+
                    // Get the list of billable plans - this includes all active plans + deleted plans that have not yet had a final bill submitted.
                    var plans = await planManager.GetBillablePlansByShardAsync(
                        new List<AzureLocation> { region },
@@ -510,7 +529,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                    var shardUsageStateTimes = new Dictionary<string, double>();
                    foreach (var plan in plans)
                    {
-                       await BeginAccountCalculations(plan, start, end, childLogger.NewChildLogger(), region, shardUsageStateTimes);
+                       await BeginAccountCalculations(plan, start, end, region, shardUsageStateTimes, enablePushAgentSubmission, enablePartnerSubmission, childLogger.NewChildLogger());
                    }
 
                    if (shardUsageStateTimes.ContainsKey(BillingWindowBillingState.Active.ToString()))

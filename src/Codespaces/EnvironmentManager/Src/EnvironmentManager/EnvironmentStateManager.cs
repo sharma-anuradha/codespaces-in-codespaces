@@ -29,18 +29,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentStateChangeManager">the environment state change manager.</param>
         /// <param name="environmentMetricsLogger">The metrics logger.</param>
         public EnvironmentStateManager(
+            BillingSettings billingSettings,
             IWorkspaceManager workspaceManager,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IBillingEventManager billingEventManager,
             IEnvironmentStateChangeManager environmentStateChangeManager,
             IEnvironmentMetricsManager environmentMetricsLogger)
         {
+            BillingSettings = billingSettings;
             WorkspaceManager = workspaceManager;
             CloudEnvironmentRepository = cloudEnvironmentRepository;
             BillingEventManager = billingEventManager;
             EnvironmentStateChangeManager = environmentStateChangeManager;
             EnvironmentMetricsLogger = environmentMetricsLogger;
         }
+
+        private BillingSettings BillingSettings { get; }
 
         private IWorkspaceManager WorkspaceManager { get; }
 
@@ -134,20 +138,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         plan.Location = record.Value.Location;
                     }
 
-                    // Create billing event (legacy)
                     var environment = new EnvironmentBillingInfo
                     {
                         Id = record.Value.Id,
                         Name = record.Value.FriendlyName,
                         Sku = new Sku { Name = record.Value.SkuName, Tier = string.Empty },
                     };
-                    var stateChange = new BillingStateChange
+
+                    if (await BillingSettings.V1StateChangesAreEnabledAsync(logger))
                     {
-                        OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
-                        NewValue = newState.ToString(),
-                    };
-                    await BillingEventManager.CreateEventAsync(
-                        plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
+                        // Create billing event (legacy)
+                        var stateChange = new BillingStateChange
+                        {
+                            OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
+                            NewValue = newState.ToString(),
+                        };
+
+                        await BillingEventManager.CreateEventAsync(plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
+                    }
 
                     // Create the new billing state change
                     await EnvironmentStateChangeManager.CreateAsync(plan, environment, oldState, newState, logger.NewChildLogger());

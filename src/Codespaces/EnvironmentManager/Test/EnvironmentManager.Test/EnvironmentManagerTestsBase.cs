@@ -160,8 +160,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.currentLocationProvider = new Mock<ICurrentLocationProvider>().Object;
             var planManager = new PlanManager(this.planRepository, planSettings, this.skuCatalog, currentLocationProvider);
             var environmentStateChangeManager = new Mock<IEnvironmentStateChangeManager>().Object;
+            var billingSettings = new Mock<BillingSettings>();
 
-            this.environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, environmentStateChangeManager, metricsLogger);
+            billingSettings.Setup(x => x.V1StateChangesAreEnabledAsync(It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(true));
+
+            this.environmentStateManager = new EnvironmentStateManager(billingSettings.Object, workspaceManager, environmentRepository, billingEventManager, environmentStateChangeManager, metricsLogger);
 
             var serviceProviderMock = new Mock<IServiceProvider>();
             serviceProviderMock.Setup(x => x.GetService(typeof(IEnvironmentMonitor))).Returns(environmentMonitor);

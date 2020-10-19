@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingEventManager.cs" company="Microsoft">
+// <copyright file="BillingEventManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

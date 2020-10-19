@@ -836,7 +836,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var workspaceManager = new WorkspaceManager(new MockClientWorkspaceRepository());
             var metricsLogger = new MockEnvironmentMetricsLogger();
             var environmentStateChangeManager = new Mock<IEnvironmentStateChangeManager>().Object;
-            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepositoryManager, billingEventManager, environmentStateChangeManager, metricsLogger);
+            var billingSettings = new Mock<BillingSettings>().Object;
+
+            var environmentStateManager = new EnvironmentStateManager(billingSettings, workspaceManager, environmentRepositoryManager, billingEventManager, environmentStateChangeManager, metricsLogger);
 
             var environmentSettings = new EnvironmentManagerSettings();
 
