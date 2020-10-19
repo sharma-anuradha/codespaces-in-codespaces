@@ -12,7 +12,9 @@ param(
     [Parameter(Mandatory)]
     [string]$WorkPath,
     [Parameter(Mandatory)]
-    [string]$ImageOsType
+    [string]$ImageOsType,
+    [Parameter(Mandatory)]
+    [string]$ImageDefinitionName
 )
 
 $ErrorActionPreference = 'Stop'
@@ -68,7 +70,6 @@ az snapshot delete -n $SnapshotName -g $TargetGroupName
 Write-Host "Remove $TempStorageName Storage Account"
 az storage account delete -n $TempStorageName -g $TargetGroupName --yes
 
-$ImageDefinitionName = 'ubuntu'
 $ImageGalleryName = "gallery_$RegionCode"
 Write-Host "Create Image Version $ImageVersion for $ImageName"
 $ImageDefinitionVersion = az sig image-version create --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --managed-image $ImageName --location $TargetLocation --target-regions "$TargetLocation=Premium_LRS"

@@ -27,5 +27,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// The image name specifies a custom Ubuntu VM image resource.
         /// </summary>
         Ubuntu = 2,
+
+        /// <summary>
+        /// The image name specifies a custom Ubuntu GPU VM image resource.
+        /// </summary>
+        UbuntuGPU = 3,
     }
 }

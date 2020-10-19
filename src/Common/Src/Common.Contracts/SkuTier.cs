@@ -1,4 +1,4 @@
-﻿// <copyright file="SkuTier.cs" company="Microsoft">
+// <copyright file="SkuTier.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -57,5 +57,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// A premium tier SKU, 8 vCPU, FSv2 compute, 1TB storage
         /// </summary>
         UltimatePremium = 8,
+
+        /// <summary>
+        /// A standard tier SKU, 4 vCPU, NC4v3 compute, 64GB Storage.
+        /// </summary>
+        StandardGPU = 9,
     }
 }

@@ -102,6 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     return $"{customImageVersionBaseUrl}/windows/versions/{imageVersion}";
 
                 case ImageKind.Ubuntu:
+                case ImageKind.UbuntuGPU:
                     return $"{customImageVersionBaseUrl}/{ImageKind.ToString().ToLower()}/versions/{imageVersion}";
 
                 default:
