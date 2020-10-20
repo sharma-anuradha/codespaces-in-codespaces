@@ -131,5 +131,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The logger</param>
         /// <returns>The environment if one exists</returns>
         Task<CloudEnvironment> GetEnvironmentUsingResource(string resourceId, ResourceType resourceType, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets all environments in the unavailable/failed state that need to be repaired
+        /// </summary>
+        /// <param name="lastUpdatedDate">The subscriptionId.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>The number of active jobs.</returns>
+        Task<IEnumerable<CloudEnvironment>> GetEnvironmentsNeedRepairAsync(DateTime lastUpdatedDate, IDiagnosticsLogger logger);
     }
 }

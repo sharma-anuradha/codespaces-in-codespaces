@@ -760,5 +760,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 setter.Invoke(target, new object[1] { value });
             }
         }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsNeedRepairAsync(DateTime lastUpdatedDate, IDiagnosticsLogger logger)
+        {
+            if (await GetRolloutStatusAsync(logger) == RolloutStatus.Phase1)
+            {
+                var regionalEnvironments = await RegionalRepository.GetEnvironmentsNeedRepairAsync(lastUpdatedDate, logger.NewChildLogger());
+                var globalEnvironments = await GlobalRepository.GetEnvironmentsNeedRepairAsync(lastUpdatedDate, logger.NewChildLogger());
+
+                // Note: We merge the global repository results in case the regional repository hasn't been (fully) populated by the migration yet.
+                return MergeCloudEnvironments(globalEnvironments, regionalEnvironments);
+            }
+            else
+            {
+                return await RegionalRepository.GetEnvironmentsNeedRepairAsync(lastUpdatedDate, logger.NewChildLogger());
+            }
+        }
     }
 }

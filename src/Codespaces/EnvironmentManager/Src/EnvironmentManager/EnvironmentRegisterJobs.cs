@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -40,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="watchExportBlobsTask">Target watch export blobs task.</param>
         /// <param name="jobHandlerTargets">All the job handlers.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
+        /// <param name="jobSchedulersRegisters">List of job scheduler to register.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
             IWatchFailedEnvironmentTask watchFailedEnvironmentTask,
@@ -58,7 +60,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IJobQueueConsumerFactory jobQueueConsumerFactory,
             IWatchExportBlobsTask watchExportBlobsTask,
             IEnumerable<IJobHandlerTarget> jobHandlerTargets,
-            ITaskHelper taskHelper)
+            ITaskHelper taskHelper,
+            IEnumerable<IJobSchedulerRegister> jobSchedulersRegisters)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
             WatchFailedEnvironmentTask = watchFailedEnvironmentTask;
@@ -78,6 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             JobQueueConsumerFactory = jobQueueConsumerFactory;
             WatchExportBlobsTask = watchExportBlobsTask;
             TaskHelper = taskHelper;
+            JobSchedulersRegisters = jobSchedulersRegisters;
             Random = new Random();
         }
 
@@ -116,6 +120,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IWatchExportBlobsTask WatchExportBlobsTask { get; }
 
         private ITaskHelper TaskHelper { get; }
+
+        private IEnumerable<IJobSchedulerRegister> JobSchedulersRegisters { get; }
 
         private Random Random { get; }
 
@@ -236,6 +242,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // new job continuation handlers
             JobQueueConsumerFactory.RegisterJobHandlers(JobHandlerTargets);
             JobQueueConsumerFactory.Start(JobHandlerTargets, QueueMessageProducerSettings.Default);
+
+            // register all the job schedulers
+            foreach (var jobSchedulersRegister in JobSchedulersRegisters)
+            {
+                jobSchedulersRegister.RegisterScheduleJob();
+            }
 
             // Job: Watch Export Blobs to be deleted from export storage account and wipe out export blob url from DB
             TaskHelper.RunBackgroundLoop(

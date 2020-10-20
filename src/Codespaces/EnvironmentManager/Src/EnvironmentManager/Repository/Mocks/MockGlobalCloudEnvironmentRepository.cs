@@ -92,5 +92,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         {
             throw new NotImplementedException();
         }
+
+        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsNeedRepairAsync(DateTime lastUpdatedDate, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

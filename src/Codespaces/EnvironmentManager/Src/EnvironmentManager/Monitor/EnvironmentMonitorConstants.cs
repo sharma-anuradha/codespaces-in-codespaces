@@ -88,5 +88,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor
         /// Healthy intermediate state transition.
         /// </summary>
         public const string HealthyIntermediateStateTransitionReason = "HealthyIntermediateStateTransition";
+
+        /// <summary>
+        /// Environment Repair Reason
+        /// </summary>
+        public const string EnvironmentRepairReason = "EnvironmentRepairReason";
     }
 }

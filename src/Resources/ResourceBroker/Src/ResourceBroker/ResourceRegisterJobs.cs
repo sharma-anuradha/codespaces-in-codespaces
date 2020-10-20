@@ -31,7 +31,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="watchOrphanedVmAgentImagesTask">Target watch orphaned VM images/blobs job.</param>
         /// <param name="watchOrphanedStorageImagesTask">Target watch orphaned storage images/blobs job.</param>
         /// <param name="watchOrphanedComputeImagesTask">Target watch orphaned compute images job.</param>
-        /// <param name="watchOrphanedSystemResourceTask">Target watch orphaned system resources job.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>

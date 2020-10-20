@@ -452,5 +452,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger.NewChildLogger());
             return items.FirstOrDefault();
         }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsNeedRepairAsync(DateTime lastUpdatedDate, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT *
+                FROM c
+                WHERE
+                    (NOT c.isDeleted or NOT IS_DEFINED(c.isDeleted))
+                    AND c.state in (@queuedState, @provisioningState, @shuttingDownState, @startingState, @unavailableState, @failedState)
+                    AND c.lastStateUpdated < @date",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@queuedState", Value = CloudEnvironmentState.Queued.ToString() },
+                    new SqlParameter { Name = "@provisioningState", Value = CloudEnvironmentState.Provisioning.ToString() },
+                    new SqlParameter { Name = "@shuttingDownState", Value = CloudEnvironmentState.ShuttingDown.ToString() },
+                    new SqlParameter { Name = "@startingState", Value = CloudEnvironmentState.Starting.ToString() },
+                    new SqlParameter { Name = "@unavailableState", Value = CloudEnvironmentState.Unavailable.ToString() },
+                    new SqlParameter { Name = "@failedState", Value = CloudEnvironmentState.Failed.ToString() },
+                    new SqlParameter { Name = "@date", Value = lastUpdatedDate },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger.NewChildLogger());
+            return items;
+        }
     }
 }

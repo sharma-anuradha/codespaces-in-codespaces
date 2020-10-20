@@ -3,8 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -13,7 +11,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
@@ -65,10 +62,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             var cloudEnvironmentId = Guid.Parse(cloudEnvironment.Id);
 
+            // Update the database state
+            await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
+
             // Delete the allocated resources.
             if (cloudEnvironment.Compute != null)
             {
-                await ResourceBrokerClient.DeleteAsync(cloudEnvironmentId, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                await ResourceBrokerClient.DeleteAsync(cloudEnvironmentId, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());            
             }
 
             if (cloudEnvironment.OSDisk != null)
@@ -78,11 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             if (cloudEnvironment.Storage != null)
             {
-                await ResourceBrokerClient.DeleteAsync(cloudEnvironmentId, cloudEnvironment.Storage.ResourceId, logger.NewChildLogger());
+                await ResourceBrokerClient.DeleteAsync(cloudEnvironmentId, cloudEnvironment.Storage.ResourceId, logger.NewChildLogger());            
             }
-
-            // Update the database state
-            await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
 
             return record.Value;
         }

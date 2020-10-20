@@ -21,6 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common.Repositories.AzureQueue;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -125,6 +126,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IJobHandlerTarget, HeartbeatMonitorJobHandler>();
             services.AddSingleton<IJobHandlerTarget, EnvironmentStateTransitionMonitorJobHandler>();
             services.AddSingleton<IJobHandlerTarget, CreateEnvironmentResourceJobHandler>();
+
+            // new job handlers
+            services.AddSingleton<IJobHandlerTarget, EnvironmentStateRepairJobHandler>();
+
+            // new job paytload producer
+            services.AddSingleton<IJobSchedulerRegister, EnvironmentStateRepairJobProducer>();
 
             // The environment manager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
