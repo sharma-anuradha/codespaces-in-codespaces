@@ -72,6 +72,8 @@ export function isActivating({ state }: Pick<ILocalEnvironment | IEnvironment, '
         case EnvironmentStateInfo.ShuttingDown:
         case EnvironmentStateInfo.Starting:
         case EnvironmentStateInfo.Provisioning:
+        case EnvironmentStateInfo.Queued:
+
             return true;
 
         default:
@@ -86,6 +88,8 @@ export function isInStableState({ state }: ILocalEnvironment): boolean {
 
 export function stateToDisplayName(state: EnvironmentStateInfo, translation: TFunction) {
     switch (state) {
+        case EnvironmentStateInfo.Queued:
+            return translation('queued');
         case EnvironmentStateInfo.Provisioning:
             return translation('creating');
         case EnvironmentStateInfo.Failed:

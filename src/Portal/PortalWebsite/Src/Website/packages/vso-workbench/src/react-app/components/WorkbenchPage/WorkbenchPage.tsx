@@ -260,6 +260,7 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
         trace.info(`render state: ${value}`);
 
         if (
+            value !== EnvironmentStateInfo.Queued &&
             value !== EnvironmentStateInfo.Starting &&
             value !== EnvironmentStateInfo.Provisioning &&
             value !== EnvironmentStateInfo.ShuttingDown &&

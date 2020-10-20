@@ -123,6 +123,7 @@
     "pricing": "Pricing",
     "privaceNotice": "Privacy notice",
     "privateRepoNoAuth": "Repository doesn’t appear to exist. If it’s private, then you’ll need to authenticate.",
+    "queued": "Queued",
     "repository": "Repository",
     "requestedAutoShutdownDelayMinutesIsInvalid": "Requested auto-suspend delay is invalid.",
     "requestBetaAccess": "Request beta access.",
