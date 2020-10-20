@@ -19,7 +19,6 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
@@ -58,85 +57,89 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// </summary>
         /// <param name="azureSubscriptionCatalog">The azure subscription catalog.</param>
         /// <param name="capacityRepository">The capacity repository.</param>
-        /// <param name="controlPlaneInfo">The control-plane resource accessor.</param>
         /// <param name="servicePrincipal">The application service principal.</param>
-        /// <param name="taskHelper">The task helper.</param>
         public AzureSubscriptionCapacityProvider(
             IAzureSubscriptionCatalog azureSubscriptionCatalog,
             ICapacityRepository capacityRepository,
-            IControlPlaneInfo controlPlaneInfo,
-            IServicePrincipal servicePrincipal,
-            ITaskHelper taskHelper)
+            IServicePrincipal servicePrincipal)
         {
             Requires.NotNull(azureSubscriptionCatalog, nameof(azureSubscriptionCatalog));
             Requires.NotNull(capacityRepository, nameof(capacityRepository));
-            Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             Requires.NotNull(servicePrincipal, nameof(servicePrincipal));
-            Requires.NotNull(taskHelper, nameof(taskHelper));
 
             AzureSubscriptionCatalog = azureSubscriptionCatalog;
             CapacityRepository = capacityRepository;
-            ControlPlaneInfo = controlPlaneInfo;
             ServicePrincipal = servicePrincipal;
-            TaskHelper = taskHelper;
         }
 
         private IAzureSubscriptionCatalog AzureSubscriptionCatalog { get; }
 
         private ICapacityRepository CapacityRepository { get; }
 
-        private IControlPlaneInfo ControlPlaneInfo { get; }
-
         private IServicePrincipal ServicePrincipal { get; }
-
-        private ITaskHelper TaskHelper { get; }
 
         private static string MakeLoggingName(string operation) => $"{LoggingPrefix}_{operation}".ToLowerInvariant();
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger)
+        public Task<AzureResourceUsage> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, string quota, IDiagnosticsLogger logger)
         {
-            logger = logger
-                .NewChildLogger()
+            Requires.NotNull(subscription, nameof(subscription));
+            Requires.NotNullOrEmpty(quota, nameof(quota));
+            var id = CapacityRecord.MakeId(subscription.SubscriptionId, serviceType, location, quota);
+
+            logger
                 .AddSubscriptionId(subscription.SubscriptionId)
                 .AddAzureLocation(location)
-                .AddServiceType(serviceType);
+                .AddServiceType(serviceType)
+                .AddQuota(quota);
 
-            switch (serviceType)
-            {
-                case ServiceType.Compute:
-                    return await LoadAzureResourceUsageAsync(subscription, location, ServiceType.Compute, subscription.ComputeQuotas, logger);
+            var operationName = MakeLoggingName(nameof(LoadAzureResourceUsageAsync));
 
-                case ServiceType.Storage:
-                    return await LoadAzureResourceUsageAsync(subscription, location, ServiceType.Storage, subscription.StorageQuotas, logger);
+            return logger.RetryOperationScopeAsync(
+                operationName,
+                async (childLogger) =>
+                {
+                    if (serviceType == ServiceType.KeyVault)
+                    {
+                        /*
+                        // Theoretically there are no limits to the number of KeyVaults you can have in a subscription.
+                        // This code constructs an artificial resource usage object for keyVaults, which can still
+                        // preserve the randomness of how the subscription is choosen.
+                        */
 
-                case ServiceType.Network:
-                    return await LoadAzureResourceUsageAsync(subscription, location, ServiceType.Network, subscription.NetworkQuotas, logger);
+                        // TODO - this should be tracked properly
 
-                case ServiceType.KeyVault:
-                    /*
-                    // Theoretically there are no limits to the number of KeyVaults you can have in a subscription.
-                    // This code constructs an artificial resource usage object for keyVaults, which can still
-                    // preserve the randomness of how the subscription is choosen.
-                    */
+                        int artificialKeyVaultCurrentUsage = Random.Next(ArtificialKeyVaultLimit); // Returning random usage implies there will always be room for one more.
 
-                    // TODO - this should be tracked properly
+                        return new AzureResourceUsage(
+                            subscription.SubscriptionId,
+                            ServiceType.KeyVault,
+                            location,
+                            ServiceType.KeyVault.ToString(),
+                            ArtificialKeyVaultLimit,
+                            artificialKeyVaultCurrentUsage);
+                    }
 
-                    int artificialKeyVaultCurrentUsage = Random.Next(ArtificialKeyVaultLimit); // Returning random usage implies there will always be room for one more.
+                    var capacity = await CapacityRepository.GetAsync(id, childLogger.NewChildLogger());
 
-                    var resourceUsage = new AzureResourceUsage(
-                        subscription.SubscriptionId,
-                        ServiceType.KeyVault,
-                        location,
-                        ServiceType.KeyVault.ToString(),
-                        ArtificialKeyVaultLimit,
-                        artificialKeyVaultCurrentUsage);
+                    // The record doesn't exist so we can't answer the question.
+                    if (capacity is null)
+                    {
+                        throw new CapacityNotFoundException(subscription, location, serviceType, quota);
+                    }
 
-                    return Enumerable.Repeat(resourceUsage, 1);
-
-                default:
-                    throw new NotSupportedException();
-            }
+                    return new AzureResourceUsage(
+                        capacity.SubscriptionId,
+                        capacity.ServiceType,
+                        capacity.Location,
+                        capacity.Quota,
+                        capacity.Limit,
+                        capacity.CurrentValue);
+                },
+                (exception, childLogger) =>
+                {
+                    throw new CapacityNotFoundException(subscription, location, serviceType, quota, exception);
+                });
         }
 
         /// <inheritdoc/>
@@ -222,74 +225,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                         currentValue: 0))
                     .ToArray();
             }
-        }
-
-        private async Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(
-            IAzureSubscription subscription,
-            AzureLocation location,
-            ServiceType serviceType,
-            IReadOnlyDictionary<string, int> quotas,
-            IDiagnosticsLogger logger)
-        {
-            var operationName = MakeLoggingName(nameof(LoadAzureResourceUsageAsync));
-
-            return await logger.OperationScopeAsync(
-                operationName,
-                async (childLogger) =>
-                {
-                    var result = new List<AzureResourceUsage>();
-
-                    logger = logger
-                        .NewChildLogger()
-                        .AddSubscriptionId(subscription.SubscriptionId)
-                        .AddAzureLocation(location)
-                        .AddServiceType(serviceType);
-
-                    foreach (var quotaItem in quotas)
-                    {
-                        var quota = quotaItem.Key;
-                        var desiredLimit = quotaItem.Value;
-
-                        if (desiredLimit > 0)
-                        {
-                            var usage = await LoadAzureResourceUsageAsync(subscription, location, serviceType, quota, childLogger.NewChildLogger());
-                            result.Add(usage);
-                        }
-                    }
-
-                    return result;
-                });
-        }
-
-        private async Task<AzureResourceUsage> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, string quota, IDiagnosticsLogger logger)
-        {
-            Requires.NotNull(subscription, nameof(subscription));
-            Requires.NotNullOrEmpty(quota, nameof(quota));
-            var id = CapacityRecord.MakeId(subscription.SubscriptionId, serviceType, location, quota);
-
-            return await Retry.DoAsync(
-                async (attempt) =>
-                {
-                    var capacity = await CapacityRepository.GetAsync(id, logger);
-
-                    // The record doesn't exist so we can't answer the question.
-                    if (capacity is null)
-                    {
-                        throw new CapacityNotFoundException(subscription, location, serviceType, quota);
-                    }
-
-                    return new AzureResourceUsage(
-                        capacity.SubscriptionId,
-                        capacity.ServiceType,
-                        capacity.Location,
-                        capacity.Quota,
-                        capacity.Limit,
-                        capacity.CurrentValue);
-                },
-                (attempt, exception) =>
-                {
-                    throw new CapacityNotFoundException(subscription, location, serviceType, quota, exception);
-                });
         }
 
         private async Task<IEnumerable<AzureResourceUsage>> GetAzureComputeUsageAsync(

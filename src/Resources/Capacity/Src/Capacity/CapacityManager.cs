@@ -84,54 +84,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 throw new LocationNotAvailableException(location);
             }
 
+            // Older versions of the resource broker might have serialized create-inputs
+            // that don't have all of the necessary criteria ingredients. Filter those out.
+            var validCriteria = criteria
+                .Where(c => !string.IsNullOrEmpty(c.Quota))
+                .Where(c => c.Required > 0)
+                .ToArray();
+
+            // The subscription must either support all ServiceTypes, or be able to handle all required ServiceTypes to be considered.
+            var subscriptionsWithAllRequiredServiceTypes = enabledSubscriptionForLocation
+                .Where(subscription =>
+                    subscription.ServiceType == null ||
+                    validCriteria.All(criterion => criterion.ServiceType == subscription.ServiceType));
+
+            if (!subscriptionsWithAllRequiredServiceTypes.Any())
+            {
+                logger
+                    .FluentAddValue(nameof(location), location)
+                    .AddResourceCriteria(criteria)
+                    .FluentAddValue("enabledSubscriptions", string.Join(",", enabledSubscriptionForLocation.Select(s => s.DisplayName)))
+                    .LogError("capacity_manager_subscriptions_match_service_types_error");
+                throw new LocationNotAvailableException(location);
+            }
+
             var subscriptionsWithAllCriteria = new Dictionary<IAzureSubscription, AzureResourceUsage>();
 
-            foreach (var subscription in enabledSubscriptionForLocation)
+            foreach (var subscription in subscriptionsWithAllRequiredServiceTypes)
             {
                 try
                 {
                     var allRequiredCriteria = true;
                     var primaryUsage = default(AzureResourceUsage);
 
-                    // Older versions of the resource broker might have serialized create-inputs
-                    // that don't have all of the necessary criteria ingredients. Filter those out.
-                    foreach (var criterion in criteria
-                        .Where(c => !string.IsNullOrEmpty(c.Quota))
-                        .Where(c => c.Required > 0))
+                    foreach (var criterion in validCriteria)
                     {
-                        // If subscription has a supported service type, criterion must match this service type.
-                        if (subscription.ServiceType != null
-                            && subscription.ServiceType != criterion.ServiceType)
-                        {
-                            allRequiredCriteria = false;
-                            break;
-                        }
-
                         // Get all usage data for this subscription/location
-                        var azureResourceUsages = await AzureSubscriptionCapacity.LoadAzureResourceUsageAsync(
+                        var azureResourceUsage = await AzureSubscriptionCapacity.LoadAzureResourceUsageAsync(
                             subscription,
                             location,
                             criterion.ServiceType,
+                            criterion.Quota,
                             logger);
 
-                        // Select the usage that matches the current criterion
-                        var match = (
-                            from usage in azureResourceUsages
-                            where usage.Quota == criterion.Quota
-                            let available = usage.Limit - usage.CurrentValue
-                            where available >= criterion.Required
-                            select usage)
-                            .FirstOrDefault();
-
                         // If no match, bail out. Note that all criteria must match.
-                        if (match == null)
+                        if (azureResourceUsage == null || (azureResourceUsage.Limit - azureResourceUsage.CurrentValue) < criterion.Required)
                         {
                             allRequiredCriteria = false;
                             break;
                         }
 
                         // Capture the first usage for later use.
-                        primaryUsage = primaryUsage ?? match;
+                        primaryUsage ??= azureResourceUsage;
                     }
 
                     if (allRequiredCriteria)
@@ -162,8 +165,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             {
                 logger
                     .FluentAddValue(nameof(location), location)
-                    .FluentAddValue("subscriptions", string.Join(",", enabledSubscriptionForLocation.Select(s => s.DisplayName)))
-                    .FluentAddValue("criteria", string.Join(",", criteria.Select(c => $"{c.ServiceType}/{c.Quota}:{c.Required}")))
+                    .FluentAddValue("subscriptions", string.Join(",", subscriptionsWithAllRequiredServiceTypes.Select(s => s.DisplayName)))
+                    .AddResourceCriteria(criteria)
                     .LogError("capacity_manager_capacity_not_available_error");
 
                 throw new CapacityNotAvailableException(location, criteria.Select(c => $"{c.ServiceType}/{c.Quota}"));
@@ -186,8 +189,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 .FluentAddValue("subscriptionId", theSubscription.SubscriptionId)
                 .FluentAddValue("resourceGroup", resourceGroupName)
                 .FluentAddValue(nameof(location), location)
-                .FluentAddValue("candidateSubscriptions", string.Join(",", enabledSubscriptionForLocation.Select(s => s.DisplayName)))
-                .FluentAddValue("criteria", string.Join(",", criteria.Select(c => $"{c.ServiceType}/{c.Quota}:{c.Required}")))
+                .FluentAddValue("candidateSubscriptions", string.Join(",", subscriptionsWithAllRequiredServiceTypes.Select(s => s.DisplayName)))
+                .AddResourceCriteria(criteria)
                 .LogInfo("capacity_manager_select_azure_resource_location");
 
             return new AzureResourceLocation(theSubscription, resourceGroupName, location);

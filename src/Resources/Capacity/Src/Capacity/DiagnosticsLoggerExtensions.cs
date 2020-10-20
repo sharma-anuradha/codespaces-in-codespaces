@@ -2,9 +2,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
@@ -64,6 +67,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         }
 
         /// <summary>
+        /// Add the azure quota name to the logger
+        /// </summary>
+        /// <param name="logger">The logger</param>
+        /// <param name="quota">The azure quota name</param>
+        /// <returns>The logger with values added</returns>
+        public static IDiagnosticsLogger AddQuota(this IDiagnosticsLogger logger, string quota)
+        {
+            return logger.FluentAddBaseValue(LogNames.Quota, quota);
+        }
+
+        public static IDiagnosticsLogger AddResourceCriteria(this IDiagnosticsLogger logger, IEnumerable<AzureResourceCriterion> criteria)
+        {
+            return logger.FluentAddValue(LogNames.ResourceCriteria, string.Join(",", criteria.Select(c => $"{c.ServiceType}/{c.Quota}:{c.Required}")));
+        }
+
+        /// <summary>
         /// Add the capacity metric values to the logger
         /// </summary>
         /// <param name="logger">The logger</param>
@@ -75,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         public static IDiagnosticsLogger AddSubscriptionCapacityValues(this IDiagnosticsLogger logger, string quota, long limit, long currentValue, double usedPercent)
         {
             return logger
-                .FluentAddBaseValue(LogNames.Quota, quota)
+                .AddQuota(quota)
                 .FluentAddBaseValue(LogNames.Limit, limit)
                 .FluentAddBaseValue(LogNames.CurrentValue, currentValue)
                 .FluentAddBaseValue(LogNames.UsedPercent, usedPercent);
@@ -228,6 +247,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             /// The aggregate current value for single type subscriptions
             /// </summary>
             public const string CurrentForServiceTypeSpecificSubs = "currentForServiceTypeSpecificSubs";
+
+            /// <summary>
+            /// The list of AzureResourceCriterion for a capacity request
+            /// </summary>
+            public const string ResourceCriteria = "criteria";
 
             /// <summary>
             /// The subscription type (e.g. Data or Infrastructure)

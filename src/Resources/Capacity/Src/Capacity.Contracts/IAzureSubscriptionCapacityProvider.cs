@@ -1,4 +1,4 @@
-﻿// <copyright file="IAzureSubscriptionCapacityProvider.cs" company="Microsoft">
+// <copyright file="IAzureSubscriptionCapacityProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -17,14 +17,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
     public interface IAzureSubscriptionCapacityProvider
     {
         /// <summary>
-        /// Loads the the resource usage for the given subscription, location, and resource type, from the capacity repository.
+        /// Loads the the resource usage for the given subscription, location, and resource type, and quota from the capacity repository.
         /// </summary>
         /// <param name="subscription">The azure subscription.</param>
         /// <param name="location">The azure location.</param>
         /// <param name="serviceType">The azure service type.</param>
+        /// <param name="quota">The azure quota name.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The resource usage.</returns>
-        Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger);
+        Task<AzureResourceUsage> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, string quota, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Updates the resource useage for the given subscription, location, and resource type, into the capacity repository.

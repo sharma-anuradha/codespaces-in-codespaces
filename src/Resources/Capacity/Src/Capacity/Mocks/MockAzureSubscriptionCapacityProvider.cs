@@ -1,4 +1,4 @@
-﻿// <copyright file="MockAzureSubscriptionCapacityProvider.cs" company="Microsoft">
+// <copyright file="MockAzureSubscriptionCapacityProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger)
+        public Task<AzureResourceUsage> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, string quota, IDiagnosticsLogger logger)
         {
             throw new System.NotImplementedException();
         }

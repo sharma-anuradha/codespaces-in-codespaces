@@ -246,18 +246,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
                                 It.Is<IAzureSubscription>(sub => sub.SubscriptionId == subscription.SubscriptionId),
                                 location,
                                 ServiceType.Compute,
+                                CoresQuota,
                                 It.IsAny<IDiagnosticsLogger>()))
                         .ReturnsAsync(() =>
-                            new AzureResourceUsage[]
-                            {
                             new AzureResourceUsage(
                                 subscription.SubscriptionId,
                                 ServiceType.Compute,
                                 location,
                                 CoresQuota,
                                 thisLimit,
-                                thisCurrent),
-                            });
+                                thisCurrent));
                 }
             }
 
