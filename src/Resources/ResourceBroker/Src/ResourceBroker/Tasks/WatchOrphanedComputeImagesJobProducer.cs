@@ -24,6 +24,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public const string FeatureFlagName = "WatchOrphanedComputeImagesJob";
 
         /// <summary>
+        /// If job is default enabled, should not default obtain the lease for the old deprecated task
+        /// </summary>
+        public const bool DefaultEnabled = true;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="WatchOrphanedComputeImagesJobProducer"/> class.
         /// <param name="jobSchedulerFeatureFlags">Job scheduler feature flags</param>
         /// </summary>

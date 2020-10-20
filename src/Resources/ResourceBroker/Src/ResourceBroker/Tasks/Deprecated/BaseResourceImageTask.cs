@@ -152,7 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(BaseResourceImageProducer.FeatureFlagName))
+            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(BaseResourceImageProducer.FeatureFlagName, BaseResourceImageProducer.DefaultEnabled))
             {
                 return null;
             }

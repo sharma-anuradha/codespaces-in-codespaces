@@ -163,7 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(WatchPoolJobScheduleRegister.WatchPoolJobsEnabledFeatureFlagName))
+            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(WatchPoolJobScheduleRegister.WatchPoolJobsEnabledFeatureFlagName, WatchPoolJobScheduleRegister.DefaultEnabled))
             {
                 return null;
             }

@@ -28,6 +28,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private string jobName = "watch_orphaned_pool_job";
 
+        /// <summary>
+        /// If job is default enabled, should not default obtain the lease for the old deprecated task
+        /// </summary>
+        public const bool DefaultEnabled = true;
+
         // Run once a day
         private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.WatchOrphanedPoolJobSchedule;
 

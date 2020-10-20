@@ -20,6 +20,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public const string WatchPoolJobsEnabledFeatureFlagName = "WatchPoolJobs";
 
         /// <summary>
+        /// If job is default enabled, should not default obtain the lease for the old deprecated task
+        /// </summary>
+        public const bool DefaultEnabled = true;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="WatchPoolJobScheduleRegister"/> class.
         /// </summary>
         /// <param name="watchPoolPayloadFactory">A watch pool payload factory instance.</param>

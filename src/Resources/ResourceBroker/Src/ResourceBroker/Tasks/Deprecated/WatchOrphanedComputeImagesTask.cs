@@ -374,8 +374,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            // if WatchOrphanedComputeImagesJob feature flag is on, it should never obtain the lease for the old deprecated task
-            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(WatchOrphanedComputeImagesJobProducer.FeatureFlagName))
+            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(WatchOrphanedComputeImagesJobProducer.FeatureFlagName, WatchOrphanedComputeImagesJobProducer.DefaultEnabled))
             {
                 return null;
             }

@@ -30,6 +30,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         public const string DataPlaneResourceGroupJobsEnabledFeatureFlagName = "DataPlaneResourceGroupJobs";
 
         /// <summary>
+        /// If job is default enabled, should not default obtain the lease for the old deprecated task
+        /// </summary>
+        public const bool DefaultEnabled = true;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="BaseDataPlaneResourceGroupJobProducer"/> class.
         /// </summary>
         /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
