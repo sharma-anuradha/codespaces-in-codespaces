@@ -17,6 +17,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
         /// Gets or sets a value indicating whether migration should use global configurations collection instead of regional.
         /// </summary>
         [JsonProperty(Required = Required.Default)]
-        public bool UseGlobalConfigurationCollection { get; set; } = false;
+        public bool UseGlobalConfigurationCollection { get; set; } = true;
     }
 }

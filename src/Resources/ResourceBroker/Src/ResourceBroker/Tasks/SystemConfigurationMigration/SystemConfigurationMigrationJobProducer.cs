@@ -15,12 +15,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks.Syste
 {
     /// <summary>
     /// A class that implements IJobSchedulePayloadFactory and able to produce job payloads
-    /// for logging system resource state
+    /// for system configuration migration task
     /// </summary>
     public class SystemConfigurationMigrationJobProducer : IJobSchedulePayloadFactory, IJobSchedulerRegister
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="LogSystemResourceStateJobProducer"/> class.
+        /// Initializes a new instance of the <see cref="SystemConfigurationMigrationJobProducer"/> class.
         /// <param name="jobSchedulerFeatureFlags">Job scheduler feature flags</param>
         /// </summary>
         public SystemConfigurationMigrationJobProducer(IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
@@ -30,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks.Syste
 
         private string JobName => "system_configuration_migration_task";
 
-        // Run once every 10 minutes
+        // Run once every 1 hour
         private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.SystemConfigurationMigrationJobSchedule;
 
         private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks.Syste
         }
 
         /// <summary>
-        /// A log system resource state payload.
+        /// A system configuration migration payload.
         /// </summary>
         public class SystemConfigurationMigrationPayload : JobPayload
         {
