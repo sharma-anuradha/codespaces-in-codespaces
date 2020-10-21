@@ -184,7 +184,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // if the flag is disabled, prevent this bill from ever being submitted retroactively
                     if (!enablePartnerSubmission)
                     {
-                        totalBillingSummary.SubmissionState = BillingSubmissionState.NeverSubmit;
+                        totalBillingSummary.PartnerSubmissionState = BillingSubmissionState.NeverSubmit;
                     }
 
                     // Write out the summary as the last action. This should always be the last action.
