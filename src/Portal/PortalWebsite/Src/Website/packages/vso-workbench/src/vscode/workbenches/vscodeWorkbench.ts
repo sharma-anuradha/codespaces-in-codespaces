@@ -198,6 +198,7 @@ export class VSCodeWorkbench {
             productConfiguration: {
                 telemetryOptOutUrl: undefined,
             },
+            _wrapWebWorkerExtHostInIframe: false,
         };
 
         trace(`Creating workbench on #${domElementId}, with config: `, workbenchConfig);

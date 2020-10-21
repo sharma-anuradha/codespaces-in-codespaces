@@ -6,6 +6,7 @@ Repository of the domains and directives allowed in CSP rules for the Codespaces
 
     - `'unsafe-eval'` - enabled since VSCode uses `onigasm` for document parsing on a separate thread with WASM modules. The WASM considered being `eval` by the browsers. Can be removed when the browsers support improved. more info: https://github.com/WebAssembly/content-security-policy/blob/master/proposals/CSP.md.
     - `'nonce-*'` - for a smooth transition from partners, we need to change the splash screen styles and favicon as soon as possible, hence we run an inline script on `workbench.html`. The `nonce` attribute is added to the inline script to enable its execution.
+    - https://vscodeweb.azureedge.net/{stable|insider}/ - CDN that hosts VSCode web workbench assets.
 
 ### style-src
 
@@ -32,3 +33,4 @@ Repository of the domains and directives allowed in CSP rules for the Codespaces
 ### frame-src
 
     - `https://*.vscode-webview-test.com` - The Extensions webviews hosted by VSC team on the domain. Should be changed to the new domain when work on the new webviews endpoint is complete (https://github.com/microsoft/vssaas-planning/issues/390).
+    - `data:` - This is required as VSCode started using `data:` for iframe for security reasons. Please see the [issue](https://github.com/microsoft/vscode-internalbacklog/issues/1498) for more info.

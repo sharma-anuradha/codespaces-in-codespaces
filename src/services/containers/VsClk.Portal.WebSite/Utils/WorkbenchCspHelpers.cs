@@ -58,6 +58,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         public string PartnerProxyApiEndpoint { get; set; }
         public string PartnerFaviconsEndpoint { get; set; }
         public string PartnerPortForwardingEndpoint { get; set; }
+        public string ServiceWorkerEndpoint {get; set;}
     }
 
     public class CspReportRequest

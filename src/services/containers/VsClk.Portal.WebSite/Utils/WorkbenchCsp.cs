@@ -17,15 +17,23 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             default-src 'none';
             base-uri 'self';
             manifest-src 'self';
-            prefetch-src 'self';
+            prefetch-src
+                'self'
+                https://vscodeweb.azureedge.net/insider/
+                https://vscodeweb.azureedge.net/stable/
+            ;
             script-src
                 'self'
                 'unsafe-eval'
                 'nonce-{InlineJavaScriptNonce}'
+                https://vscodeweb.azureedge.net/insider/
+                https://vscodeweb.azureedge.net/stable/
             ;
             style-src
                 'self'
                 'unsafe-inline'
+                https://vscodeweb.azureedge.net/insider/
+                https://vscodeweb.azureedge.net/stable/
             ;
             img-src
                 'self'
@@ -47,9 +55,22 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 https://marketplace.visualstudio.com/_apis/public/gallery/
                 https://az764295.vo.msecnd.net/experiments/vscode-experiments.json
                 https://vscodeexperiments.azureedge.net/experiments/vscode-experiments.json
+                https://vscodeweb.azureedge.net/insider/
+                https://vscodeweb.azureedge.net/stable/
+                https://default.exp-tas.com/vscode/ab
             ;
-            font-src 'self';
-            frame-src https://*.vscode-webview-test.com;
+            font-src
+                'self'
+                https://vscodeweb.azureedge.net/insider/
+                https://vscodeweb.azureedge.net/stable/
+            ;
+            frame-src
+                https://*.vscode-webview-test.com
+            ;
+            worker-src
+                {ServiceWorkerEndpoint}
+                blob:
+            ;
         ";
 
         public static Tuple<string, WorkbenchCspDynamicAttributes> GetCsp(
@@ -70,6 +91,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                     WildcardApiEndpoint = HttpUtils.ReplaceWithWildcardSubdomain(appSettings.Domain),
                     PartnerProxyApiEndpoint = GetPartnerApiProxyEndpoint(requestUrl),
                     PartnerFaviconsEndpoint = GetPartnerFaviconsEndpoint(requestUrl),
+                    ServiceWorkerEndpoint = GetServiceWorkerEndpoint(requestUrl),
                     PartnerPortForwardingEndpoint = GetPartnerPortForwardingManagementEndpoint(requestUrl, appSettings),
                 };
 
@@ -78,6 +100,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 csp,
                 attributes
             );
+        }
+
+        private static string GetServiceWorkerEndpoint(string requestUrl)
+        {
+            if (GitHubUtils.IsGithubTLD(requestUrl))
+            {
+                if (!Uri.TryCreate(requestUrl, UriKind.Absolute, out var parsedUri)) {
+                    return "";
+                }
+                return $"https://{parsedUri.Host}/service-worker.js";
+            }
+
+            return "";
         }
 
 
