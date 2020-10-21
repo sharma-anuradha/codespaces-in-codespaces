@@ -46,6 +46,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         protected override string LogBaseName => ResourceLoggingConstants.WatchFailedResourcesTask;
 
+        /// <summary>
+        /// Calculate a new failed time to check a resource record
+        /// </summary>
+        private static DateTime FailedTime => DateTime.UtcNow.AddHours(-1);
+
         private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
         private IResourceRepository ResourceRepository { get; }
@@ -56,16 +61,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var records = await ResourceRepository.GetFailedOperationAsync(
                 resourcePool.Details.GetPoolDefinition(), RequestedItems, logger.NewChildLogger());
 
-            logger.FluentAddValue("TaskRequestedItems", RequestedItems)
-                .FluentAddValue("TaskFoundItems", records.Count());
+            var operationFailedTimeLimit = FailedTime;
 
-            foreach (var record in records)
+            // discard the records that already in a valid delete status since we are later attempting
+            // queueing a delete operation, otherwise we would duplicate multiple operations that in progress
+            var failedResourcesToProcess = records.Where(r => !IsResourceInValidDeleteState(r, operationFailedTimeLimit)).ToArray();
+            logger.FluentAddValue("TaskRequestedItems", RequestedItems)
+                .FluentAddValue("TaskFoundItems", records.Count())
+                .FluentAddValue("TaskProcessItems", failedResourcesToProcess.Count());
+
+            foreach (var record in failedResourcesToProcess)
             {
-                await RunFailCleanupAsync(record, logger);
+                await RunFailCleanupAsync(record, operationFailedTimeLimit, logger);
             }
         }
 
-        private async Task RunFailCleanupAsync(ResourceRecord record, IDiagnosticsLogger loogger)
+        private static bool IsResourceInValidDeleteState(ResourceRecord record, DateTime failedTime)
+        {
+            return (
+                    record.DeletingStatus == OperationState.Initialized ||
+                    record.DeletingStatus == OperationState.InProgress)
+                   && record.DeletingStatusChanged > failedTime;
+        }
+
+        private async Task RunFailCleanupAsync(ResourceRecord record, DateTime operationFailedTimeLimit, IDiagnosticsLogger loogger)
         {
             await loogger.OperationScopeAsync(
                 $"{LogBaseName}_run_fail_cleanup",
@@ -95,7 +114,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     var didFailProvisioning = false;
                     var didFailStarting = false;
                     var didFailDeleting = false;
-                    var operationFailedTimeLimit = DateTime.UtcNow.AddHours(-1);
                     if (record.ProvisioningStatus == OperationState.Failed
                         || record.ProvisioningStatus == OperationState.Cancelled
                         || ((record.ProvisioningStatus == OperationState.Initialized
