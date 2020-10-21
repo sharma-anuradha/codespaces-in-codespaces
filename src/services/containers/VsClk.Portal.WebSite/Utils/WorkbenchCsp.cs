@@ -40,6 +40,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 data:
                 https://*.gallerycdn.vsassets.io
                 {PartnerFaviconsEndpoint}
+                https://vscodeweb.azureedge.net/insider/
+                https://vscodeweb.azureedge.net/stable/
             ;
             connect-src
                 'self'
@@ -66,6 +68,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             ;
             frame-src
                 https://*.vscode-webview-test.com
+                https://vscodeweb.azureedge.net/insider/
+                https://vscodeweb.azureedge.net/stable/
             ;
             worker-src
                 {ServiceWorkerEndpoint}
