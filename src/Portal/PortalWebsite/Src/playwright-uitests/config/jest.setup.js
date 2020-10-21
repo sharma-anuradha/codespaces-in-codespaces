@@ -1,2 +1,2 @@
-// Override default Jest timeout
-jest.setTimeout(70000); // in ms
+// Override default Jest timeout because some tests might take longer to finish e.g. loading a codespace environment
+jest.setTimeout(90000); // in ms

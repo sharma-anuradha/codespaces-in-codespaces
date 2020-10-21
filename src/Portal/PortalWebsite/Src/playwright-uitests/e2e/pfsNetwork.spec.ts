@@ -41,9 +41,13 @@ describe('Network UI Tests for Port Forwarding Service', () => {
     await page.waitForSelector('text=Preparing your codespace');
     codespaceUrl = await page.url();
     //Assert that some elements are loaded
-    await page.waitForSelector('[aria-label*="Run"]', { timeout: 60000 });
-    await page.waitForSelector('[aria-label="Remote Explorer"]');
-    await page.click('[aria-label="Remote Explorer"]');
+    await page.waitForSelector("text=Preparing your codespace");
+    await page.waitForSelector('[xmlns="http://www.w3.org/2000/svg"]');
+    await page.waitForSelector('[class="terminal-container"]');
+    await page.waitForSelector('[title*="Explorer "]');
+    await page.waitForSelector('[title*="Source Control "]');
+    await page.waitForSelector('[title*="Manage"]');
+    await page.waitForSelector('[title*="Run "]');
   });
 
   it('Should launch Testing Apps', async () => {
@@ -55,18 +59,18 @@ describe('Network UI Tests for Port Forwarding Service', () => {
     await page.click('[title="Start Debugging"]');
     await page.waitForSelector('[aria-label="Debug: Request Body App/PF Echo (Headers)/Web Sockets Echo App (PlaywrightTestingApps)"]');
     await page.waitForSelector('[aria-label="Debug Call Stack"]');
-    await page.waitForSelector('[aria-label*="Debug Session Launch RequestBodyApp: yarn.js"]');
-    await page.waitForSelector('[aria-label*="Debug Session PF Echo (Headers)"]');
-    await page.waitForSelector('[aria-label*="Debug Session Launch socketio-hello-world: yarn.js"]');
-    await page.waitForSelector('[aria-label="person vso-dev1"]');
+    await page.waitForSelector('[aria-label*="Session Launch RequestBodyApp:"]');
+    await page.waitForSelector('[aria-label*="Session PF Echo (Headers)"]');
+    await page.waitForSelector('[aria-label*="Session Launch socketio-hello-world:"]');
   });
 
   it('Checks that request bodies are received', async () => {
-    await page.waitForSelector('[aria-label="Remote Explorer"]');
-    await page.click('[aria-label="Remote Explorer"]');
+    await page.waitForSelector('[title*="Remote Explorer"]');
+    await page.click('[title*="Remote Explorer"]');
+    await page.click('[aria-label="Remote port 127.0.0.1:7000 forwarded to local address 127.0.0.1:7000"]');
     const [newPage] = await Promise.all([
       context.waitForEvent('page'),
-      page.click('[aria-label="Port: 7000 (port 7000)"]')
+      page.click('css=[aria-label="Remote port 127.0.0.1:7000 forwarded to local address 127.0.0.1:7000"] >> css=[title="Open in Browser"]')
     ])
     await newPage.waitForNavigation({ url: url => url.hostname.includes('codespaces.githubusercontent.com') });
     var element = await newPage.waitForSelector('text="Sign in"');
@@ -79,9 +83,10 @@ describe('Network UI Tests for Port Forwarding Service', () => {
   });
 
   it('Checks that user headers added in echo service are propagated', async () => {
+    await page.click('[aria-label="Remote port 127.0.0.1:5000 forwarded to local address 127.0.0.1:5000"]');
     const [newPage] = await Promise.all([
       context.waitForEvent('page'),
-      page.click('[aria-label="Port: 5000 (port 5000)"]')
+      page.click('css=[aria-label="Remote port 127.0.0.1:5000 forwarded to local address 127.0.0.1:5000"] >> css=[title="Open in Browser"]')
     ])
     await newPage.waitForNavigation({ url: url => url.hostname.includes('codespaces.githubusercontent.com') });
     //Verify that headers added in PF echo app show up in response headers
@@ -111,9 +116,10 @@ describe('Network UI Tests for Port Forwarding Service', () => {
   });
 
   it('Web Sockets App test', async () => {
+    await page.click('[aria-label="Remote port 127.0.0.1:3000 forwarded to local address 127.0.0.1:3000"]');
     const [newPage] = await Promise.all([
       context.waitForEvent('page'),
-      page.click('[aria-label="Port: 3000 (port 3000)"]')
+      page.click('css=[aria-label="Remote port 127.0.0.1:3000 forwarded to local address 127.0.0.1:3000"] >> css=[title="Open in Browser"]')
     ])
     await newPage.waitForNavigation({ url: url => url.hostname.includes('codespaces.githubusercontent.com') });
     var element = await newPage.waitForSelector('text="Playing with websockets using socketio"');
@@ -126,7 +132,11 @@ describe('Network UI Tests for Port Forwarding Service', () => {
   });
 
   it('Should delete the created codespace', async () => {
-    await page.goto('https://github.com/codespaces');
+    page.on("dialog", async (dialog) => {
+      console.log(dialog.message());
+      await dialog.accept();
+    });
+    await page.goto("https://github.com/codespaces");
     var arrStr = deleteCodespaceUrl.split(/[/.]/);
     await page.waitForSelector('[aria-label=' + "'" + "Show more actions for codespace " + arrStr[2] + "'" + ']');
     await page.click('[aria-label=' + "'" + "Show more actions for codespace " + arrStr[2] + "'" + ']');
