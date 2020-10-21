@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { IEnvironment } from 'vso-client-core';
 
-import { IDefaultEditor, IDefaultLayout } from 'vscode-web';
+import { IDefaultEditor, IDefaultView, IDefaultLayout } from 'vscode-web';
 import { SupportedGitService, getSupportedGitService } from 'vso-ts-agent';
 
 import { vscode } from '../vscode/vscodeAssets/vscode';
@@ -16,22 +16,6 @@ const isGitHubPRUrl = (url: string | undefined) => {
     }
 
     return (url.match(/https:\/\/github\.com\/.+\/.+\/pull\/\d+/) !== null);
-};
-
-const getContainers = (environmentInfo: IEnvironment) => {
-    const githubUrl = environmentInfo.seed?.moniker;
-    if (!isGitHubPRUrl(githubUrl)) {
-        return [];
-    }
-
-    return [
-        {
-            // The id of the `viewsContainers.activitybar` contributed by the PR extension
-            id: 'github-pull-requests',
-            // Sets the activity bar icon to be visible and active
-            active: true,
-        }
-    ];
 };
 
 const getEditors = (environmentInfo: IEnvironment) => {
@@ -55,29 +39,23 @@ const getEditors = (environmentInfo: IEnvironment) => {
     ];
 };
 
-const getPanel = (environmentInfo: IEnvironment) => {
+const getViews = (environmentInfo: IEnvironment) => {
+    const views: IDefaultView[] = [];
+
     const githubUrl = environmentInfo.seed?.moniker;
     if (isGitHubPRUrl(githubUrl)) {
-        return {
-            visible: true,
-            containers: [{ id: 'comments', order: 0, active: true }]
-        };
+        views.push({ id: 'workbench.panel.comments' }, { id: 'prStatus:github' });
+    } else {
+        views.push({ id: 'workbench.panel.terminal' });
     }
 
-    return {
-        visible: true,
-        containers: [{ id: 'terminal', order: 0, active: true }]
-    };    
+    return views;
 }
 
 export const getWorkbenchDefaultLayout = (environmentInfo: IEnvironment) => {
     const result: IDefaultLayout = {
-        sidebar: {
-            visible: true,
-            containers: getContainers(environmentInfo),
-        },
         editors: getEditors(environmentInfo),
-        panel: getPanel(environmentInfo),
+        views: getViews(environmentInfo)
     };
 
     return result;
