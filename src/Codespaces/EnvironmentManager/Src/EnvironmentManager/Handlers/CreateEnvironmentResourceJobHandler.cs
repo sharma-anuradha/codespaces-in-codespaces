@@ -348,7 +348,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             }
             else if (computeStatus.ProvisioningStatus.IsFailedState())
             {
-                return ReturnFailed(ResultFromReason("InvalidOSDiskResourceState"));
+                return ReturnFailed(ResultFromReason("InvalidComputeResourceState"));
             }
 
             return ReturnRetry(TimeSpan.FromSeconds(10));
