@@ -38,7 +38,8 @@ module.exports = async() => {
     var verificationCode = emailBody.match(/\d/g);
     verificationCode = verificationCode.join("");
     //fetch Github code
-    verificationCode = verificationCode.substring(4);
+    const codeSize = 6;
+    verificationCode = verificationCode.slice(verificationCode.length - codeSize);
     console.log(verificationCode);
     await page.fill('[placeholder="6-digit code"]', verificationCode);
     await page.click('[type="submit"]');
