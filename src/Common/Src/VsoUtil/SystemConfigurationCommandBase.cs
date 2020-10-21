@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using CommandLine;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         /// <summary>
         /// Gets a value indicating whether SystemConfigurationCommandBase should use BackEnd.
         /// </summary>
-        protected virtual bool UseBackEnd => false;
+        [Option('b', "backend", Default = false, Required = false, HelpText = "A value indicating whether SystemConfigurationCommandBase should use BackEnd.")]
+        public virtual bool UseBackEnd { get; set; }
 
         /// <summary>
         /// Creates the web host.
@@ -58,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             frontEndAppSettings.EnvironmentMonitorSettings.Init(systemConfig);
         }
 
-        protected async Task UpdateSystemConfigurationAsync(IServiceProvider services, string id, string value, TextWriter stdout, TextWriter stderr)
+        protected async Task UpdateSystemConfigurationAsync(IServiceProvider services, string id, string value, TextWriter stdout, TextWriter stderr, string comment = default)
         {
             var repository = services.GetRequiredService<ISystemConfigurationRepository>();
             var logger = new NullLogger();
@@ -79,6 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                     await stdout.WriteLineAsync("Current System Configuration Setting:");
                     await stdout.WriteLineAsync($"  ID: {record.Id}");
                     await stdout.WriteLineAsync($"  Value: {record.Value}");
+                    await stdout.WriteLineAsync($"  Comment: {record.Comment}");
                 }
                 else
                 {
@@ -96,6 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 };
 
                 record.Value = value;
+                record.Comment = string.IsNullOrEmpty(comment) ? null : comment;
 
                 await DoWithDryRun(() => repository.CreateOrUpdateAsync(record, logger));
 
@@ -104,6 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                     await stdout.WriteLineAsync("Updated System Configuration Setting:");
                     await stdout.WriteLineAsync($"  ID: {record.Id}");
                     await stdout.WriteLineAsync($"  Value: {record.Value}");
+                    await stdout.WriteLineAsync($"  Comment: {record.Comment}");
                 }
             }
             else

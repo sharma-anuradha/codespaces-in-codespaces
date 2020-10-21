@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         public bool Remove { get; set; }
 
         /// <inheritdoc/>
-        protected override bool UseBackEnd => true;
+        public override bool UseBackEnd => true;
 
         /// <inheritdoc/>
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)

@@ -49,9 +49,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
         }
 
         /// <inheritdoc/>
-        public async Task<T> ReadQuotaAsync<T>(string componentName, string quotaName, IDiagnosticsLogger logger, T defaultValue = default, ConfigurationContext context = default)
+        public async Task<T> ReadQuotaAsync<T>(string componentName, string quotaSettingName, IDiagnosticsLogger logger, T defaultValue = default, ConfigurationContext context = default)
         {
-            return await ReadConfigurationByScope(context, ConfigurationType.Quota, componentName, quotaName, defaultValue, logger);
+            return await ReadConfigurationByScope(context, ConfigurationType.Quota, componentName, quotaSettingName, defaultValue, logger);
         }
 
         /// <inheritdoc/>

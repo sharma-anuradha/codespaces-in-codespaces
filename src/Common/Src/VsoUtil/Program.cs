@@ -57,7 +57,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     typeof(FeatureToggleCommand),
                     typeof(UpdateConfigSettingCommand),
                     typeof(UpdateQuotaSettingCommand),
-                    typeof(EnableSubscriptionSettingCommand))
+                    typeof(EnableSubscriptionSettingCommand),
+                    typeof(ConfigurationWriterCommand))
                 .WithParsed<ShowDbAccountInfoCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CreatePortForwardingConnection>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<PortForwardingConnectionEstablished>(command => command.Execute(Console.Out, Console.Error))
@@ -89,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 .WithParsed<UpdateConfigSettingCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<UpdateQuotaSettingCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<EnableSubscriptionSettingCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ConfigurationWriterCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithNotParsed(errs => { exitCode = 1; });
             }
             catch (Exception ex)
