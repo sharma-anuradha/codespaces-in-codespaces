@@ -44,7 +44,7 @@
   {
     "ame": false,
     "component": "codesp",
-    "dbEnabled": null,
+    "dbEnabled": true,
     "enabled": false,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -60,7 +60,7 @@
     "subscriptionName": "vscs-codesp-dev-data-compute-us-w2-001",
     "subscriptionNewName": "",
     "subscriptionOldName": "",
-    "vnetInjection": "checked in"
+    "vnetInjection": "done"
   },
   {
     "ame": false,
@@ -359,7 +359,7 @@
   {
     "ame": true,
     "component": "codesp",
-    "dbEnabled": null,
+    "dbEnabled": true,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -375,7 +375,7 @@
     "subscriptionName": "vscs-codesp-ppe-data-compute-us-w2-001",
     "subscriptionNewName": "",
     "subscriptionOldName": "",
-    "vnetInjection": "checked in"
+    "vnetInjection": "done"
   },
   {
     "ame": true,

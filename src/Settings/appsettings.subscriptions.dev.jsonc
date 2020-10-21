@@ -4,6 +4,14 @@
   "AppSettings": {
     "dataPlaneSettings": {
       "subscriptions": {
+        "vscs-codesp-dev-data-compute-us-w2-001": {
+          "subscriptionId": "fd021d77-a2be-4d7b-adfb-bd4277b6c359",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "compute"
+        },
         "vscs-codesp-dev-data-keyvault-eu-w-001": {
           "subscriptionId": "cd6a254d-0a70-4179-aea8-376a13fabe11",
           "locations": [

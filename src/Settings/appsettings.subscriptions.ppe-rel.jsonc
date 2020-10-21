@@ -4,6 +4,14 @@
   "AppSettings": {
     "dataPlaneSettings": {
       "subscriptions": {
+        "vscs-codesp-ppe-data-compute-us-w2-001": {
+          "subscriptionId": "2ef64798-57d4-46ee-9c93-995f2df01a16",
+          "enabled": false,
+          "locations": [
+            "westus2"
+          ],
+          "serviceType": "compute"
+        },
         "vscs-codesp-ppe-data-keyvault-ap-se-001": {
           "subscriptionId": "d98f29c5-7bc0-4551-ac62-8ec6ad95cc75",
           "locations": [
