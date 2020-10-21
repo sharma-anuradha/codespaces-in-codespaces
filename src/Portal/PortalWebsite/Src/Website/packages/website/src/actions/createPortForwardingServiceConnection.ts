@@ -52,7 +52,7 @@ export async function createPortForwardingConnection(id: string, port: number) {
         await webClient.post(configuration.portForwardingManagementEndpoint, {
             id,
             port,
-        });
+        }, { skipParsingResponse: true });
 
         dispatch(createPortForwardingConnectionSuccessAction(id, port));
     } catch (err) {

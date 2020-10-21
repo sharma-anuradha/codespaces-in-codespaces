@@ -9,7 +9,7 @@ const serverProcessesFilter = ['vsls-agent', 'vscode-remote'];
 
 export class TunnelProvider implements ITunnelProvider {
     constructor(
-        private readonly ensureConnection: (tunnelOptions: ITunnelOptions) => Promise<void>
+        private readonly primeConnection: (tunnelOptions: ITunnelOptions) => Promise<void>
     ) {}
 
     tunnelFactory = async (tunnelOptions: ITunnelOptions): Promise<ITunnel> => {
@@ -17,7 +17,10 @@ export class TunnelProvider implements ITunnelProvider {
             ? tunnelOptions.localAddressPort
             : tunnelOptions.remoteAddress.port;
 
-        await this.ensureConnection(tunnelOptions);
+        this.primeConnection(tunnelOptions).catch((err) => {
+            // We do not care about this failing at this point.
+            // We have the failures sent to telemetry before.
+        });
 
         return {
             remoteAddress: tunnelOptions.remoteAddress,
