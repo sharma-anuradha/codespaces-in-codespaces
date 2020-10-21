@@ -2,9 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -131,6 +131,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
             logger.FluentAddValue("TotalOldKeysCount", oldkeys.Count);
 
             var keyHitCounts = new Dictionary<string, uint>();
+            var keyLastUpdate = new Dictionary<string, DateTime>();
+
+            var batchID = Guid.NewGuid().ToString();
+            logger.FluentAddBaseValue("BatchId", batchID);
+
             foreach (var record in records)
             {
                 var key = record.Id;
@@ -143,10 +148,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
                 });
 
                 keyHitCounts.Add(key, item.GetHitCount());
+                keyLastUpdate.Add(key, record.Timestamp);
                 oldkeys.Remove(key);
             }
 
-            var subHitCountDicts = SplitHitCountDictionary(keyHitCounts);
+            // log hit counts and last updated timestamp
+            await LogHitCounts(keyHitCounts, logger);
+            await LogLastUpdate(keyLastUpdate, logger);
+
+            logger.FluentAddValue("DeletedKeysCount", oldkeys.Count);
+
+            foreach (var key in oldkeys)
+            {
+                Cache.TryRemove(key, out var _);
+            }
+        }
+
+        private async Task LogHitCounts(IDictionary<string, uint> keyHitCounts, IDiagnosticsLogger logger)
+        {
+            var subHitCountDicts = SplitDictionary(keyHitCounts);
 
             foreach (var dict in subHitCountDicts)
             {
@@ -158,30 +178,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
                     await Task.FromResult(true);
                 }, swallowException: true);
             }
+        }
 
-            logger.FluentAddValue("DeletedKeysCount", oldkeys.Count);
+        private async Task LogLastUpdate(IDictionary<string, DateTime> keyLastUpdate, IDiagnosticsLogger logger)
+        {
+            var subLastUpdateDicts = SplitDictionary(keyLastUpdate);
 
-            foreach (var key in oldkeys)
+            foreach (var dict in subLastUpdateDicts)
             {
-                Cache.TryRemove(key, out var _);
+                await logger.OperationScopeAsync(
+                $"docdb_{LoggingDocumentName}_last_update",
+                async (lastUpdateLogger) =>
+                {
+                    lastUpdateLogger.FluentAddValue("LastUpdated", JsonConvert.SerializeObject(dict));
+                    await Task.FromResult(true);
+                }, swallowException: true);
             }
         }
 
-        private IList<IDictionary<string, uint>> SplitHitCountDictionary(IDictionary<string, uint> keyHitCounts, int maxSizePerDictionary = 50)
+        private IEnumerable<IDictionary<T1, T2>> SplitDictionary<T1, T2>(IDictionary<T1, T2> dictToSplit, int maxSizePerDictionary = 50)
         {
-            var list = new List<IDictionary<string, uint>>();
-            var listCount = keyHitCounts.Count() / maxSizePerDictionary;
+            var listCount = dictToSplit.Count() / maxSizePerDictionary;
 
-            if (keyHitCounts.Count % maxSizePerDictionary > 0)
+            if (dictToSplit.Count % maxSizePerDictionary > 0)
+            {
                 listCount++;
-
+            }
+                
             for (var i = 0; i < listCount; i++)
             {
-                var dict = keyHitCounts.Skip(i * maxSizePerDictionary).Take(maxSizePerDictionary).ToDictionary(c => c.Key, c => c.Value);
-                list.Add(dict);
-            }
-
-            return list;
+                yield return dictToSplit.Skip(i * maxSizePerDictionary).Take(maxSizePerDictionary).ToDictionary(c => c.Key, c => c.Value);
+            }            
         }
     }
 }

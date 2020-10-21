@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Common.Models;
 using Newtonsoft.Json;
 
@@ -10,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
     /// <summary>
     /// Configuration Record.
     /// </summary>
-    public class SystemConfigurationRecord : TaggedEntity
+    public class SystemConfigurationRecord : Document, ITaggedEntity, IEntity
     {
         /// <summary>
         /// Gets or sets the value of the configuration.

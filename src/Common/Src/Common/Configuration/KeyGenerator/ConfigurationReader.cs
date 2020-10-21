@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -28,6 +29,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
             ConfigurationScopeGenerator = configurationScopeGenerator;
             CachedSystemConfigurationRepository = cachedSystemConfigurationRepository;
         }
+
+        private string LogBaseName => "configuration_reader";
 
         /// <summary>
         /// Gets the configuration scope generator.
@@ -59,25 +62,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
 
         private async Task<T> ReadConfigurationByScope<T>(ConfigurationContext context, ConfigurationType configurationType, string componentName, string configurationName, T defaultValue, IDiagnosticsLogger logger)
         {
-            var scopes = ConfigurationScopeGenerator.GetScopes(context);
-
-            foreach (var scope in scopes)
-            {
-                var key = ConfigurationHelpers.GetCompleteKey(scope, configurationType, componentName, configurationName);
-                var record = await CachedSystemConfigurationRepository.GetAsync(key, logger.NewChildLogger());
-
-                if (!string.IsNullOrEmpty(record?.Value))
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_run",
+                async (childlogger) =>
                 {
-                    logger.FluentAddValue("KeyUsedForValue", key)
-                        .FluentAddValue("DefaultUsed", false);
+                    var scopes = ConfigurationScopeGenerator.GetScopes(context);
 
-                    return ConvertType<T>(record);
-                }
-            }
+                    foreach (var scope in scopes)
+                    {
+                        var key = ConfigurationHelpers.GetCompleteKey(scope, configurationType, componentName, configurationName);
+                        var record = await CachedSystemConfigurationRepository.GetAsync(key, childlogger.NewChildLogger());
 
-            // Return default value if we couldn't find anything
-            logger.FluentAddValue("DefaultUsed", true);
-            return defaultValue;
+                        if (!string.IsNullOrEmpty(record?.Value))
+                        {
+                            var valueToReturn = ConvertType<T>(record);
+
+                            childlogger.FluentAddValue("KeyUsedForValue", key)
+                                .FluentAddValue("DefaultUsed", false)
+                                .FluentAddValue("ScopeUsed", scope)
+                                .FluentAddValue("IsOverrideSameAsDefault", EqualityComparer<T>.Default.Equals(valueToReturn, defaultValue));
+
+                            return valueToReturn;
+                        }
+                    }
+
+                    // Return default value if we couldn't find anything
+                    childlogger.FluentAddValue("DefaultUsed", true);
+                    return defaultValue;
+                },
+                (ex, childLogger) =>
+                {
+                    // return the default value in case of any exception
+                    return Task.FromResult(defaultValue);
+                }, swallowException: true);
         }
 
         private T ConvertType<T>(SystemConfigurationRecord record)
