@@ -1,0 +1,20 @@
+.vscs-dev-panel-header-perf-block__controls {
+    float: left;
+    display: none;
+    margin-left: calc(.5 * var(--grid-unit));
+}
+
+.vscs-dev-panel-header-perf-block__controls .vscs-dev-panel-header-perf-block__console-button {
+    padding: calc(.4 * var(--grid-unit));
+    padding-bottom: calc(.2 * var(--grid-unit));
+    height: auto;
+    vertical-align: middle;
+}
+
+.vscs-dev-panel-header-perf-block.is-ready {
+    cursor: pointer;
+}
+
+.vscs-dev-panel-header-perf-block.is-ready:hover .vscs-dev-panel-header-perf-block__controls {
+    display: block;
+}

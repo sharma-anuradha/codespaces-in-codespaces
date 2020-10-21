@@ -1,9 +1,9 @@
-import { RateLimitingError } from '../../../src/errors/ReteLimitingError';
-import { errorToState } from '../../../src/react-app/components/WorkbenchPage/errorToState';
-import { EnvironmentWorkspaceState } from '../../../src/interfaces/EnvironmentWorkspaceState';
-import { AuthenticationError } from '../../../src/errors/AuthenticationError';
-import { ConfigurationError } from '../../../src/errors/ConfigurationError';
-import { HttpError } from '../../../src/errors/HttpError';
+import { RateLimitingError } from '../src/errors/ReteLimitingError';
+import { errorToState } from '../src/react-app/components/WorkbenchPage/errorToState';
+import { EnvironmentWorkspaceState } from '../src/interfaces/EnvironmentWorkspaceState';
+import { AuthenticationError } from '../src/errors/AuthenticationError';
+import { ConfigurationError } from '../src/errors/ConfigurationError';
+import { HttpError } from '../src/errors/HttpError';
 
 describe('workspace page `errorToState`', () => {
     it('should map `RateLimitingError`', () => {

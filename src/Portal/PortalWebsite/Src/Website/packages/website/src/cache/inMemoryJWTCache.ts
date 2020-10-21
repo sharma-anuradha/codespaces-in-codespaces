@@ -46,7 +46,7 @@ export class InMemoryJWTCache implements IJWTCache<TokenType> {
 
     public deleteCachedToken(name: string): IJWTCache<TokenType> {
         this[inMemoryCacheSymbol].delete(this.getKeyName(name));
-        
+
         return this;
     }
 

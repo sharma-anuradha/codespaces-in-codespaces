@@ -1,8 +1,15 @@
+import { getParentDomain, IPartnerInfo } from 'vso-client-core';
+import { VSCodespacesPlatformInfoGeneral } from 'vs-codespaces-authorization';
+
 import { telemetryMarks } from '../../telemetry/telemetryMarks';
 import { sendTelemetry } from '../../telemetry/telemetry';
-import { getParentDomain, IPartnerInfo } from 'vso-client-core';
 import { authService } from '../../auth/authService';
-import { VSCodespacesPlatformInfoGeneral } from 'vs-codespaces-authorization';
+import {
+    CodespacePerformance,
+    getMainCodespacePerformance,
+} from '../../utils/performance/CodespacePerformance';
+import { PerformanceEventIds } from '../../utils/performance/PerformanceEvents';
+import { ITelementryStartupTimes, ITimeBlock } from '../../telemetry/sendTelemetry';
 
 export enum commandIds {
     codespacesGoHome = '_codespaces.embedder.gohome',
@@ -21,10 +28,7 @@ const gotHomeHandler = async () => {
     }
 
     // if there is no `homeIndicator` set, use management portal url instead
-    if (
-        !('vscodeSettings' in platformInfo) ||
-        !('homeIndicator' in platformInfo.vscodeSettings)
-    ) {
+    if (!('vscodeSettings' in platformInfo) || !('homeIndicator' in platformInfo.vscodeSettings)) {
         const redirectUrl = await authService.getManagementPortalUrl();
         location.href = redirectUrl.toString();
         return;
@@ -39,6 +43,41 @@ const gotHomeHandler = async () => {
     }
 
     throw new Error(`Cannot find home link.`);
+};
+
+const getBlockTimings = (blockId: PerformanceEventIds): ITimeBlock => {
+    return {
+        startTime: CodespacePerformance.getBlockStartTime(blockId),
+        duration: CodespacePerformance.getBlockDurationTime(blockId),
+    };
+}
+
+const getStartupTimes = (): ITelementryStartupTimes => {
+    const {
+        getBlockStartTime,
+        getBlockDurationTime,
+        getBlockEndTime
+    } = CodespacePerformance;
+
+    // see `PerformanceEventIds` for more info on the events
+    const result = {
+        timeToJavascript: getBlockStartTime(PerformanceEventIds.Start),
+        timeToTerminal: getBlockEndTime(PerformanceEventIds.InitTimeToRemoteExtensions),
+        startCodespaceTime: getBlockDurationTime(PerformanceEventIds.StartCodespace),
+        timeToVSCode: getBlockStartTime(PerformanceEventIds.VSCodeInitialization),
+        getEnvironmentInfo1Time: getBlockDurationTime(PerformanceEventIds.GetEnvironmentInfo1),
+        getEnvironmentInfo2Time: getBlockDurationTime(PerformanceEventIds.GetEnvironmentInfo2),
+        getLiveshareWorkspaceInfo: getBlockDurationTime(PerformanceEventIds.GetLiveshareWorkspaceInfo),
+        vscodeTime: getBlockTimings(PerformanceEventIds.VSCodeInitialization),
+        workbenchComponentTime: getBlockTimings(PerformanceEventIds.WorkbenchComponent),
+        workbenchPageTime: getBlockTimings(PerformanceEventIds.WorkbenchPage),
+        workbenchPageInitTime: getBlockDurationTime(PerformanceEventIds.WorkbenchPageInitialization),
+        pureConnectionTime: getBlockDurationTime(PerformanceEventIds.WorkbenchClientConnection),
+        vscodeServerStartupTime: getBlockDurationTime(PerformanceEventIds.VSCodeServerStartup),
+        clientServerHandshake: getBlockDurationTime(PerformanceEventIds.VSCodeClientServerHandshake),
+    };
+
+    return result;
 };
 
 export const commands = [
@@ -60,6 +99,15 @@ export const commands = [
         id: commandIds.codespacesTimeToInteractive,
         handler: () => {
             window.performance.measure(telemetryMarks.timeToInteractive);
+
+            const codespacePerformance = getMainCodespacePerformance();
+            codespacePerformance.markBlockEnd({
+                id: PerformanceEventIds.InitTimeToRemoteExtensions,
+                name: '',
+            });
+
+            sendTelemetry('vsonline/portal/startup-times', getStartupTimes());
+
             const [measure] = window.performance.getEntriesByName(telemetryMarks.timeToInteractive);
             sendTelemetry(`vsonline/portal/vscode-time-to-interactive`, {
                 duration: measure.duration,

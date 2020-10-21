@@ -19,6 +19,8 @@ import { getUriAuthority } from '../../utils/getUriAuthority';
 import { GitCredentialService } from '../../rpcServices/GitCredentialService';
 import { BrowserSyncService } from '../../rpcServices/BrowserSyncService';
 import { assertValidSubdomain } from '../../utils/assertValidSubdomain';
+import { performanceAsync } from "../../react-app/components/WorkbenchPage/performanceAsyncDecorator";
+import { CodespacePerformance } from '../../utils/performance/CodespacePerformance';
 
 interface IWorkbenchOptions {
     domElementId: string;
@@ -42,56 +44,71 @@ logContent.log =
 export class VSCodeWorkbench {
     private envConnector: EnvConnector | null = null;
 
-    constructor(private readonly options: IWorkbenchOptions) {}
+    constructor(
+        protected performance: CodespacePerformance,
+        private readonly options: IWorkbenchOptions
+    ) {}
+
+    @performanceAsync('get token')
+    private async getToken() {
+        return await this.options.getToken();
+    }
+
+    @performanceAsync('get vscode')
+    private async getVscode() {
+        return await vscode.getVSCode();
+    }
+
+    @performanceAsync('env connector initialization')
+    private async getEnvironmentConnector() {
+        return new EnvConnector(async (e) => {
+            const { workspaceClient, workspaceService, rpcConnection } = e;
+
+            // Expose credential service
+            const gitCredentialService = new GitCredentialService(
+                workspaceService,
+                rpcConnection
+            );
+            await gitCredentialService.shareService();
+
+            // Expose browser sync service
+            const sourceEventService = workspaceClient.getServiceProxy<vsls.SourceEventService>(
+                vsls.SourceEventService
+            );
+
+            new BrowserSyncService(sourceEventService);
+
+            const codespaceInfo = await authService.getPartnerInfo();
+            if (!codespaceInfo) {
+                return;
+            }
+
+            /**
+             * If no `homeIndicator` present in `CodespaceInfo`,
+             * enable the `Go Home` item in the VSCode FileMenu,
+             * since vscode won't add it automatically.
+             * https://github.com/github/codespaces/issues/1014
+             */
+            if (!('homeIndicator' in codespaceInfo)) {
+                await sourceEventService.fireEventAsync(
+                    BrowserConnectorMessages.GetLocalStorageValueResponse,
+                    ''
+                );
+            }
+        });
+    }
 
     public connect = async () => {
-        const { getToken, onConnection } = this.options;
-
-        const token = await getToken();
-
+        const token = await this.getToken();
         if (!token) {
             throw new AuthenticationError('No token found.');
         }
 
         if (!this.envConnector) {
-            this.envConnector = new EnvConnector(async (e) => {
-                const { workspaceClient, workspaceService, rpcConnection } = e;
-
-                // Expose credential service
-                const gitCredentialService = new GitCredentialService(
-                    workspaceService,
-                    rpcConnection
-                );
-                await gitCredentialService.shareService();
-
-                // Expose browser sync service
-                const sourceEventService = workspaceClient.getServiceProxy<vsls.SourceEventService>(
-                    vsls.SourceEventService
-                );
-
-                new BrowserSyncService(sourceEventService);
-
-                const codespaceInfo = await authService.getPartnerInfo();
-                if (!codespaceInfo) {
-                    return;
-                }
-
-                /**
-                 * If no `homeIndicator` present in `CodespaceInfo`,
-                 * enable the `Go Home` item in the VSCode FileMenu,
-                 * since vscode won't add it automatically.
-                 * https://github.com/github/codespaces/issues/1014
-                 */
-                if (!('homeIndicator' in codespaceInfo)) {
-                    await sourceEventService.fireEventAsync(
-                        BrowserConnectorMessages.GetLocalStorageValueResponse,
-                        ''
-                    );
-                }
-            });
+            this.envConnector = await this.getEnvironmentConnector();
         }
 
-        await vscode.getVSCode();
+        await this.getVscode();
 
         /**
          * Temporary comment out since doing this will cause the "Failed to start VSCode server"
@@ -111,7 +128,7 @@ export class VSCodeWorkbench {
         //     ),
         // ]);
 
-        await onConnection();
+        await this.options.onConnection();
     };
 
     public mount = async () => {
@@ -126,7 +143,6 @@ export class VSCodeWorkbench {
         } = this.options;
 
         const token = await getToken();
-
         if (!token) {
             throw new AuthenticationError('No token found.');
         }
@@ -145,11 +161,14 @@ export class VSCodeWorkbench {
             throw new Error('Call "initializeConnection" first.');
         }
 
+        const perf = this.performance;
+        let cnt = 0;
         const VSLSWebSocketFactory: IWebSocketFactory = {
             create(url: string) {
                 assertValidSubdomain(environmentInfo);
 
                 return new VSLSWebSocket(
+                    perf.createGroup(`socket factory - ${cnt++}`),
                     url,
                     token,
                     liveShareEndpoint,
@@ -201,6 +220,7 @@ export class VSCodeWorkbench {
         };
 
         trace(`Creating workbench on #${domElementId}, with config: `, workbenchConfig);
+
         vscode.create(workbenchEl, workbenchConfig);
     };
 }

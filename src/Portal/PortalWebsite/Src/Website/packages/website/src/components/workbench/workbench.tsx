@@ -28,6 +28,7 @@ import {
     getWorkbenchDefaultLayout,
     codespaceInitializationTracker,
     TunnelProvider,
+    getMainCodespacePerformance,
 } from 'vso-workbench';
 
 import * as envRegService from '../../services/envRegService';
@@ -387,7 +388,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             liveShareEndpoint,
             getVSCodeVersion(),
             getExtensions(isFirstCodespaceLoad),
-            apiEndpoint
+            apiEndpoint,
+            getMainCodespacePerformance(),
         );
 
         const listener = () => {
@@ -421,6 +423,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         const VSLSWebSocketFactory: IWebSocketFactory = {
             create(url: string) {
                 return new VSLSWebSocket(
+                    getMainCodespacePerformance(),
                     url,
                     token,
                     liveShareEndpoint,
@@ -430,7 +433,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     logger.verbose,
                     getEnvironment,
                     getExtensions(isFirstCodespaceLoad),
-                    apiEndpoint
+                    apiEndpoint,
                 );
             },
         };

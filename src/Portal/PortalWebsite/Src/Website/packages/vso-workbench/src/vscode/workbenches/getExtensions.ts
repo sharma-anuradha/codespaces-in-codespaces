@@ -5,7 +5,6 @@
 import { isHostedOnGithub } from 'vso-client-core';
 import {
     DEFAULT_EXTENSIONS,
-    DEFAULT_NON_ESSENTIAL_EXTENSIONS,
     HOSTED_IN_GITHUB_EXTENSIONS
 } from '../../constants';
 

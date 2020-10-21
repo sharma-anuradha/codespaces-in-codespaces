@@ -4,11 +4,14 @@ import { createTrace } from 'vso-client-core';
 
 import { authService } from '../../../auth/authService';
 import { config } from '../../../config/config';
+import { IPerformanceProps } from '../../../interfaces/IPerformanceProps';
+import { PerformanceEventIds } from '../../../utils/performance/PerformanceEvents';
 import { Workbench } from '../../../vscode/workbenches/defaultWorkbench';
+import { PerformanceComponent } from '../WorkbenchPage/PerformanceComponent';
 
 import './Workbench.css';
 
-export interface IWorkbechPropsComponent {
+export interface IWorkbechPropsComponent extends IPerformanceProps {
     onError: (e: Error) => any;
     onConnection?: () => any;
     onMount?: () => any;
@@ -16,20 +19,23 @@ export interface IWorkbechPropsComponent {
 
 const trace = createTrace('workbench');
 
-class WorkbenchComponent extends React.Component<IWorkbechPropsComponent> {
+class WorkbenchComponent extends PerformanceComponent<IWorkbechPropsComponent, any> {
     private readonly domElementId = 'js-vscode-workbench-placeholder';
 
     private workbench: Workbench | null = null;
+
+    constructor(props: IWorkbechPropsComponent, state: any) {
+        super(props, state);
+
+        this.newPerformanceGroup(PerformanceEventIds.WorkbenchComponent);
+    }
 
     public shouldComponentUpdate() {
         return false;
     }
 
     private onConnection = async () => {
-        const {
-            onConnection = () => {},
-            onMount = () => {},
-        } = this.props;
+        const { onConnection = () => {}, onMount = () => {} } = this.props;
 
         onConnection();
 
@@ -43,10 +49,16 @@ class WorkbenchComponent extends React.Component<IWorkbechPropsComponent> {
     };
 
     async componentDidMount() {
-        trace.info(`Getting config..`);
-        await config.fetch();
+        await this.measure(
+            { name: 'get config' },
+            async () => {
+                trace.info(`Getting config..`);
 
-        this.workbench = new Workbench({
+                await config.fetch();
+            }
+        );
+
+        this.workbench = new Workbench(this.performance, {
             domElementId: this.domElementId,
             getToken: authService.getCachedToken,
             liveShareEndpoint: config.liveShareApi,
@@ -60,12 +72,7 @@ class WorkbenchComponent extends React.Component<IWorkbechPropsComponent> {
     }
 
     render() {
-        return (
-            <div
-                id={this.domElementId}
-                className='vso-workbench-root'
-            />
-        );
+        return <div id={this.domElementId} className='vso-workbench-root' />;
     }
 }
 

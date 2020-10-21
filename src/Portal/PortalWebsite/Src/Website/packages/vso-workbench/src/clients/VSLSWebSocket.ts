@@ -1,6 +1,5 @@
 import { SshChannel } from '@vs/vs-ssh';
 import { Event, Emitter } from 'vscode-jsonrpc';
-
 import {
     bufferToArrayBuffer,
     IVSCodeConfig,
@@ -12,6 +11,8 @@ import {
 
 import { EnvConnector } from './envConnector';
 import { sendTelemetry } from '../telemetry/sendTelemetry';
+import { PerformanceEventIds, PerformanceEventNames } from '../utils/performance/PerformanceEvents';
+import { CodespacePerformance } from '../utils/performance/CodespacePerformance';
 import { PlatformQueryParams } from '../constants';
 import { setQueryParamFlag } from '../utils/queryParamFlag';
 
@@ -104,6 +105,7 @@ export class VSLSWebSocket implements IWebSocket {
     }
 
     constructor(
+        protected performance: CodespacePerformance,
         private readonly url: string,
         private readonly accessToken: string,
         private readonly liveShareEndpoint: string,
@@ -122,61 +124,86 @@ export class VSLSWebSocket implements IWebSocket {
 
     private environmentInfo?: IEnvironment;
 
+    private static readonly channelInitializatinRetries = 3;
+
     // tslint:disable-next-line: max-func-body-length
-    private async initializeChannel(url: string, retry = 3) {
-        this.environmentInfo = await this.getEnvironmentInfo(getCurrentEnvironmentId());
+    private async initializeChannel(url: string, retry = VSLSWebSocket.channelInitializatinRetries) {
+        const totalRetries = VSLSWebSocket.channelInitializatinRetries;
+        const currentAttempt = (totalRetries - retry) + 1;
+
+        const perf = this.performance.createGroup(`initialize channel (attempt: ${currentAttempt})`);
+
+        let disposables: any[] = [];
+
+        this.environmentInfo = await perf.measure(
+            {
+                id: PerformanceEventIds.GetLiveshareWorkspaceInfo,
+                name: `get workspace`,
+            },
+            async () => {
+                return await this.getEnvironmentInfo(getCurrentEnvironmentId());
+            }
+        );
 
         if (!this.environmentInfo) {
             throw new Error('No environment info found.');
         }
 
-        window.performance.mark(
-            `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
-        );
-        sendTelemetry('vsonline/portal/ls-connection-initializing', {
-            connectionCorrelationId: this.correlationId,
-            isFirstConnection: this.id === 0,
-            connectionNumber: this.id,
-            environmentType: this.environmentInfo.type,
-        });
-
-        url = url.replace(/skipWebSocketFrames=false/gim, 'skipWebSocketFrames=true');
-
-        let disposables = [];
-
-        // vscode `remoteAgentConnection` has different timeouts for `initial` vs `subsequent` connections:
-        // https://github.com/microsoft/vscode/blob/master/src/vs/platform/remote/common/remoteAgentConnection.ts#L19
-        const timeoutSeconds = (isReconnection(url))
-            ? 30
-            : 120;
-
-        const timeout = new Promise((_, reject) => {
-            // tslint:disable-next-line: no-string-based-set-timeout
-            setTimeout(reject, timeoutSeconds * 1000, new Error('VSLSSocketTimeout'));
-        });
-
-        const environmentCheck = this.getEnvironmentInfo(getCurrentEnvironmentId()).then(
-            (environment) => {
-                if (environment && environment.state !== EnvironmentStateInfo.Available) {
-                    throw new Error('EnvironmentNotAvailable');
+        const [combinedTimeoutEnvCheck] = await perf.measure(
+            { name: `prepare for connection` },
+            async () => {
+                if (!this.environmentInfo) {
+                    throw new Error('No environment info found.');
                 }
-            },
-            (err) => {
-                // noop
-            }
-        );
 
-        // In case the environment is suspended, we want to know as soon as possible in the process.
-        //
-        // We don't want to delay the connection/reconnection by the time
-        // it takes to check the environment status.
-        //
-        // Both timeout and environment check reject and send us on error handling path
-        // of connection process.
-        // In case of failure, we are interested in the earliest failure.
-        // In case successful environment check we want to keep watching for the timeout.
-        const combinedTimeoutEnvCheck = Promise.race([timeout, environmentCheck]).then(
-            () => timeout
+                window.performance.mark(
+                    `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
+                );
+
+                sendTelemetry('vsonline/portal/ls-connection-initializing', {
+                    connectionCorrelationId: this.correlationId,
+                    isFirstConnection: this.id === 0,
+                    connectionNumber: this.id,
+                    environmentType: this.environmentInfo.type,
+                });
+
+                url = url.replace(/skipWebSocketFrames=false/gim, 'skipWebSocketFrames=true');
+
+                // vscode `remoteAgentConnection` has different timeouts for `initial` vs `subsequent` connections:
+                // https://github.com/microsoft/vscode/blob/master/src/vs/platform/remote/common/remoteAgentConnection.ts#L19
+                const timeoutSeconds = (isReconnection(url))
+                    ? 30
+                    : 120;
+
+                const timeout = new Promise((_, reject) => {
+                    // tslint:disable-next-line: no-string-based-set-timeout
+                    setTimeout(reject, timeoutSeconds * 1000, new Error('VSLSSocketTimeout'));
+                });
+
+                const environmentCheck = this.getEnvironmentInfo(getCurrentEnvironmentId()).then(
+                    (environment) => {
+                        if (environment && environment.state !== EnvironmentStateInfo.Available) {
+                            throw new Error('EnvironmentNotAvailable');
+                        }
+                    },
+                    (err) => {
+                        // noop
+                    }
+                );
+
+                // In case the environment is suspended, we want to know as soon as possible in the process.
+                //
+                // We don't want to delay the connection/reconnection by the time
+                // it takes to check the environment status.
+                //
+                // Both timeout and environment check reject and send us on error handling path
+                // of connection process.
+                // In case of failure, we are interested in the earliest failure.
+                // In case successful environment check we want to keep watching for the timeout.
+                return [Promise.race([timeout, environmentCheck]).then(
+                    () => timeout
+                )];
+            }
         );
 
         try {
@@ -187,54 +214,78 @@ export class VSLSWebSocket implements IWebSocket {
                     this.liveShareEndpoint,
                     this.vscodeConfig,
                     this.extensions,
-                    this.serviceEndpoint
+                    this.serviceEndpoint,
+                    perf.createGroup('connection'),
                 ),
                 combinedTimeoutEnvCheck,
             ]);
 
-            const channel = await Promise.race([
-                this.envConnector.sendHandshakeRequest(this.createHandshakeRequest(url)),
-                combinedTimeoutEnvCheck as Promise<SshChannel>,
-            ]);
-            disposables.push(channel);
+            const channel = await perf.measure(
+                {
+                    id: PerformanceEventIds.VSCodeClientServerHandshake,
+                    name: 'vscode client 🤝 server',
+                },
+                async () => {
+                    const channel = await Promise.race([
+                        this.envConnector.sendHandshakeRequest(this.createHandshakeRequest(url)),
+                        combinedTimeoutEnvCheck as Promise<SshChannel>,
+                    ]);
 
-            disposables.push(
-                channel.onDataReceived((data: Buffer) => {
-                    verbose(`[${this.getWebSocketIdentifier()}] SSh channel received data.`);
-                    this.logContent(`[${this.getWebSocketIdentifier()}]\n\n${data.toString()}`);
-                    channel.adjustWindow(data.length);
-
-                    this._onData.fire(bufferToArrayBuffer(data));
-                })
+                    disposables.push(channel);
+                    return channel;
+                }
             );
 
-            disposables.push(
-                channel.onClosed(async () => {
-                    verbose(`[${this.getWebSocketIdentifier()}] Ssh channel closed.`);
+            await perf.measure(
+                {
+                    id: PerformanceEventIds.FinishingConnection,
+                    name: PerformanceEventNames.FinishingConnection,
+                },
+                async () => {
+                    if (!this.environmentInfo) {
+                        throw new Error('No environment info found.');
+                    }
 
-                    this._onClose.fire();
-                })
+                    disposables.push(
+                        channel.onDataReceived((data: Buffer) => {
+                            verbose(`[${this.getWebSocketIdentifier()}] SSh channel received data.`);
+                            this.logContent(`[${this.getWebSocketIdentifier()}]\n\n${data.toString()}`);
+                            channel.adjustWindow(data.length);
+
+                            this._onData.fire(bufferToArrayBuffer(data));
+                        })
+                    );
+
+                    disposables.push(
+                        channel.onClosed(async () => {
+                            verbose(`[${this.getWebSocketIdentifier()}] Ssh channel closed.`);
+
+                            this._onClose.fire();
+                        })
+                    );
+
+                    verbose(`[${this.getWebSocketIdentifier()}] Ssh channel open.`);
+                    this._onOpen.fire();
+
+                    window.performance.measure(
+                        `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-opened`,
+                        `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
+                    );
+                    const [measure] = window.performance.getEntriesByName(
+                        `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-opened`
+                    );
+
+                    sendTelemetry('vsonline/portal/ls-connection-opened', {
+                        connectionCorrelationId: this.correlationId,
+                        isFirstConnection: this.id === 0,
+                        connectionNumber: this.id,
+                        environmentType: this.environmentInfo.type,
+                        duration: measure.duration,
+                    });
+
+                    this.channel = channel;
+                }
             );
-
-            verbose(`[${this.getWebSocketIdentifier()}] Ssh channel open.`);
-            this._onOpen.fire();
-
-            window.performance.measure(
-                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-opened`,
-                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
-            );
-            const [measure] = window.performance.getEntriesByName(
-                `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-opened`
-            );
-            sendTelemetry('vsonline/portal/ls-connection-opened', {
-                connectionCorrelationId: this.correlationId,
-                isFirstConnection: this.id === 0,
-                connectionNumber: this.id,
-                environmentType: this.environmentInfo.type,
-                duration: measure.duration,
-            });
-
-            this.channel = channel;
         } catch (err) {
             error(`[${this.getWebSocketIdentifier()}] Ssh channel failed to open.`);
 

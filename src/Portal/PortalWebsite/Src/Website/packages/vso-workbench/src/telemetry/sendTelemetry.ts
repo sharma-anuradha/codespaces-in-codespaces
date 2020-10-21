@@ -65,6 +65,28 @@ interface ISubdomainMismatchProperties {
     environment: TCodespaceEnvironment;
 }
 
+export interface ITimeBlock {
+    startTime: number | null;
+    duration: number | null;
+}
+
+export interface ITelementryStartupTimes {
+    timeToJavascript: number | null;
+    timeToTerminal: number | null;
+    workbenchPageInitTime: number | null;
+    startCodespaceTime: number | null;
+    timeToVSCode: number | null;
+    getEnvironmentInfo1Time: number | null;
+    getEnvironmentInfo2Time: number | null;
+    pureConnectionTime: number | null;
+    vscodeServerStartupTime: number | null;
+    clientServerHandshake: number | null;
+    getLiveshareWorkspaceInfo: number | null;
+    vscodeTime: ITimeBlock;
+    workbenchComponentTime: ITimeBlock;
+    workbenchPageTime: ITimeBlock;
+}
+
 type SendTelemetryProps =
     | ['vsonline/workbench/resolve-external-uri', { port: number }]
     | ['vsonline/workbench/error', IVSOWorkbenchError]
@@ -76,6 +98,7 @@ type SendTelemetryProps =
     | ['vsonline/portal/ls-connection-close', IVSCodeConnectProperties]
     | ['vsonline/portal/connect-with-retry', { correlationId: string; duration: number }]
     | ['vsonline/portal/vscode-time-to-interactive', { hostedOn: string; duration: number }]
+    | ['vsonline/portal/startup-times', ITelementryStartupTimes]
     | ['vsonline/extensionload/error', Error];
 
 let isTelemetryInitialized = false;

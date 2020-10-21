@@ -23,7 +23,10 @@ import { getProductConfiguration } from './getProductConfiguration';
 import { getDefaultSettings } from './getDefaultSettings';
 import { codespaceInitializationTracker } from '../../utils/CodespaceInitializationTracker/CodespaceInitializationTracker';
 import { TunnelProvider } from '../providers/tunnelProvider';
+import { performanceAsync } from "../../react-app/components/WorkbenchPage/performanceAsyncDecorator";
 import { portForwardingManagementApi } from '../../api/portForwardingManagementApi';
+import { CodespacePerformance } from '../../utils/performance/CodespacePerformance';
+import { PerformanceEventIds } from '../../utils/performance/PerformanceEvents';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -38,7 +41,10 @@ interface IDefaultWorkbenchOptions {
 export class Workbench {
     private workbench: VSCodeWorkbench | null = null;
 
-    constructor(private readonly options: IDefaultWorkbenchOptions) {}
+    constructor(
+        protected performance: CodespacePerformance,
+        private readonly options: IDefaultWorkbenchOptions
+    ) {}
 
     public getProviders(
         environmentInfo: IEnvironment,
@@ -119,23 +125,44 @@ export class Workbench {
         };
     }
 
+    @performanceAsync('vscode version')
+    private async getVSCodeConfig() {
+        return await getVSCodeVersion();
+    }
+
+    @performanceAsync('get token')
+    private async getToken() {
+        return await this.options.getToken();
+    }
+
+    @performanceAsync('get environment info 2', PerformanceEventIds.GetEnvironmentInfo2)
+    private async getEnvironmentInfo(token: string) {
+        return await vsoAPI.getEnvironmentInfo(
+            getCurrentEnvironmentId(),
+            token
+        );
+    }
+
+    @performanceAsync('get extensions')
+    private async getExtensions() {
+        const isFirstLoad = await codespaceInitializationTracker.isFirstCodespaceLoad();
+        return await getExtensions(isFirstLoad);
+    }
+
     public connect = async () => {
         const { getToken, domElementId, liveShareEndpoint, onConnection, onError } = this.options;
 
         try {
-            const vscodeConfig = await getVSCodeVersion();
-            const token = await getToken();
+            const vscodeConfig = await this.getVSCodeConfig();
+
+            const token = await this.getToken();
             if (!token) {
                 throw new AuthenticationError('Cannot get authentication token.');
             }
 
-            const environmentInfo = await vsoAPI.getEnvironmentInfo(
-                getCurrentEnvironmentId(),
-                token
-            );
+            const environmentInfo = await this.getEnvironmentInfo(token);
+            const extensions = await this.getExtensions();
 
-            const isFirstLoad = await codespaceInitializationTracker.isFirstCodespaceLoad();
-            const extensions = await getExtensions(isFirstLoad);
             const providersFunc = this.getProviders(
                 environmentInfo,
                 vscodeConfig,
@@ -143,16 +170,19 @@ export class Workbench {
                 this.options
             );
 
-            this.workbench = new VSCodeWorkbench({
-                domElementId,
-                vscodeConfig,
-                environmentInfo,
-                extensions,
-                onConnection,
-                getProviders: providersFunc,
-                getToken,
-                liveShareEndpoint,
-            });
+            this.workbench = new VSCodeWorkbench(
+                this.performance.createGroup('vscode', PerformanceEventIds.VSCodeInitialization),
+                    {
+                    domElementId,
+                    vscodeConfig,
+                    environmentInfo,
+                    extensions,
+                    onConnection,
+                    getProviders: providersFunc,
+                    getToken,
+                    liveShareEndpoint,
+                }
+            );
 
             await Promise.all([
                 registerServiceWorker({

@@ -10,7 +10,6 @@ import {
 } from 'vso-client-core';
 
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
-import { TEnvironmentState } from '../../../interfaces/TEnvironmentState';
 import { getEnvironmentInfo } from './utils/getEnvironmentInfo';
 import { IWorkbenchStateObject } from './IWorkbenchStateObject';
 import { config } from '../../../config/config';
@@ -22,28 +21,34 @@ import { getWelcomeMessage } from '../../../utils/getWelcomeMessage';
 import { vsoAPI } from '../../../api/vsoAPI';
 import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 import { PlatformQueryParams, CONNECT_ATTEMPT_COUNT_LS_KEY } from '../../../constants';
-import { getQueryParamFlag, setQueryParamFlag } from '../../../utils/queryParamFlag';
 import { MaybeDevPanel } from './DevPanel';
 
 import { LOADING_ENVIRONMENT_STAGE } from './DevPanelHeader';
 import { assertValidSubdomain } from '../../../utils/assertValidSubdomain';
 
-import './WorkbenchPage.css';
 import { FeatureFlags, featureFlags } from '../../../config/featureFlags';
+import { getQueryParamFlag } from '../../../utils/queryParamFlag';
+import { IPerformanceProps } from '../../../interfaces/IPerformanceProps';
+import { PerformanceComponent } from './PerformanceComponent';
+import { PerformanceEventIds } from '../../../utils/performance/PerformanceEvents';
+
+import './WorkbenchPage.css';
 
 const trace = createTrace('workbench');
 
 const { SECOND_MS } = timeConstants;
 
-interface IWorkbenchPageProps {
+interface IWorkbenchPageProps extends IPerformanceProps {
     platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null;
 }
 
-export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkbenchStateObject> {
+export class WorkbenchPage extends PerformanceComponent<IWorkbenchPageProps, IWorkbenchStateObject> {
     private interval: ReturnType<typeof setInterval> | undefined;
 
-    constructor(props: any, state: TEnvironmentState) {
+    constructor(props: any, state: IWorkbenchStateObject) {
         super(props, state);
+
+        this.newPerformanceGroup(PerformanceEventIds.WorkbenchPage);
 
         this.state = {
             value: EnvironmentWorkspaceState.Unknown,
@@ -154,81 +159,110 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
 
     public async componentWillMount() {
         try {
-            this.setState({ value: EnvironmentWorkspaceState.Initializing });
+            await this.measure(
+                {
+                    id: PerformanceEventIds.WorkbenchPageInitialization,
+                    name: 'initialize'
+                },
+                async () => {
+                    this.setState({ value: EnvironmentWorkspaceState.Initializing });
 
-            trace.info(`Getting config..`);
+                    trace.info(`Getting config..`);
 
-            await config.fetch();
+                    await config.fetch();
 
-            this.logWelcomeMessage();
+                    this.logWelcomeMessage();
 
-            /**
-             * Check if we need to auto authorize to the environment.
-             */
-            const isAuthorized = !!(await authService.getPartnerInfo());
-            if ((await getQueryParamFlag(PlatformQueryParams.AutoAuthRedirect)) && !isAuthorized) {
-                /**
-                 * Since we redirect for the credentials to external partners,
-                 * if something unexpected happens, there is a potential to stuck in an infinite loop.
-                 * The logic below aimed to break such loop after sequential failed 3 attempts.
-                 */
-                const connectAttempLsValue =
-                    localStorage.getItem(CONNECT_ATTEMPT_COUNT_LS_KEY) || '';
-                const connectAttemptCount = parseInt(connectAttempLsValue, 10) || 0;
+                    /**
+                     * Check if we need to auto authorize to the environment.
+                     */
+                    const isAuthorized = !!(await authService.getPartnerInfo());
+                    if ((await getQueryParamFlag(PlatformQueryParams.AutoAuthRedirect)) && !isAuthorized) {
+                        /**
+                         * Since we redirect for the credentials to external partners,
+                         * if something unexpected happens, there is a potential to stuck in an infinite loop.
+                         * The logic below aimed to break such loop after sequential failed 3 attempts.
+                         */
+                        const connectAttempLsValue =
+                            localStorage.getItem(CONNECT_ATTEMPT_COUNT_LS_KEY) || '';
+                        const connectAttemptCount = parseInt(connectAttempLsValue, 10) || 0;
 
-                // too many attempts, bail out of the OAuth redirection infinite loop
-                if (connectAttemptCount >= 3) {
-                    return this.setState({
-                        value: EnvironmentWorkspaceState.SignedOut,
-                        message: 'Cannot connect to the Codespace.',
+                        // too many attempts, bail out of the OAuth redirection infinite loop
+                        if (connectAttemptCount >= 3) {
+                            return this.setState({
+                                value: EnvironmentWorkspaceState.SignedOut,
+                                message: 'Cannot connect to the Codespace.',
+                            });
+                        }
+
+                        // increment attempt count
+                        localStorage.setItem(CONNECT_ATTEMPT_COUNT_LS_KEY, `${connectAttemptCount + 1}`);
+
+                        return await authService.redirectToLogin();
+                    }
+                    // on successful auth, reset the count
+                    localStorage.removeItem(CONNECT_ATTEMPT_COUNT_LS_KEY);
+
+                    authService.onEvent((event) => {
+                        if (event === 'signed-out') {
+                            this.setState({ value: EnvironmentWorkspaceState.SignedOut });
+                        }
                     });
+
+                    authService.keepUserAuthenticated();
+
+                    trace.info(`Getting environment info..`);
                 }
-
-                // increment attempt count
-                localStorage.setItem(CONNECT_ATTEMPT_COUNT_LS_KEY, `${connectAttemptCount + 1}`);
-
-                return await authService.redirectToLogin();
-            }
-            // on successful auth, reset the count
-            localStorage.removeItem(CONNECT_ATTEMPT_COUNT_LS_KEY);
-
-            authService.onEvent((event) => {
-                if (event === 'signed-out') {
-                    // if the Codespace is inactive, set the flag
-                    // to prevent auto redirection to auth endoint
-                    setQueryParamFlag(PlatformQueryParams.AutoAuthRedirect, false);
-                    this.setState({ value: EnvironmentWorkspaceState.SignedOut });
-                }
-            });
-
-            authService.keepUserAuthenticated();
-
-            trace.info(`Getting environment info..`);
-
-            this.environmentInfo = await getEnvironmentInfo(
-                this.setState.bind(this),
-                this.handleAPIError
             );
-            if (!this.environmentInfo) {
-                /**
-                 * error state already handled by
-                 * the `getEnvironmentInfo` function
-                 */
-                return;
-            }
 
-            assertValidSubdomain(this.environmentInfo);
+            await this.measure(
+                {
+                    id: PerformanceEventIds.GetEnvironmentInfo1,
+                    name: 'get environment info 1'
+                },
+                async () => {
+                    this.environmentInfo = await getEnvironmentInfo(
+                        this.setState.bind(this),
+                        this.handleAPIError
+                    );
+                    if (!this.environmentInfo) {
+                        /**
+                         * error state already handled by
+                         * the `getEnvironmentInfo` function
+                         */
+                        return;
+                    }
 
-            /**
-             * Check if we need to auto start the environment.
-             */
-            const isShutdown = this.environmentInfo.state === EnvironmentStateInfo.Shutdown;
-            const isAutoStart = await getQueryParamFlag(PlatformQueryParams.AutoStart);
-            if (isAutoStart && isShutdown) {
-                return await this.startCodespace();
-            }
+                    assertValidSubdomain(this.environmentInfo);
+                }
+            );
 
-            this.setState({ value: this.environmentInfo.state });
+            await this.measure(
+                {
+                    id: PerformanceEventIds.StartCodespace,
+                    name: 'start codespace',
+                },
+                async () => {
+                    if (!this.environmentInfo) {
+                        /**
+                         * error state already handled by
+                         * the `getEnvironmentInfo` function
+                         */
+                        return;
+                    }
+
+                    /**
+                     * Check if we need to auto start the environment.
+                     */
+                    const isShutdown = this.environmentInfo.state === EnvironmentStateInfo.Shutdown;
+                    const isAutoStart = await getQueryParamFlag(PlatformQueryParams.AutoStart);
+                    if (isAutoStart && isShutdown) {
+                        return await this.startCodespace();
+                    }
+
+                    this.setState({ value: this.environmentInfo.state });
+                }
+            );
         } catch (e) {
             this.handleAPIError(e);
         }
@@ -260,7 +294,6 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
         trace.info(`render state: ${value}`);
 
         if (
-            value !== EnvironmentStateInfo.Queued &&
             value !== EnvironmentStateInfo.Starting &&
             value !== EnvironmentStateInfo.Provisioning &&
             value !== EnvironmentStateInfo.ShuttingDown &&
@@ -292,6 +325,7 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
                     environment={environment}
                 />
                 <WorkbenchPageRender
+                    performance={this.performance}
                     className='vscs-workbench-page__body'
                     environmentInfo={this.environmentInfo}
                     platformInfo={platformInfo}

@@ -2,8 +2,10 @@ import * as React from 'react';
 
 import { TEnvironment } from '../../../config/config';
 
-import './DevPanelHeader.css';
 import { DevPanelHeaderValue } from './DevPanelHeaderValue';
+import { DevPanelHeaderPerformance } from './DevPanelHeaderPerformance';
+
+import './DevPanelHeader.css';
 
 export const LOADING_ENVIRONMENT_STAGE = 'loading...';
 
@@ -92,13 +94,15 @@ export const DevPanelHeader: React.FunctionComponent<IDevPanelHeaderProps> = (
     const { environment, onClick } = props;
     const env = envToPrettyName(environment);
 
-    const codespaceEmoji = (process.env.VSCS_IN_CODESPACE === 'true')
-        ? <DevPanelHeaderEmoji emoji='🚀' title='in a Codespace' />
-        : null;
+    const codespaceEmoji =
+        process.env.VSCS_IN_CODESPACE === 'true' ? (
+            <DevPanelHeaderEmoji emoji='🚀' title='in a Codespace' />
+        ) : null;
 
     return (
         <div className='vscs-dev-panel-header vscs-dev-panel__header' onMouseUp={onClick}>
             <DevPanelHeaderEmoji emoji={envToEmoji(environment)} title={`env: ${env}`} />
+            <DevPanelHeaderPerformance />
 
             {codespaceEmoji}
 
@@ -110,3 +114,4 @@ export const DevPanelHeader: React.FunctionComponent<IDevPanelHeaderProps> = (
         </div>
     );
 };
+

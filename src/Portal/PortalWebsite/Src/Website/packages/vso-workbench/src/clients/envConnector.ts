@@ -24,6 +24,8 @@ import {
     onMessage as onServiceWorkerMessage,
 } from 'vso-service-worker-client';
 import { sendTelemetry } from '../telemetry/sendTelemetry';
+import { PerformanceEventIds, PerformanceEventNames } from '../utils/performance/PerformanceEvents';
+import { CodespacePerformance } from '../utils/performance/CodespacePerformance';
 
 export type RemoteVSCodeServerDescription = {
     readonly port: number;
@@ -302,7 +304,8 @@ export class EnvConnector {
         liveShareEndpoint: string,
         vscodeConfig: IVSCodeConfig,
         extensions: string[],
-        serviceEndpoint: string
+        serviceEndpoint: string,
+        performance: CodespacePerformance
     ): Promise<{ sessionPath: string; port: number }> {
         // if already `connecting` or `connected`, return the result
         if (this.initializeConnectionSignal && !this.initializeConnectionSignal.isRejected) {
@@ -315,35 +318,67 @@ export class EnvConnector {
             const { sessionId, sessionPath } = environmentInfo.connection;
 
             trace.info(`Live Share session id: ${sessionId}, workspace path: "${sessionPath}"`);
-            const workspaceClient = await this.connectWorkspaceClient(
-                sessionId,
-                accessToken,
-                liveShareEndpoint
+
+            const workspaceClient = await performance.measure(
+                {
+                    id: PerformanceEventIds.WorkbenchClientConnection,
+                    name: 'workspace client connection',
+                },
+                async () => {
+                    return await this.connectWorkspaceClient(
+                        sessionId,
+                        accessToken,
+                        liveShareEndpoint
+                    );
+                }
             );
 
-            const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
-                vsls.StreamManagerService
-            );
-            const vscodeServer = await this.getSharedVscodeServer(
-                workspaceClient,
-                vscodeConfig,
-                extensions,
-                environmentInfo.id,
-                serviceEndpoint
+            const [streamManagerClient, vscodeServer] = await performance.measure(
+                {
+                    id: PerformanceEventIds.VSCodeServerStartup,
+                    name: PerformanceEventNames.VSCodeServerStartup,
+                },
+                async () => {
+                    const streamManager = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
+                        vsls.StreamManagerService
+                    );
+
+                    const vscodeServer = await this.getSharedVscodeServer(
+                        workspaceClient,
+                        vscodeConfig,
+                        extensions,
+                        environmentInfo.id,
+                        serviceEndpoint
+                    );
+
+                    return [streamManager, vscodeServer];
+                }
             );
 
-            trace.info(`Creating the stream.`);
-            this.channelOpener = workspaceClient.createServerStream(
-                vscodeServer,
-                streamManagerClient
+            performance.measureSync(
+                {
+                    id: PerformanceEventIds.OpenSshChannel,
+                    name: PerformanceEventNames.OpenSshChannel,
+                },
+                () => {
+                    trace.info(`Creating the stream.`);
+                    this.channelOpener = workspaceClient.createServerStream(
+                        vscodeServer,
+                        streamManagerClient
+                    );
+
+                    const result = {
+                        sessionPath,
+                        port: vscodeServer.sourcePort,
+                    };
+
+                    if (!this.initializeConnectionSignal) {
+                        throw new Error(`No "InitializeConnectionSignal" set.`)
+                    }
+
+                    this.initializeConnectionSignal.complete(result);
+                }
             );
-
-            const result = {
-                sessionPath,
-                port: vscodeServer.sourcePort,
-            };
-
-            this.initializeConnectionSignal.complete(result);
         } catch (err) {
             trace.info(err);
 

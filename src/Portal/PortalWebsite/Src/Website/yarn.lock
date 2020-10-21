@@ -1556,6 +1556,11 @@ ansi-colors@^3.0.0, ansi-colors@^3.2.1:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/ansi-colors/-/ansi-colors-3.2.4.tgz#e3a3da4bfbae6c86a9c285625de124a234026fbf"
   integrity sha1-46PaS/uubIapwoViXeEkojQCb78=
 
+ansi-colors@^4.1.1:
+  version "4.1.1"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/ansi-colors/-/ansi-colors-4.1.1.tgz#cbb9ae256bf750af1eab344f229aa27fe94ba348"
+  integrity sha1-y7muJWv3UK8eqzRPIpqif+lLo0g=
+
 ansi-escapes@^4.2.1, ansi-escapes@^4.3.0:
   version "4.3.1"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/ansi-escapes/-/ansi-escapes-4.3.1.tgz#a5c47cc43181f1f38ffd7076837700d395522a61"

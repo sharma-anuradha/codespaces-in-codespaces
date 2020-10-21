@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { EnvironmentStateInfo, wait, IEnvironment, IPartnerInfo } from 'vso-client-core';
+import { EnvironmentStateInfo, IEnvironment, IPartnerInfo } from 'vso-client-core';
 
 import { Workbench } from '../Workbench/Workbench';
 import { TEnvironmentState } from '../../../interfaces/TEnvironmentState';
@@ -10,11 +10,13 @@ import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 import { removeDefaultSplashScreen } from './utils/removeDefaultSplashScreen';
 import { credentialsProvider } from '../../../vscode/providers/credentialsProvider/credentialsProvider';
 import { ServerlessSplashscreen } from '../ServerlessSplashscreen/ServerlessSplashscreen';
+import { PerformanceComponent } from './PerformanceComponent';
 import { featureFlags, FeatureFlags } from '../../../config/featureFlags';
 import { authService } from '../../../auth/authService';
+import { IPerformanceProps } from '../../../interfaces/IPerformanceProps';
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
 
-export interface IWorkbenchPageRenderProps {
+export interface IWorkbenchPageRenderProps extends IPerformanceProps {
     className?: string;
     environmentInfo: IEnvironment | null;
     platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null;
@@ -33,14 +35,14 @@ interface IWorkbenchPageRenderState {
 /**
  * Component to render VSCode Workbench or Splash Screen.
  */
-export class WorkbenchPageRender extends React.Component<
+export class WorkbenchPageRender extends PerformanceComponent<
     IWorkbenchPageRenderProps,
     IWorkbenchPageRenderState
 > {
     constructor(props: IWorkbenchPageRenderProps, state: IWorkbenchPageRenderState) {
         super(props, state);
 
-        var isServerlessSplashScreenShown: boolean = false;
+        let isServerlessSplashScreenShown: boolean = false;
         if (
             featureFlags.isEnabled(FeatureFlags.ServerlessEnabled) &&
             this.props.environmentInfo?.state === EnvironmentStateInfo.Provisioning
@@ -101,7 +103,13 @@ export class WorkbenchPageRender extends React.Component<
             if (window.performance.mark) {
                 window.performance.mark(telemetryMarks.timeToInteractive);
             }
-            return <Workbench onError={handleAPIError} onMount={this.onMount} />;
+            return (
+                <Workbench
+                    performance={this.performance}
+                    onError={handleAPIError}
+                    onMount={this.onMount}
+                />
+            );
         }
 
         return null;

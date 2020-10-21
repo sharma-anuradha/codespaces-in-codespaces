@@ -79,5 +79,8 @@
     "webpack-dev-server": "^3.10.3",
     "webpack-merge": "^4.2.2",
     "vs-codespaces-authorization": "^0.1.19"
+  },
+  "dependencies": {
+    "ansi-colors": "^4.1.1"
   }
 }

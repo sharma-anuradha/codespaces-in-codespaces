@@ -16,6 +16,7 @@ import { withTranslation, WithTranslation } from 'react-i18next';
 import { authService } from './services/authService';
 import './loc/i18n'
 import './app.css';
+import { initializeCodespacePerformanceInstance } from 'vso-workbench';
 
 export interface AppState {
     isMessageBarVisible: boolean;
@@ -34,6 +35,8 @@ const isSupported = isSupportedBrowser();
 const isPartiallySupported = isPartiallySupportedBrowser();
 const partiallySupportedLocalStorageKey = 'vso.suppress.partial.browsersupport.warning';
 const notSupportedLocalStorageKey = 'vso.suppress.browsersupport.warning';
+
+initializeCodespacePerformanceInstance();
 
 class AppRoot extends Component<AppProps, AppState> {
     constructor(props: AppProps) {

@@ -48,3 +48,4 @@ export { getWorkbenchDefaultLayout } from './utils/getWorkbenchDefaultLayout';
 export { ServerlessWorkbench, ServerlessWorkbenchProps, RepoType_QueryParam } from './vscode/workbenches/serverlessWorkbench';
 export { IServerlessSplashscreenProps, ServerlessSplashscreen } from './react-app/components/ServerlessSplashscreen/ServerlessSplashscreen';
 export { codespaceInitializationTracker } from './utils/CodespaceInitializationTracker/CodespaceInitializationTracker';
+export { CodespacePerformance, initializeCodespacePerformanceInstance, getMainCodespacePerformance } from './utils/performance/CodespacePerformance';
