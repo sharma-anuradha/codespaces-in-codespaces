@@ -200,7 +200,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, job.Id)
                             .FluentAddBaseValue(JobQueueLoggerConst.JobType, typeTag)
 #if DEBUG
-                            .FluentAddBaseValue(JobQueueLoggerConst.JobPayload, jobInstance.JobPayloadInfo.Payload)
+                            .FluentAddValue(JobQueueLoggerConst.JobPayload, jobInstance.JobPayloadInfo.Payload)
 #endif
                             .FluentAddValue(JobQueueLoggerConst.JobRetries, jobInstance.JobPayloadInfo.Retries)
                             .FluentAddValue(JobQueueLoggerConst.JobDequeuedDuration, nowUtc - jobInstance.DequeueTime);
