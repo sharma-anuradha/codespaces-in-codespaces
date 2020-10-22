@@ -5,12 +5,11 @@ import { CodespacePerformance } from '../../../utils/performance/CodespacePerfor
  * `performance` property set to the isntance of `CodespacePerformance` on
  * the method's class. Covenience over the `CodespacePerformance.markBlock` method.
  */
-
 export function performanceAsync(perfBlockName: string, groupId?: string | number) {
-    return function (
+    return function <T>(
         target: any,
         propertyName: string,
-        descriptor: TypedPropertyDescriptor<(...args: any[]) => any>
+        descriptor: TypedPropertyDescriptor<(...args: any[]) => Promise<T>>
     ) {
         const method = descriptor.value;
 
@@ -22,10 +21,8 @@ export function performanceAsync(perfBlockName: string, groupId?: string | numbe
                 );
             }
 
-            await perf.measure(
-                {
-                    name: perfBlockName,
-                },
+            return await perf.measure(
+                { name: perfBlockName, },
                 async () => {
                     return await method!.apply(this, [...arguments]);
                 },

@@ -1,4 +1,4 @@
-import { getCurrentEnvironmentId, IEnvironment, IVSCodeConfig } from 'vso-client-core';
+import { createTrace, getCurrentEnvironmentId, IEnvironment, IVSCodeConfig } from 'vso-client-core';
 import { registerServiceWorker } from 'vso-service-worker-client';
 import { getVSCodeVersion } from '../../utils/getVSCodeVersion';
 import { AuthenticationError } from '../../errors/AuthenticationError';
@@ -26,8 +26,8 @@ import { codespaceInitializationTracker } from '../../utils/CodespaceInitializat
 import { TunnelProvider } from '../providers/tunnelProvider';
 import { performanceAsync } from "../../react-app/components/WorkbenchPage/performanceAsyncDecorator";
 import { portForwardingManagementApi } from '../../api/portForwardingManagementApi';
-import { CodespacePerformance } from '../../utils/performance/CodespacePerformance';
 import { PerformanceEventIds } from '../../utils/performance/PerformanceEvents';
+import { CodespacePerformance } from '../../utils/performance/CodespacePerformance';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -38,6 +38,8 @@ interface IDefaultWorkbenchOptions {
     readonly enableEnvironmentPortForwarding: boolean;
     readonly portForwardingDomainTemplate: string;
 }
+
+const trace = createTrace('defaultWorkbench');
 
 export class Workbench {
     private workbench: VSCodeWorkbench | null = null;
@@ -175,16 +177,16 @@ export class Workbench {
             this.workbench = new VSCodeWorkbench(
                 this.performance.createGroup('vscode', PerformanceEventIds.VSCodeInitialization),
                     {
-                    domElementId,
-                    vscodeConfig,
-                    environmentInfo,
-                    extensions,
-                    onConnection,
-                    getProviders: providersFunc,
-                    getToken,
-                    liveShareEndpoint,
-                }
-            );
+                        domElementId,
+                        vscodeConfig,
+                        environmentInfo,
+                        extensions,
+                        onConnection,
+                        getProviders: providersFunc,
+                        getToken,
+                        liveShareEndpoint,
+                    }
+                );
 
             await Promise.all([
                 registerServiceWorker({
@@ -197,6 +199,7 @@ export class Workbench {
                 this.workbench.connect(),
             ]);
         } catch (e) {
+            trace.error(e);
             if (onError) {
                 return await onError(e);
             }

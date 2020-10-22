@@ -264,6 +264,7 @@ export class WorkbenchPage extends PerformanceComponent<IWorkbenchPageProps, IWo
                 }
             );
         } catch (e) {
+            trace.error(e);
             this.handleAPIError(e);
         }
     }
