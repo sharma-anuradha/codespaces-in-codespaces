@@ -58,6 +58,7 @@ export class VsoAPI {
             const message = 'Cannot fetch Codespace info';
 
             if (environmentInfoResponse.status === 401) {
+                await authService.signOut();
                 throw new AuthenticationError(message);
             }
 

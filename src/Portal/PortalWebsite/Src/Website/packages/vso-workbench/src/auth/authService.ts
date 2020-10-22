@@ -17,7 +17,6 @@ import {
 
 import { FatalPlatformRedirectionError } from '../errors/FatalPlatformRedirectionError';
 import { getPartnerLoginRedirectionURL } from '../utils/getPartnerLoginRedirectionURL';
-import { isValidCascadeToken } from '../utils/isValidCascadeToken';
 import { isJwtTokenWithMicrosoftEmail } from '../utils/isJwtTokenWithMicrosoftEmail';
 import { AuthenticationError } from '../errors/AuthenticationError';
 import { TAuthServiceEvent } from '../interfaces/TAuthServiceEvent';
@@ -113,10 +112,6 @@ export class AuthService {
         }
 
         this.setIsInternal(token);
-
-        if (!isValidCascadeToken(token)) {
-            return null;
-        }
 
         return token;
     };
