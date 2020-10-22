@@ -67,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
                 async (childlogger) =>
                 {
                     var scopes = ConfigurationScopeGenerator.GetScopes(context);
+                    childlogger.FluentAddValue("DefaultValue", defaultValue?.ToString());
 
                     foreach (var scope in scopes)
                     {
@@ -79,6 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
 
                             childlogger.FluentAddValue("KeyUsedForValue", key)
                                 .FluentAddValue("DefaultUsed", false)
+                                .FluentAddValue("OverrideValue", valueToReturn.ToString())
                                 .FluentAddValue("ScopeUsed", scope)
                                 .FluentAddValue("IsOverrideSameAsDefault", EqualityComparer<T>.Default.Equals(valueToReturn, defaultValue));
 
