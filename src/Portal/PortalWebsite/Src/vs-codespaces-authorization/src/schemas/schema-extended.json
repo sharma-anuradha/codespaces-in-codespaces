@@ -33,6 +33,16 @@
                 "https://foo.com/codespaces"
             ]
         },
+        "defaultWorkspacePath": {
+            "$id": "#/properties/defaultWorkspacePath",
+            "type": "string",
+            "title": "defaultWorkspacePath",
+            "description": "A `folder` or `workspace file` to open as Codespace root by default. If not defined, open an MRU(most recently used) folder. Otherwise, fallback to default folder, which is usually the repository root.",
+            "default": "/home/codespace/workspace",
+            "examples": [
+                "/home/codespace/workspace"
+            ]
+        },
         "codespaceToken": {
             "$id": "#/properties/codespaceToken",
             "type": "string",

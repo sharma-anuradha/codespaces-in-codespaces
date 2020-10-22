@@ -8,7 +8,7 @@
 
           const parseUrl = new URL(url);
 
-          if (!parseUrl.hostname.endsWith('github.dev')) {
+          if (!parseUrl.hostname.endsWith('github.localhost')) {
               return;
           }
 

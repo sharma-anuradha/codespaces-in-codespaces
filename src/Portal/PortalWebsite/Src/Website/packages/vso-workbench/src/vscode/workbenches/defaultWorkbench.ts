@@ -7,6 +7,7 @@ import { VSCodeWorkbench } from './vscodeWorkbench';
 import { EnvConnector } from '../../clients/envConnector';
 import { WorkspaceProvider } from '../providers/workspaceProvider/workspaceProvider';
 import { UrlCallbackProvider } from '../providers/userDataProvider/urlCallbackProvider';
+import { getDefaultWorkspacePath } from './getDefaultWorkspacePath';
 import { resourceUriProviderFactory } from '../providers/resourceUriProvider/resourceUriProviderFactory';
 import {
     EnvironmentsExternalUriProvider,
@@ -56,7 +57,8 @@ export class Workbench {
             const workspaceProvider = new WorkspaceProvider(
                 new URLSearchParams(location.search),
                 environmentInfo,
-                (url) => url
+                (url) => url,
+                await getDefaultWorkspacePath(),
             );
             const urlCallbackProvider = new UrlCallbackProvider();
             const resourceUriProvider = resourceUriProviderFactory(

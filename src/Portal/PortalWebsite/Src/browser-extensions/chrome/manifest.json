@@ -30,6 +30,7 @@
     "matches": [
       "*://github.com/codespaces/*",
       "*://*.github.dev/*",
+      "*://*.github.localhost/*",
       "*://auth.apps.dev.codespaces.githubusercontent.com/*",
       "*://auth.apps.ppe.codespaces.githubusercontent.com/*",
       "*://auth.apps.codespaces.githubusercontent.com/*"

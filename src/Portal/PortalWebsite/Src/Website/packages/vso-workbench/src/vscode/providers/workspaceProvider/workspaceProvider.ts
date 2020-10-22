@@ -6,6 +6,8 @@ import { parseWorkspacePayload } from '../../../utils/parseWorkspacePayload';
 import { getUriAuthority } from '../../../utils/getUriAuthority';
 import { PlatformQueryParams } from '../../../constants';
 
+type TWorkspacePathType = 'folder' | 'workspace';
+
 const isUntitledWorkspace = (path: string) => {
     return !!path.match(/Untitled\-\d+\.code\-workspace/gim);
 };
@@ -17,10 +19,28 @@ export class WorkspaceProvider implements IWorkspaceProvider {
     constructor(
         params: URLSearchParams,
         private environmentInfo: IEnvironment,
-        private getWorkspaceUrl: (url: URL) => URL
+        private getWorkspaceUrl: (url: URL) => URL,
+        private defaultWorkspacePath: string | undefined
     ) {
-        const workspace = params.get('workspace');
-        const folder = params.get('folder');
+        const codespaceInfo = this.getDefaultWorkspacePath(
+            environmentInfo.connection.sessionPath,
+            params.get('workspace'),
+            params.get('folder')
+        );
+        let folder: any;
+        let workspace: any;
+
+        const workspacePathType = codespaceInfo[0];
+        const workspacePath = codespaceInfo[1];
+
+        if (workspacePathType === 'folder') {
+            folder = workspacePath;
+        }
+
+        if (workspacePathType === 'workspace') {
+            workspace = workspacePath;
+        }
+
         const isEmpty = params.get('ew');
         const playloadString = params.get('payload');
 
@@ -28,10 +48,10 @@ export class WorkspaceProvider implements IWorkspaceProvider {
 
         if (isEmpty === 'true') {
             this.workspace = undefined;
-        } else if (workspace !== null) {
+        } else if (workspace) {
             let workspaceUri = vscode.URI.parse(workspace);
             /**
-             * If no schema present, use the remote authority one
+             * If no schema present, use the remote authority ones
              */
             if (workspaceUri.scheme === 'file') {
                 const scheme = isUntitledWorkspace(workspace) ? 'vscode-userdata' : 'vscode-remote';
@@ -50,12 +70,40 @@ export class WorkspaceProvider implements IWorkspaceProvider {
             this.workspace = { workspaceUri };
         } else {
             const folderUri = vscode.URI.from({
-                path: this.normalizeVSCodePath(folder || environmentInfo.connection.sessionPath),
+                path: this.normalizeVSCodePath(folder),
                 scheme: 'vscode-remote',
                 authority: getUriAuthority(environmentInfo),
             });
             this.workspace = { folderUri };
         }
+    }
+
+    /**
+     * Precedence given to query params, then partner info. If workspace path passed from partner info is null, then open MRU.
+     *  If the last used folder (MRU) is not available, then open default folder (sessionPath)
+     */
+    public getDefaultWorkspacePath(
+        sessionPath: string,
+        paramWorkspace: string | null,
+        paramFolder: string | null
+    ): [TWorkspacePathType, string] {
+        if (paramFolder) {
+            return ['folder', paramFolder];
+        }
+
+        if (paramWorkspace) {
+            return ['workspace', paramWorkspace];
+        }
+
+        if (this.defaultWorkspacePath) {
+            //check if partner passed in a workspace file or a folder
+            if (this.defaultWorkspacePath.includes('.code-workspace')) {
+                return ['workspace', this.defaultWorkspacePath];
+            }
+            return ['folder', this.defaultWorkspacePath];
+        }
+        //TODO --> gicherui: add option to open MRU folder
+        return ['folder', sessionPath];
     }
 
     public getApplicationUri(quality: string): URI {

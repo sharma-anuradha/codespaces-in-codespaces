@@ -25,6 +25,7 @@ export { GitHubStrategy } from './vscode/providers/credentialsProvider/strategie
 export { CrossDomainPFAuthenticator } from './auth/portForwarding/CrossDomainPFAuthenticator';
 
 export { getExtensions } from './vscode/workbenches/getExtensions';
+export { getDefaultWorkspacePath } from './vscode/workbenches/getDefaultWorkspacePath'
 
 export { AuthService } from './auth/authService';
 

@@ -128,6 +128,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             [JsonProperty("managementPortalUrl")]
             public string ManagementPortalUrl { get; set; }
 
+            [JsonProperty("defaultWorkspacePath")]
+            public string defaultWorkspacePath{ get; set; }
+
             [JsonProperty("codespaceId")]
             public string CodespaceId { get; set; }
 

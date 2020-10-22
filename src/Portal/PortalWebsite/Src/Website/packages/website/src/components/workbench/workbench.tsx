@@ -24,6 +24,7 @@ import {
     vscode,
     getVSCodeVersion,
     getExtensions,
+    getDefaultWorkspacePath,
     DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
     getWorkbenchDefaultLayout,
     codespaceInitializationTracker,
@@ -443,7 +444,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         const workspaceProvider = new WorkspaceProvider(
             this.props.params,
             environmentInfo,
-            getWorkspaceUrl
+            getWorkspaceUrl,
+            await getDefaultWorkspacePath()
         );
 
         let resolveExternalUri;

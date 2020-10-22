@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 0.1.21 (2020-10-20)
+
+### Features
+
+* Add `defaultWorkspacePath` optional property that uses a `folder` or `workspace file` to open as Codespace root by default. If not defined, open an MRU(most recently used) folder. Otherwise, fallback to default folder, which is usually the repository root.
+
 ### 0.1.18 (2020-08-03)
 
 ### Features

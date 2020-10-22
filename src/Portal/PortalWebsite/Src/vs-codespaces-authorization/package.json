@@ -1,6 +1,6 @@
 {
   "name": "vs-codespaces-authorization",
-  "version": "0.1.19",
+  "version": "0.1.21",
   "description": "VS Codespaces authorization client",
   "main": "./dist/index.js",
   "types": "./src/types/index.d.ts",

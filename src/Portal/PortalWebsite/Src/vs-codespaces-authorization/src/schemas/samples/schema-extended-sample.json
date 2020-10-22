@@ -1,6 +1,7 @@
 {
     "partnerName": "github",
     "managementPortalUrl": "https://github.com/codespaces",
+    "defaultWorkspacePath": "/home/codespace/workspace/repo-name",
     "codespaceToken": "<codespaces JWT>",
     "credentials": [{
         "expiration": 10000000000000,
