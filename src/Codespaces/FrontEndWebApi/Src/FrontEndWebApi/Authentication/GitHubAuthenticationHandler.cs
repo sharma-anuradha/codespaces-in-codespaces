@@ -170,8 +170,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             {
                 return AuthenticateResult.Fail("GitHub Token is invalid or the app it was issued to is not trusted.");
             }
-
-            bool isMicrosoftInternalUser = await gateway.IsMemberOfMicrosoftOrganisationAsync(username, logger);
            
             var delegatedIdentity = new DelegateIdentity()
             {
@@ -209,20 +207,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             // We do this, because users that we "fake", from GitHub, don't carry the same information
             // about SKU access. This makes it easier to keep the existing logic for checking SKU access.
-            if (profile != null && isMicrosoftInternalUser) 
+            // We get all SKUs that a user is authorized for and add the right profiles to their LiveShare profile
+            var userAuthorizedSkus = await gateway.GetSkusAsync(username, logger);
+
+            foreach (var sku in userAuthorizedSkus)
             {
-                if (!profile.GetProgramsItem<bool>(ProfileExtensions.VisualStudioOnlineInternalWindowsSkuUserProgram))
+                if (sku.OS.EqualsOrdinalIgnoreCase(ComputeOS.Windows.ToString()))
                 {
-                    if (profile.Programs == null)
+                    // The SKUs containing internal or staging need the InternalWindowsSkuUserProgram flag
+                    if (sku.Name.Contains("internal", StringComparison.OrdinalIgnoreCase)
+                        || sku.Name.Contains("staging", StringComparison.OrdinalIgnoreCase))
                     {
-                        profile.Programs = new Dictionary<string, object>();
+                        AddProgramToProfile(profile, ProfileExtensions.VisualStudioOnlineInternalWindowsSkuUserProgram);
                     }
 
-                    profile.Programs.AddOrSet(ProfileExtensions.VisualStudioOnlineInternalWindowsSkuUserProgram, true);
+                    AddProgramToProfile(profile, ProfileExtensions.VisualStudioOnlineWindowsSkuPreviewUserProgram);
                 }
             }
 
             return authenticationResult;
+        }
+
+        private void AddProgramToProfile(Profile profile, string program)
+        {
+            if (!profile.GetProgramsItem<bool>(program))
+            {
+                if (profile.Programs == null)
+                {
+                    profile.Programs = new Dictionary<string, object>();
+                }
+
+                profile.Programs.AddOrSet(program, true);
+            }
         }
 
         private static bool ReadClaim(

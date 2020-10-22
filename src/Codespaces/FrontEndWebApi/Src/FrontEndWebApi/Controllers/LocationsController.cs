@@ -20,7 +20,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -50,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="planManager">The plan manager.</param>
         /// <param name="planManagerSettings">The default plan settings.</param>
         /// <param name="skuUtils">skuUtils to find sku eligiblity.</param>
-        /// <param name="gitHubFixedPlansMapper">The GitHubFixedPlansMapper.</param>
+        /// <param name="gitHubApiGatewayProvider">The Provider for GitHubApiGateway.</param>
         public LocationsController(
             ICurrentLocationProvider locationProvider,
             IControlPlaneInfo controlPlaneInfo,
@@ -59,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IPlanManager planManager,
             PlanManagerSettings planManagerSettings,
             ISkuUtils skuUtils,
-            GitHubFixedPlansMapper gitHubFixedPlansMapper)
+            GitHubApiGatewayProvider gitHubApiGatewayProvider)
         {
             LocationProvider = locationProvider;
             ControlPlaneInfo = controlPlaneInfo;
@@ -68,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             PlanManager = planManager;
             PlanManagerSettings = planManagerSettings;
             SkuUtils = skuUtils;
-            GitHubFixedPlansMapper = Requires.NotNull(gitHubFixedPlansMapper, nameof(gitHubFixedPlansMapper));
+            GitHubApiGatewayProvider = gitHubApiGatewayProvider;
         }
 
         private ICurrentLocationProvider LocationProvider { get; }
@@ -85,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
         private ISkuUtils SkuUtils { get; }
 
-        private GitHubFixedPlansMapper GitHubFixedPlansMapper { get; }
+        private GitHubApiGatewayProvider GitHubApiGatewayProvider { get; }
 
         /// <summary>
         /// Get the current location and list of globally available locations.
@@ -140,6 +142,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             if (!Enum.TryParse<AzureLocation>(location, ignoreCase: true, out var azureLocation))
             {
                 return NotFound();
+            }
+
+            if (GitHubAuthenticationHandler.IsInGitHubAuthenticatedSession(Request, out _))
+            {
+                if (!GitHubApiGateway.GetGitHubUsername(User, out string username))
+                {
+                    return new ForbidResult();
+                }
+
+                var gateway = await GitHubApiGatewayProvider.NewAsync(logger);
+                if (gateway != null)
+                {
+                    var ghSkus = await gateway.GetSkusAsync(username, logger.NewChildLogger());
+
+                    return Ok(new LocationInfoResult
+                    {
+                        Skus = ghSkus,
+                        DefaultAutoSuspendDelayMinutes = PlanManagerSettings.DefaultAutoSuspendDelayMinutesOptions,
+                    });
+                }
             }
 
             IControlPlaneStampInfo owningStamp;

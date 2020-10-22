@@ -7,11 +7,13 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
@@ -159,7 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 DefaultAutoSuspendDelayMinutesOptions = DefaultAutoSuspendDelayMinutes,
             },
                 skuUtils,
-                new Middleware.GitHubFixedPlansMapper(currentLocationProviderMock, new FrontEndAppSettings()));
+                new Providers.GitHubApiGatewayProvider(new Mock<IHttpContextAccessor>().Object, currentLocationProviderMock, new Mock<IHostEnvironment>().Object, new Mock<IConfigurationReader>().Object));
 
             var httpContext = MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;

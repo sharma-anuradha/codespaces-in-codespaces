@@ -94,24 +94,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
             return user;
         }
 
-        public async Task<bool> IsMemberOfMicrosoftOrganisationAsync(
-            string username,
-            IDiagnosticsLogger logger)
-        {
-            var result = await logger.OperationScopeAsync(
-                "github_apigateway_org_membership",
-                async (logger) =>
-                {
-                    var request = NewRequest(HttpMethod.Get, $"/orgs/microsoft/members/{username}");
-                    var response = await this.httpClient.SendAsync(request);
-                    return response.StatusCode == HttpStatusCode.NoContent;
-                },
-                null,
-                true);
-
-            return result;
-        }
-
         public async Task<CloudEnvironmentResult> CreateCodespace(
             string username,
             string repoFullName,
@@ -361,6 +343,72 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Gateways
                 },
                 null,
                 swallowException: true);
+
+            return result;
+        }
+
+        public async Task<SkuInfoResult[]> GetSkusAsync(
+            string username,
+            IDiagnosticsLogger logger)
+        {
+            var result = await logger.OperationScopeAsync(
+                  "github_apigateway_get_skus",
+                  async (logger) =>
+                  {
+                      var request = NewRequest(HttpMethod.Get, $"vscs_internal/user/{username}/skus");
+                      var response = await this.httpClient.SendAsync(request);
+
+                      if (!response.IsSuccessStatusCode)
+                      {
+                          var responseText = await response.Content.ReadAsStringAsync();
+                          logger.AddErrorDetail(responseText);
+                          logger.LogError("github_getskus_failed.");
+                          return null;
+                      }
+
+                      var responseStream = await response.Content.ReadAsStreamAsync();
+                      var resultAsJson = this.jsonSerializer.Deserialize<JObject>(
+                          new JsonTextReader(new StreamReader(responseStream)));
+
+                      if (!resultAsJson.TryGetValue("skus", out var skus))
+                      {
+                          return null;
+                      }
+
+                      SkuInfoResult GetSkuInfoResult(JToken item)
+                      {
+                          if (item == null)
+                          {
+                              return null;
+                          }
+
+                          try
+                          {
+                              var name = item.Value<string>("name");
+                              var displayName = item.Value<string>("display_name");
+                              var os = item.Value<string>("operating_system");
+
+                              return new SkuInfoResult()
+                              {
+                                  DisplayName = displayName,
+                                  OS = os,
+                                  Name = name,
+                              };
+                          }
+                          catch
+                          {
+                              logger.LogError("could_not_parse_sku");
+                              return null;
+                          }
+                      }
+
+                      return skus.ToArrayIfNotAlready()
+                                               .Select(x => GetSkuInfoResult(x))
+                                               .Where(x => x != null)
+                                               .ToArray();
+                  },
+                  null,
+                  swallowException: true);
 
             return result;
         }
