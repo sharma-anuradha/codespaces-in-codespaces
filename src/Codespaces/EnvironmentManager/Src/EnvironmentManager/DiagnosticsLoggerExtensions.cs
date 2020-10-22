@@ -23,9 +23,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueWorkspaceId = "WorkspaceId";
         private const string LogValueNewWorkspaceId = "NewWorkspaceId";
         private const string LogValueComputeResourceId = "ComputeResourceId";
+        private const string LogValueComputeStatus = "ComputeStatus";
         private const string LogValueStorageResourceId = "StorageResourceId";
+        private const string LogValueStorageStatus = "StorageStatus";
         private const string LogValueArchiveStorageResourceId = "ArchiveStorageResourceId";
         private const string LogValueOSDiskResourceId = "OSDiskResourceId";
+        private const string LogValueOSDiskStatus = "OSDiakStatus";
         private const string LogValueCloudEnvironmentType = "CloudEnvironmentType";
         private const string LogValueCloudEnvironmentState = "CloudEnvironmentState";
         private const string LogValueCloudEnvironmentIsArchived = "CloudEnvironmentIsArchived";
@@ -59,8 +62,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId)
                     .AddWorkspaceId(cloudEnvironment.Connection?.WorkspaceId)
                     .AddComputeResourceId(cloudEnvironment.Compute?.ResourceId)
+                    .AddComputeResourceStatus(cloudEnvironment.Compute?.IsReady)
                     .AddOSDiskResourceId(cloudEnvironment.OSDisk?.ResourceId)
+                    .AddOSDiskResourceStatus(cloudEnvironment.OSDisk?.IsReady)
                     .AddStorageResourceId(cloudEnvironment.Storage?.ResourceId)
+                    .AddStorageResourceStatus(cloudEnvironment.Storage?.IsReady)
                     .AddAutoShutdownDelay(cloudEnvironment.AutoShutdownDelayMinutes)
                     .AddSkuName(cloudEnvironment.SkuName)
                     .AddCloudEnvironmentState(cloudEnvironment.State)
@@ -133,6 +139,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             => logger.FluentAddBaseValue(LogValueComputeResourceId, computeId?.ToString());
 
         /// <summary>
+        /// Add the environment connection compute status to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="isReady">The environment connection compute status.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddComputeResourceStatus(this IDiagnosticsLogger logger, bool? isReady)
+            => logger.FluentAddBaseValue(LogValueComputeStatus, isReady?.ToString());
+
+        /// <summary>
         /// Add the environment osdisk id to the logger.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
@@ -142,6 +157,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             => logger.FluentAddBaseValue(LogValueOSDiskResourceId, osDiskId?.ToString());
 
         /// <summary>
+        /// Add the environment connection osdisk status to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="isReady">The environment connection osdisk status.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddOSDiskResourceStatus(this IDiagnosticsLogger logger, bool? isReady)
+            => logger.FluentAddBaseValue(LogValueComputeStatus, isReady?.ToString());
+
+        /// <summary>
         /// Add the environment storage id to the logger.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
@@ -149,6 +173,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddStorageResourceId(this IDiagnosticsLogger logger, Guid? storageId)
             => logger.FluentAddBaseValue(LogValueStorageResourceId, storageId?.ToString());
+
+        /// <summary>
+        /// Add the environment connection storage status to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="isReady">The environment connection storage status.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddStorageResourceStatus(this IDiagnosticsLogger logger, bool? isReady)
+            => logger.FluentAddBaseValue(LogValueComputeStatus, isReady?.ToString());
 
         /// <summary>
         /// Add the environment archive storage id to the logger.
