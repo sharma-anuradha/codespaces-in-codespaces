@@ -141,7 +141,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
             if (resourceList.Count != 0)
             {
-                await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(record.Value.Id), resourceList, logger.NewChildLogger());
+                try
+                {
+                    await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(record.Value.Id), resourceList, logger.NewChildLogger());
+                }
+                catch (Exception ex)
+                {
+                    logger.LogException($"{LogBaseName}_failed_to_delete_environment_resources", ex);
+                }
             }
 
             // delete environment
@@ -176,8 +183,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 Created = DateTime.UtcNow,
                 Updated = DateTime.UtcNow,
                 OwnerId = string.Empty,
-                SkuName = payload.SkuName,
-                Location = payload.Location,
+                SkuName = payload.Pool.Details.SkuName,
+                Location = payload.Pool.Details.Location,
+                PoolReference = new CloudEnvironmentPoolDefinition() { Code = payload.Pool.Details.GetPoolDefinition(), },
                 QueueResourceAllocation = true,
                 IsAssigned = false,
                 IsReady = false,
@@ -483,14 +491,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             public bool IsCreated { get; set; }
 
             /// <summary>
-            /// Gets or sets the environment sku name.
+            /// Gets or sets the environment pool.
             /// </summary>
-            public string SkuName { get; set; }
-
-            /// <summary>
-            /// Gets or sets the cloud environment Azure location.
-            /// </summary>
-            public AzureLocation Location { get; set; }
+            public EnvironmentPool Pool { get; set; }
 
             /// <summary>
             /// Gets or sets the compute resource for environment.

@@ -1,4 +1,4 @@
-﻿// <copyright file="StaticEnvironmentSku.cs" company="Microsoft">
+// <copyright file="StaticEnvironmentSku.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 using System;
@@ -72,6 +72,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public int StoragePoolLevel { get; } = 0;
+
+        /// <inheritdoc/>
+        public int CodespacePoolLevel { get; } = 0;
 
         /// <inheritdoc/>
         public bool IsExternalHardware { get; } = true;

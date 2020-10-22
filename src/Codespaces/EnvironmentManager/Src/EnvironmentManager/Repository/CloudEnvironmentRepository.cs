@@ -466,7 +466,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             if (await GetRolloutStatusAsync(logger) == RolloutStatus.Phase1)
             {
                 // Note: We merge the global repository results in case the regional repository hasn't been (fully) populated by the migration yet.
-                var globalEnvironments = await GlobalRepository.GetEnvironmentsReadyForHardDeleteAsync(idShard, cutoffTime,  logger.NewChildLogger());
+                var globalEnvironments = await GlobalRepository.GetEnvironmentsReadyForHardDeleteAsync(idShard, cutoffTime, logger.NewChildLogger());
                 var regionalEnvironments = await RegionalRepository.GetEnvironmentsReadyForHardDeleteAsync(idShard, cutoffTime, logger.NewChildLogger());
 
                 return MergeCloudEnvironments(globalEnvironments, regionalEnvironments);
@@ -589,6 +589,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             {
                 return await RegionalRepository.GetEnvironmentUsingResource(resourceId, resourceType, logger.NewChildLogger());
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPoolUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            var unAssignedCount = await RegionalRepository.GetPoolUnassignedCountAsync(poolCode, logger.NewChildLogger());
+
+            if (unAssignedCount == 0 && await GetRolloutStatusAsync(logger) == RolloutStatus.Phase1)
+            {
+                // Note: We fall back to the global repository results in case the regional repository is not populated by the migration yet.
+                var globalCount = await GlobalRepository.GetPoolUnassignedCountAsync(poolCode, logger.NewChildLogger());
+
+                return globalCount;
+            }
+
+            return unAssignedCount;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>> GetPoolUnassignedAsync(string poolCode, int count, IDiagnosticsLogger logger)
+        {
+            var unAssigned = await RegionalRepository.GetPoolUnassignedAsync(poolCode, count, logger.NewChildLogger());
+
+            if (unAssigned.Count() == 0 && await GetRolloutStatusAsync(logger) == RolloutStatus.Phase1)
+            {
+                // Note: We fall back to the global repository results in case the regional repository is not populated by the migration yet.
+                var globalUnassigned = await GlobalRepository.GetPoolUnassignedAsync(poolCode, count, logger.NewChildLogger());
+
+                return globalUnassigned;
+            }
+
+            return unAssigned;
         }
 
         private async Task<RolloutStatus> GetRolloutStatusAsync(IDiagnosticsLogger logger)

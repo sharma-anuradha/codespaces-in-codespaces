@@ -433,6 +433,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public DateTime? Ready { get; set; }
 
         /// <summary>
+        /// Gets or sets the pool reference details.
+        /// </summary>
+        [JsonProperty(PropertyName = "poolReference")]
+        public CloudEnvironmentPoolDefinition PoolReference { get; set; }
+        
+        /// <summary>
         /// Indicates whether the environment is in a shutdown state.
         /// </summary>
         /// <returns>Whether it is shutdown.</returns>

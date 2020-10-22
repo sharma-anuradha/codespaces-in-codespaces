@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -375,6 +375,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             },
                             ComputePoolSize = 1,
                             StoragePoolSize = 1,
+                            CodespacePoolSize = 1,
                             ComputeImageFamily = "test-compute-image-family-linux",
                             StorageImageFamily = "test-storage-image-family-linux",
                             VmAgentImageFamily = "test-vm-agent-image-family-linux",

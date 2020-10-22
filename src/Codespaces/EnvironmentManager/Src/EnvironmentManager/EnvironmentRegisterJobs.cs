@@ -39,7 +39,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="syncRegionalEnvironmentsToGlobalTask">Sync task for cloud environments.</param>
         /// <param name="jobQueueConsumerFactory">Target Job Queue Consumer Factory.</param>
         /// <param name="watchExportBlobsTask">Target watch export blobs task.</param>
-        /// <param name="jobHandlerTargets">All the job handlers.</param>
+        /// <param name="jobHandlerTargets">All the job continuation handlers.</param>
+        /// <param name="jobHandlers">All the job handlers.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         /// <param name="jobSchedulersRegisters">List of job scheduler to register.</param>
         public EnvironmentRegisterJobs(
@@ -60,6 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IJobQueueConsumerFactory jobQueueConsumerFactory,
             IWatchExportBlobsTask watchExportBlobsTask,
             IEnumerable<IJobHandlerTarget> jobHandlerTargets,
+            IEnumerable<IJobHandler> jobHandlers,
             ITaskHelper taskHelper,
             IEnumerable<IJobSchedulerRegister> jobSchedulersRegisters)
         {
@@ -78,6 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentRegionalMigrationTask = cloudEnvironmentRegionalMigrationTask;
             SyncRegionalEnvironmentsToGlobalTask = syncRegionalEnvironmentsToGlobalTask;
             JobHandlerTargets = jobHandlerTargets;
+            JobHandlers = jobHandlers;
             JobQueueConsumerFactory = jobQueueConsumerFactory;
             WatchExportBlobsTask = watchExportBlobsTask;
             TaskHelper = taskHelper;
@@ -116,6 +119,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IJobQueueConsumerFactory JobQueueConsumerFactory { get; }
 
         private IEnumerable<IJobHandlerTarget> JobHandlerTargets { get; }
+
+        private IEnumerable<IJobHandler> JobHandlers { get; }
 
         private IWatchExportBlobsTask WatchExportBlobsTask { get; }
 
@@ -241,6 +246,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // new job continuation handlers
             JobQueueConsumerFactory.RegisterJobHandlers(JobHandlerTargets);
+            JobQueueConsumerFactory
+                .GetOrCreate(EnvironmentJobQueueConstants.GenericQueueName)
+                .RegisterJobHandlers(JobHandlers)
+                .Start(QueueMessageProducerSettings.Default);
+
             JobQueueConsumerFactory.Start(JobHandlerTargets, QueueMessageProducerSettings.Default);
 
             // register all the job schedulers

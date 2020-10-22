@@ -475,6 +475,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger.NewChildLogger());
+            
+            return items;
+        }
+
+        /// <inheritdoc />
+        public async Task<int> GetPoolUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+               @"SELECT VALUE COUNT(1)
+                FROM c
+                WHERE c.poolReference.code = @poolCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isDeleted = @isDeleted
+                    AND c.transitions.createEnvironmentResource.status != @statusFailed
+                    AND c.transitions.createEnvironmentResource.status != @statusCancelled",
+               new SqlParameterCollection
+               {
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                    new SqlParameter { Name = "@statusFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@statusCancelled", Value = OperationState.Cancelled.ToString() },
+               });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var count = items.FirstOrDefault();
+
+            return count;
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<string>> GetPoolUnassignedAsync(string poolCode, int count, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c.id
+                FROM c
+                WHERE c.poolReference.code = @poolCode
+                    AND c.isAssigned = @isAssigned
+                    AND c.isDeleted = @isDeleted
+                    AND c.transitions.createEnvironmentResource.status != @statusFailed
+                    AND c.transitions.createEnvironmentResource.status != @statusCancelled",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@count", Value = count },
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                    new SqlParameter { Name = "@statusFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@statusCancelled", Value = OperationState.Cancelled.ToString() },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<string>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
             return items;
         }
     }

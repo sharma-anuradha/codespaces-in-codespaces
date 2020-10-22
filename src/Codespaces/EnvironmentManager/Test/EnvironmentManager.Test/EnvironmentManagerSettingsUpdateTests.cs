@@ -730,6 +730,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 computeUnits,
                 5,
                 5,
+                5,
                 new ReadOnlyCollection<string>(skuTransitions.ToList()),
                 new ReadOnlyCollection<string>(skuTransitions.ToList()),
                 1);

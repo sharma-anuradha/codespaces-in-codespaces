@@ -201,6 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 computeUnits,
                 5,
                 5,
+                5,
                 new ReadOnlyCollection<string>(skuTransitions.ToList()),
                 new ReadOnlyCollection<string>(supportedFeatures.ToList()),
                 priority);
@@ -254,6 +255,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 null,
                 2.0m,
                 125.0m,
+                5,
                 5,
                 5,
                 new ReadOnlyCollection<string>(new string[0]),

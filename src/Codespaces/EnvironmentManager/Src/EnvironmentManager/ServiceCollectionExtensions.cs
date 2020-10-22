@@ -5,6 +5,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -13,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuatio
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
@@ -74,6 +76,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<ICloudEnvironmentHeartbeatRepository, DocumentDbCloudEnvironmentHeartbeatRepository>();
             services.AddSingleton<IEnvironmentStateManager, EnvironmentStateManager>();
 
+            // Environment Pool Dependencies
+            services.AddSingleton<EnvironmentPoolDefinitionStore>();
+            services.AddSingleton<IAsyncWarmup>(x => x.GetRequiredService<EnvironmentPoolDefinitionStore>());
+            services.AddSingleton<IEnvironmentPoolDefinitionStore>(x => x.GetRequiredService<EnvironmentPoolDefinitionStore>());
+
             // Continuation
             services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();
             services.AddSingleton<IContinuationTaskMessagePump, ContinuationTaskMessagePump>();
@@ -129,9 +136,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // new job handlers
             services.AddSingleton<IJobHandlerTarget, EnvironmentStateRepairJobHandler>();
+            services.AddSingleton<IJobHandler, WatchEnvironmentPoolSizeJobHandler>();
 
-            // new job paytload producer
+            // new job payload producer
             services.AddSingleton<IJobSchedulerRegister, EnvironmentStateRepairJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, WatchEnvironmentPoolJobProducer>();
+
+            // payload factories
+            services.AddSingleton<WatchEnvironmentPoolPayloadFactory>();
 
             // The environment manager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();

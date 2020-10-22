@@ -111,6 +111,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// </summary>
         public bool DefaultDynamicEnvironmentArchivalTimeEnabled { get; set; }
 
+        /// <summary>
+        /// Gets or sets the max number of environments we can delete from pool at a time.
+        /// </summary>
+        public int MaxDeleteBatchCount { get; internal set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>

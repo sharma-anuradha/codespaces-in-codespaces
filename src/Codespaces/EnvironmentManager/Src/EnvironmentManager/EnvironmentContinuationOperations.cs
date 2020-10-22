@@ -86,29 +86,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         /// <inheritdoc/>
         public async Task CreatePoolResourceAsync(
-            string skuName,
-            AzureLocation location,
+            Guid environmentId,
+            EnvironmentPool pool,
             string reason,
             IDiagnosticsLogger logger)
         {
-            var environmentId = Guid.NewGuid();
             var loggingProperties = BuildLoggingProperties(environmentId, reason);
 
             await JobQueueProducerFactory
                 .GetOrCreate(CreateEnvironmentResourceJobHandler.DefaultQueueId)
                 .AddJobContinuationAsync(
-                new CreateEnvironmentResourceJobHandler.Payload()
-                {
-                    EntityId = environmentId,
-                    SkuName = skuName,
-                    Location = location,
-                    Reason = reason,
-                    LoggerProperties = loggingProperties.CreateLoggerProperties(),
-                    CurrentState = CreateEnvironmentResourceJobHandler.JobState.AllocateResource,
-                },
-                null,
-                logger,
-                CancellationToken.None);
+                    new CreateEnvironmentResourceJobHandler.Payload()
+                    {
+                        EntityId = environmentId,
+                        Pool = pool,
+                        Reason = reason,
+                        LoggerProperties = loggingProperties.CreateLoggerProperties(),
+                        CurrentState = CreateEnvironmentResourceJobHandler.JobState.AllocateResource,
+                    },
+                    null,
+                    logger,
+                    CancellationToken.None);
         }
 
         /// <inheritdoc/>
@@ -247,6 +245,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 reason,
                 StartEnvironmentInputActionState.Update,
                 logger);
+        }
+
+        /// <inheritdoc/>
+        public Task DeletePoolResourceAsync(
+            Guid environmentId,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            // TBD : Implementation.
+            return Task.CompletedTask;
         }
 
         private IDictionary<string, string> BuildLoggingProperties(

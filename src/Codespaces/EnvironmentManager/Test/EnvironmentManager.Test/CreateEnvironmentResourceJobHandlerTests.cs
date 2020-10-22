@@ -16,6 +16,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
     {
         private const AzureLocation testLocation = AzureLocation.WestUs2;
         private const string skuName = "standardLinux";
+        private EnvironmentPool testEnvironmentPool;
+
+        public CreateEnvironmentResourceJobHandlerTests()
+        {
+            var details = new EnvironmentPoolDetails() { Location = testLocation, SkuName = skuName, };
+
+            testEnvironmentPool = new EnvironmentPool() { Id = Guid.NewGuid().ToString(), IsEnabled = true, TargetCount = 5, Details = details, };
+        }
 
         [Fact]
         public async Task CreateEnvironmentResourceJobHandler_AllStages_Succeeds()
@@ -32,11 +40,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 jobQueueProducerFactory);
 
             var envId = Guid.NewGuid();
+
             var jobInput = new CreateEnvironmentResourceJobHandler.Payload()
             {
                 EntityId = envId,
-                SkuName = skuName,
-                Location = testLocation,
+                Pool = testEnvironmentPool,
                 Reason = "WatchPoolSizeIncrease",
                 LoggerProperties = new Dictionary<string, object>(),
                 CurrentState = CreateEnvironmentResourceJobHandler.JobState.AllocateResource,
@@ -58,9 +66,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 (codespace) =>
                 {
                     Assert.NotNull(codespace);
+                    Assert.Equal(CloudEnvironmentState.Created, codespace.State);
                     Assert.Equal(skuName, codespace.SkuName);
                     Assert.Equal(testLocation, codespace.Location);
-                    Assert.Equal(CloudEnvironmentState.Created, codespace.State);
+                    Assert.NotNull(codespace.PoolReference);
+                    Assert.Equal(testEnvironmentPool.Details.GetPoolDefinition(), codespace.PoolReference.Code);
                     Assert.False(codespace.IsAssigned);
                     Assert.Null(codespace.Assigned);
                     Assert.NotNull(codespace.Compute);

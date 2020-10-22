@@ -1,4 +1,4 @@
-﻿// <copyright file="SkuConfigurationSettings.cs" company="Microsoft">
+// <copyright file="SkuConfigurationSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -33,6 +33,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public int? StoragePoolSize { get; set; }
+
+        /// <summary>
+        /// Gets or sets the pool size to be maintained, e.g., 25.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public int? CodespacePoolSize { get; set; }
 
         /// <summary>
         /// Gets or sets the compute image family.

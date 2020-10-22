@@ -86,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     computeUnits,
                     5,
                     5,
+                    5,
                     new ReadOnlyCollection<string>(new string[0]),
                     new ReadOnlyCollection<string>(new string[0]),
                     1);

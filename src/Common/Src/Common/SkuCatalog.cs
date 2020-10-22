@@ -131,6 +131,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         skuConfiguration.StoragePoolSize = defaultSkuConfiguration.StoragePoolSize;
                     }
 
+                    // Storage pool size setup
+                    if (skuConfiguration.CodespacePoolSize.GetValueOrDefault() == default)
+                    {
+                        skuConfiguration.CodespacePoolSize = defaultSkuConfiguration.CodespacePoolSize;
+                    }
+
                     // The compute image family
                     if (string.IsNullOrEmpty(skuConfiguration.ComputeImageFamily))
                     {
@@ -217,6 +223,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     cloudEnvironmentSettings.ComputeVsoUnitsPerHour,
                     enabled ? skuConfiguration.ComputePoolSize.GetValueOrDefault() : 0,
                     enabled ? skuConfiguration.StoragePoolSize.GetValueOrDefault() : 0,
+                    enabled ? skuConfiguration.CodespacePoolSize.GetValueOrDefault() : 0,
                     supportedSkuTransitions,
                     supportedFeatures,
                     priority);

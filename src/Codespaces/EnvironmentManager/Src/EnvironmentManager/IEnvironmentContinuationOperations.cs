@@ -114,14 +114,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Creates codespace for codespace hot pool.
         /// </summary>
-        /// <param name="skuName">codespace sku name.</param>
-        /// <param name="location">codespace pool location.</param>
+        /// <param name="environmentId">Codespace id.</param>
+        /// <param name="pool">Codespace pool details.</param>
         /// <param name="reason">Reason.</param>
         /// <param name="logger">Logger.</param>
-        /// <returns></returns>
+        /// <returns>Task.</returns>
         Task CreatePoolResourceAsync(
-            string skuName,
-            AzureLocation location,
+            Guid environmentId, 
+            EnvironmentPool pool, 
+            string reason, 
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Delets codespace for codespace hot pool.
+        /// </summary>
+        /// <param name="environmentId">Codespace id.</param>
+        /// <param name="reason">Reason.</param>
+        /// <param name="logger">Logger.</param>
+        /// <returns>Task.</returns>
+        Task DeletePoolResourceAsync(
+            Guid environmentId,
             string reason,
             IDiagnosticsLogger logger);
     }

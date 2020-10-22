@@ -103,5 +103,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Re-syncbroken Global environment records with their regional environment records.
         /// </summary>
         public const string SyncRegionalEnvironmentsToGlobalTask = "cloud_environment_resync_regional_to_global_task";
+
+        /// <summary>
+        /// Watch codespace pool size.
+        /// </summary>
+        public const string WatchEnvironmentPoolSizeTask = "watch_codespace_pool_size_Task";
+
+        /// <summary>
+        /// Watch Pool Producer Task.
+        /// </summary>
+        public const string WatchPoolProducerTask = "watch_pool_producer_task";
     }
 }

@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             EnvironmentRepository = Requires.NotNull(environmentRepository, nameof(environmentRepository));
             EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
             EnvironmentDeleteAction = Requires.NotNull(environmentDeleteAction, nameof(environmentDeleteAction));
-            EnvironmentFailAction = Requires.NotNull(environmentFailAction, nameof(EnvironmentFailAction));
+            EnvironmentFailAction = Requires.NotNull(environmentFailAction, nameof(environmentFailAction));
             SuperuserIdentity = Requires.NotNull(superuserIdentity, nameof(superuserIdentity));
             CurrentIdentityProvider = Requires.NotNull(currentIdentityProvider, nameof(currentIdentityProvider));
         }

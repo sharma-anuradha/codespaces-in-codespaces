@@ -124,6 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 0.0m,
                 5,
                 5,
+                5,
                 new ReadOnlyCollection<string>(new string[0]),
                 new ReadOnlyCollection<string>(new string[0]),
                 1);
@@ -178,6 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 0.0m,
                 5,
                 5,
+                5,
                 new ReadOnlyCollection<string>(new string[0]),
                 new ReadOnlyCollection<string>(new string[0]),
                 1);
@@ -230,6 +232,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 null,
                 0.0m,
                 0.0m,
+                5,
                 5,
                 5,
                 new ReadOnlyCollection<string>(new string[0]),

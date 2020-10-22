@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentSku.cs" company="Microsoft">
+// <copyright file="CloudEnvironmentSku.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -61,6 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             decimal computeVsoUnitsPerHour,
             int computePoolLevel,
             int storagePoolLevel,
+            int codespacePoolLevel,
             IReadOnlyCollection<string> supportedSkuTransitions,
             IReadOnlyCollection<string> supportedFeatureFlags,
             int priority)
@@ -107,6 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ComputeVsoUnitsPerHour = computeVsoUnitsPerHour;
             ComputePoolLevel = computePoolLevel;
             StoragePoolLevel = storagePoolLevel;
+            CodespacePoolLevel = codespacePoolLevel;
             SupportedSkuTransitions = supportedSkuTransitions;
             SupportedFeatureFlags = supportedFeatureFlags;
             Priority = priority;
@@ -175,6 +177,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public int StoragePoolLevel { get; }
+
+        /// <inheritdoc/>
+        public int CodespacePoolLevel { get; }
 
         /// <inheritdoc/>
         public IEnumerable<string> SupportedSkuTransitions { get; }

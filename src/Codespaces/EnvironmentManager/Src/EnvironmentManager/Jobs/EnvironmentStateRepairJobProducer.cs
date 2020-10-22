@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
-            JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
+            JobSchedulerFeatureFlags = Requires.NotNull(jobSchedulerFeatureFlags, nameof(jobSchedulerFeatureFlags));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }

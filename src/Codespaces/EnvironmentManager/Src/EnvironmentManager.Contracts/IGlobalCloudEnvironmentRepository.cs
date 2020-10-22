@@ -139,5 +139,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">Target logger.</param>
         /// <returns>The number of active jobs.</returns>
         Task<IEnumerable<CloudEnvironment>> GetEnvironmentsNeedRepairAsync(DateTime lastUpdatedDate, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the count of unassigned environments for pool.
+        /// </summary>
+        /// <param name="poolCode">pool definition code.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>result.</returns>
+        Task<int> GetPoolUnassignedCountAsync(string poolCode, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the list of unassigned environment Ids for pool.
+        /// </summary>
+        /// <param name="poolCode">pool definition code.</param>
+        /// <param name="count">batch size for result.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>result.</returns>
+        Task<IEnumerable<string>> GetPoolUnassignedAsync(string poolCode, int count, IDiagnosticsLogger logger);
     }
 }
