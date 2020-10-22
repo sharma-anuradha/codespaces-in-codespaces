@@ -133,9 +133,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             taskCopyCommand.Add("echo ----- COPY DOWN BLOB -----");
             taskCopyCommand.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{taskInput.SrcFileShareUriWithSas}' '{localTargetSrc}' --block-size-mb 100");
 
-            // Conduct safty check post copy
-            taskCopyCommand.Add("echo ----- SAFTY CHECKS -----");
-            taskCopyCommand.Add($"e2fsck -fy {localTargetSrc}");
+            // Conduct safety check post copy
+            taskCopyCommand.Add("echo ----- SAFETY CHECKS -----");
+            taskCopyCommand.Add($"e2fsck -fy {localTargetSrc} || test $? -eq 1 ");
 
             // Resize the share down
             taskCopyCommand.Add("echo ----- RESIZE -----");
