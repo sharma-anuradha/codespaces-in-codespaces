@@ -73,7 +73,7 @@ export class CodespacePerformance {
      * in between. see `blocks.markBlock` method note for man example.
      */
     public markBlockEnd = (blockOptions: IPerformanceBlock) => {
-        this.blocks.markBlockStart(blockOptions);
+        this.blocks.markBlockEnd(blockOptions);
 
         return this;
     };
