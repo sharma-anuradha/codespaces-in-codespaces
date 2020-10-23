@@ -1,9 +1,13 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Web;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Net.Http.Headers;
 using SmartFormat;
+using UAParser;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 {
@@ -17,11 +21,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             default-src 'none';
             base-uri 'self';
             manifest-src 'self';
-            prefetch-src
-                'self'
-                https://vscodeweb.azureedge.net/insider/
-                https://vscodeweb.azureedge.net/stable/
-            ;
             script-src
                 'self'
                 'unsafe-eval'
@@ -71,7 +70,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 https://vscodeweb.azureedge.net/insider/
                 https://vscodeweb.azureedge.net/stable/
             ;
-            worker-src
+            {WorkerSrcOrClildSrc}
                 {ServiceWorkerEndpoint}
                 blob:
             ;
@@ -80,12 +79,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         public static Tuple<string, WorkbenchCspDynamicAttributes> GetCsp(
             AppSettings appSettings,
             IHostEnvironment hostEnvironment,
-            string requestUrl
+            HttpRequest request
             )
         {
             // interpolate the CSP string placeholders
             var relayEndpoints = GetLiveShareRelayEndpoints(hostEnvironment);
             var inlineJavaScriptNonce = RuntimeUtils.GetNonceBase64();
+            var requestUrl = HttpUtils.GetAbsoluteUri(request);
 
             var attributes = new WorkbenchCspDynamicAttributes()
                 {
@@ -97,6 +97,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                     PartnerFaviconsEndpoint = GetPartnerFaviconsEndpoint(requestUrl),
                     ServiceWorkerEndpoint = GetServiceWorkerEndpoint(requestUrl),
                     PartnerPortForwardingEndpoint = GetPartnerPortForwardingManagementEndpoint(requestUrl, appSettings),
+                    WorkerSrcOrClildSrc = GetWorkerSrcOrChildSrc(request),
                 };
 
             var csp = Smart.Format(GetCspString(), attributes);
@@ -104,6 +105,29 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 csp,
                 attributes
             );
+        }
+
+        private static string GetWorkerSrcOrChildSrc(HttpRequest request)
+        {
+            if (request.Headers.ContainsKey(HeaderNames.UserAgent))
+            {
+                try
+                {
+                    var userAgent = request.Headers[HeaderNames.UserAgent];
+                    var ua = Parser.GetDefault().Parse(Convert.ToString(userAgent[0]));
+                    if (ua.UA.Family.ToLower().Contains("safari"))
+                    {
+                        // Safari does not support worker-src
+                        return "child-src";
+                    }
+                }
+                catch
+                {
+                    // ignore any exceptions and return default
+                }
+            }
+
+            return "worker-src";
         }
 
         private static string GetServiceWorkerEndpoint(string requestUrl)

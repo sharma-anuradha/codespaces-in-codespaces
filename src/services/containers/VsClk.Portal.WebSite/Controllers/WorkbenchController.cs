@@ -48,7 +48,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var csp = WorkbenchCSP.GetCsp(
                 AppSettings,
                 HostEnvironment,
-                HttpUtils.GetAbsoluteUri(HttpContext.Request)
+                HttpContext.Request
             );
 
             HttpContext.Response.Headers.Add("Content-Security-Policy", csp.Item1);
