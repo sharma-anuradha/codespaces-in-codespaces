@@ -15,7 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
 {
     public class EnvironmentStateRepairJobHandler : JobHandlerPayloadBase<EnvironmentStateRepairJobProducer.EnvironmentStateRepairPayload>, IJobHandlerTarget
     {
@@ -48,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
         public IJobHandler JobHandler => this;
 
-        public string QueueId => EnvironmentJobQueueConstants.EnvironmentStateRepairJob;
+        public string QueueId => EnvironmentJobQueueConstants.GenericQueueName;
 
         public AzureLocation? Location => null;
 
@@ -72,85 +72,84 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                {
                    var environment = await EnvironmentRepository.GetAsync(payload.EnvironmentId, childLogger.NewChildLogger());
 
-                   if (environment == null)
+                   if (environment == default)
                    {
                        childLogger.FluentAddValue("ErrorReason", "EnvironmentRecordNotFound");
                        return;
                    }
 
                    childLogger.AddEnvironmentId(environment.Id)
-                        .FluentAddBaseValue("EnvironmentCurrentState", environment.State);
+                        .FluentAddValue("EnvironmentCurrentState", environment.State);
+
+                   if (environment.Type == EnvironmentType.StaticEnvironment)
+                   {
+                       // no clean up is performed for static environments
+                       childLogger.AddValue("IsStaticEnvironment", "true");
+                       return;
+                   }
 
                    if (environment.State == payload.CurrentState)
                    {
-                       // the cleanup actions require the super user identity
-                       using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
+                       // the nonstatic environment is still in the wrong state, need clean up
+                       var result = await HandleCleanUpAsync(environment, childLogger.NewChildLogger());
+                       if (result != null)
                        {
-                           // the environment is still in the wrong state, need clean up
-                           await HandleCleanUpAsync(environment, childLogger.NewChildLogger());
-                           childLogger.FluentAddBaseValue("EnvironmentStateAfterRepair", environment.State);
+                           childLogger.FluentAddValue("EnvironmentStateAfterRepair", result.State);
                        }
                    }
                },
                swallowException: true);
         }
 
-        private async Task HandleCleanUpAsync(CloudEnvironment environment, IDiagnosticsLogger logger)
+        private async Task<CloudEnvironment> HandleCleanUpAsync(CloudEnvironment environment, IDiagnosticsLogger logger)
         {
-            if (environment.Type == EnvironmentType.StaticEnvironment)
+            var result = (CloudEnvironment)null;
+
+            // the cleanup actions require the super user identity
+            using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
             {
-                // no clean up is performed for static environments
-                return;
-            }
+                switch (environment.State)
+                {
+                    case CloudEnvironmentState.Unavailable:
+                    case CloudEnvironmentState.Starting:
+                    case CloudEnvironmentState.ShuttingDown:
+                        // Unavailable, Starting, ShuttingDown -> Suspend
+                        result = await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger);
+                        return result;
 
-            switch (environment.State)
-            {
-                case CloudEnvironmentState.Unavailable:
-                    // Unavailable -> Suspend
-                    await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger);
-                    return;
+                    case CloudEnvironmentState.Provisioning:
+                        // Provisioning -> Fail environment
+                        result = await EnvironmentFailAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentRepairReason, logger);
+                        return result;
 
-                case CloudEnvironmentState.Starting:
-                    // Starting -> Suspend
-                    await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger);
-                    return;
+                    case CloudEnvironmentState.Queued:
 
-                case CloudEnvironmentState.ShuttingDown:
-                    // ShuttingDown -> Suspend
-                    await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger);
-                    return;
+                        if (string.Equals(environment.LastStateUpdateTrigger, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Stay in Queued state when creating new environment -> Fail environment
+                            result = await EnvironmentFailAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentRepairReason, logger);
+                        }
+                        else
+                        {
+                            // Otherwise -> Suspend environment
+                            result = await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger);
+                        }
 
-                case CloudEnvironmentState.Provisioning:
-                    // Provisioning -> Fail environment
-                    await EnvironmentFailAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentRepairReason, logger);
-                    return;
+                        return result;
 
-                case CloudEnvironmentState.Queued:
-                   
-                    if (environment.LastStateUpdateTrigger.Equals(CloudEnvironmentStateUpdateTriggers.CreateEnvironment, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Stay in Queued state when creating new environment -> Fail environment
-                        await EnvironmentFailAction.RunAsync(Guid.Parse(environment.Id), EnvironmentMonitorConstants.EnvironmentRepairReason, logger);
-                    }
-                    else
-                    {
-                        // Otherwise -> Suspend environment
-                        await EnvironmentSuspendAction.RunAsync(Guid.Parse(environment.Id), false, logger);
-                    }
-                    
-                    return;
+                    case CloudEnvironmentState.Failed:
+                        // Failed -> Delete
+                        if (!environment.IsDeleted)
+                        {
+                            var deleteResult = await EnvironmentDeleteAction.RunAsync(Guid.Parse(environment.Id), logger);
+                            logger.AddValue("FailedEnvironmentDeleteSucceed", deleteResult.ToString());
+                        }
 
-                case CloudEnvironmentState.Failed:
-                    // Failed -> Delete
-                    if (!environment.IsDeleted)
-                    {
-                        await EnvironmentDeleteAction.RunAsync(Guid.Parse(environment.Id), logger);
-                    }
+                        return result;
 
-                    return;
-
-                default:
-                    return;
+                    default:
+                        return result;
+                }
             }
         }
     }

@@ -471,7 +471,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 Mock.Of<IResourceStartManager>(),
                 getAction,
                 listAction,
-                Mock.Of<IEnvironmentUpdateStatusAction>(),
                 Mock.Of<IEnvironmentCreateAction>(),
                 Mock.Of<IEnvironmentDeleteRestoreAction>(),
                 Mock.Of<IEnvironmentIntializeResumeAction>(),

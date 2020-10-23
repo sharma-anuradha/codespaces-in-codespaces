@@ -12,5 +12,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
     {
         // WatchPool jobs run every minute ("* * * * *") with 1 minute lease
         public static readonly (string CronExpression, TimeSpan Interval) WatchPoolJobSchedule = ("* * * * *", TimeSpan.FromMinutes(1));
+
+        // EnvironmentStateRepair jobs run every day at 00:00 ("0 0 * * *") with 1 day lease
+        public static readonly (string CronExpression, TimeSpan Interval) EnvironmentStateRepairJobSchedule = ("0 0 * * *", TimeSpan.FromDays(1));
     }
 }

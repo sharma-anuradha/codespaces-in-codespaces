@@ -12,7 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
 {
     public class EnvironmentStateRepairJobProducer : IJobSchedulerRegister, IJobSchedulePayloadFactory
     {
@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
         public const string JobName = "environment_state_repair_job";
 
-        public const string QueueName = EnvironmentJobQueueConstants.EnvironmentStateRepairJob;
+        public const string QueueName = EnvironmentJobQueueConstants.GenericQueueName;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentStateRepairJobProducer"/> class.
@@ -38,8 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
         private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
-        // Run once a day
-        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => ("0 0 * * *", TimeSpan.FromDays(1));
+        private (string CronExpression, TimeSpan Interval) ScheduleTimeInterval => JobPayloadRegisterSchedule.EnvironmentStateRepairJobSchedule;
 
         public async Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadsCreatedDelegateAsync onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
@@ -50,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     var lastUpdatedDate = DateTime.UtcNow.AddDays(-1);
                     var cloudEnvironmentsToRepair = await CloudEnvironmentRepository.GetEnvironmentsNeedRepairAsync(lastUpdatedDate, innerLogger);
 
-                    logger.FluentAddValue("EnvironmentNeedRepairFound", cloudEnvironmentsToRepair.Count());
+                    innerLogger.FluentAddValue("EnvironmentNeedRepairFound", cloudEnvironmentsToRepair.Count());
 
                     await onCreated.AddAllPayloadsAsync(cloudEnvironmentsToRepair, (environment) =>
                     {

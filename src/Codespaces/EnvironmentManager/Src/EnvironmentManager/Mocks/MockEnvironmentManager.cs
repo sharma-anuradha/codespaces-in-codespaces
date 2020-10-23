@@ -105,12 +105,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironment> UpdateStatusAsync(Guid cloudEnvironmentId, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
         public Task<IEnumerable<CloudEnvironment>> ListBySubscriptionAsync(Subscription subscription, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();

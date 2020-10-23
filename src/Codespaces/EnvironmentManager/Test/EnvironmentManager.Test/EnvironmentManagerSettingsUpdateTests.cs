@@ -623,7 +623,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var resourceStartManager = new Mock<IResourceStartManager>().Object;
 
             var environmentGetAction = new Mock<IEnvironmentGetAction>().Object;
-            var environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
             var environmentCreateAction = new Mock<IEnvironmentCreateAction>().Object;
             var environmentDeleteRestoreAction = new Mock<IEnvironmentDeleteRestoreAction>().Object;
             var environmentListAction = new EnvironmentListAction(
@@ -658,7 +657,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 resourceStartManager,
                 environmentGetAction,
                 environmentListAction,
-                environmentUpdateStatusAction,
                 environmentCreateAction,
                 environmentDeleteRestoreAction,
                 environmentIntializeResumeAction,

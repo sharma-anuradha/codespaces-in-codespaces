@@ -50,22 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Update Environment Status.
-        /// </summary>
-        /// <param name="cloudEnvironmentId">Cloud environment id.</param>
-        /// <param name="newState">New state, if the state needs to be updated.</param>
-        /// <param name="trigger">The trigger for the state change.</param>
-        /// <param name="reason">Reason for state change, if the state needs to be updated.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>A task whose result is the updated <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> UpdateStatusAsync(
-            Guid cloudEnvironmentId,
-            CloudEnvironmentState newState,
-            string trigger,
-            string reason,
-            IDiagnosticsLogger logger);
-
-        /// <summary>
         /// Update Environment.
         /// </summary>
         /// <param name="cloudEnvironment">Cloud Environemnt that needs to be updated.</param>

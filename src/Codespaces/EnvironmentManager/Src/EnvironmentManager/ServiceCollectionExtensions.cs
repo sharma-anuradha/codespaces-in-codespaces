@@ -155,7 +155,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // The environment manager actions
             services.AddSingleton<IEnvironmentCreateAction, EnvironmentCreateAction>();
             services.AddSingleton<IEnvironmentGetAction, EnvironmentGetAction>();
-            services.AddSingleton<IEnvironmentUpdateStatusAction, EnvironmentUpdateStatusAction>();
             services.AddSingleton<IEnvironmentListAction, EnvironmentListAction>();
             services.AddSingleton<IEnvironmentHardDeleteAction, EnvironmentHardDeleteAction>();
             services.AddSingleton<IEnvironmentDeleteRestoreAction, EnvironmentDeleteRestoreAction>();

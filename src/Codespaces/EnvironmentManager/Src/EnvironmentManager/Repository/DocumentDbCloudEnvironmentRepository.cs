@@ -462,7 +462,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 WHERE
                     (NOT c.isDeleted or NOT IS_DEFINED(c.isDeleted))
                     AND c.state in (@queuedState, @provisioningState, @shuttingDownState, @startingState, @unavailableState, @failedState)
-                    AND c.lastStateUpdated < @date",
+                    AND c.lastStateUpdated < @date
+                    AND (((
+                        IS_DEFINED(c.controlPlaneLocation) = false
+                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                        OR c.controlPlaneLocation = @controlPlaneLocation)",
                 new SqlParameterCollection
                 {
                     new SqlParameter { Name = "@queuedState", Value = CloudEnvironmentState.Queued.ToString() },
@@ -472,6 +476,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@unavailableState", Value = CloudEnvironmentState.Unavailable.ToString() },
                     new SqlParameter { Name = "@failedState", Value = CloudEnvironmentState.Failed.ToString() },
                     new SqlParameter { Name = "@date", Value = lastUpdatedDate },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger.NewChildLogger());

@@ -41,7 +41,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="resourceStartManager">The resource start manager.</param>
         /// <param name="environmentGetAction">Target environment get action.</param>
         /// <param name="environmentListAction">Target environment listaction.</param>
-        /// <param name="environmentUpdateStatusAction">Target environment update status action.</param>
         /// <param name="environmentCreateAction">Target environment create action.</param>
         /// <param name="environmentDeleteRestoreAction">Target environment restore action.</param>
         /// <param name="environmentIntializeResumeAction">Target environment resume action.</param>
@@ -65,7 +64,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IResourceStartManager resourceStartManager,
             IEnvironmentGetAction environmentGetAction,
             IEnvironmentListAction environmentListAction,
-            IEnvironmentUpdateStatusAction environmentUpdateStatusAction,
             IEnvironmentCreateAction environmentCreateAction,
             IEnvironmentDeleteRestoreAction environmentDeleteRestoreAction,
             IEnvironmentIntializeResumeAction environmentIntializeResumeAction,
@@ -89,7 +87,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ResourceStartManager = Requires.NotNull(resourceStartManager, nameof(resourceStartManager));
             EnvironmentGetAction = Requires.NotNull(environmentGetAction, nameof(environmentGetAction));
             EnvironmentListAction = Requires.NotNull(environmentListAction, nameof(environmentListAction));
-            EnvironmentUpdateStatusAction = Requires.NotNull(environmentUpdateStatusAction, nameof(environmentUpdateStatusAction));
             EnvironmentCreateAction = Requires.NotNull(environmentCreateAction, nameof(environmentCreateAction));
             EnvironmentDeleteRestoreAction = Requires.NotNull(environmentDeleteRestoreAction, nameof(environmentDeleteRestoreAction));
             EnvironmentFinalizeResumeAction = Requires.NotNull(environmentFinalizeResumeAction, nameof(environmentFinalizeResumeAction));
@@ -124,8 +121,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IEnvironmentGetAction EnvironmentGetAction { get; }
 
         private IEnvironmentListAction EnvironmentListAction { get; }
-
-        private IEnvironmentUpdateStatusAction EnvironmentUpdateStatusAction { get; }
 
         private IEnvironmentCreateAction EnvironmentCreateAction { get; }
 
@@ -167,17 +162,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             return await EnvironmentListAction.RunAsync(planId, location, name, identity: null, userIdSet, environmentListType, logger);
-        }
-
-        /// <inheritdoc/>
-        public Task<CloudEnvironment> UpdateStatusAsync(
-            Guid cloudEnvironmentId,
-            CloudEnvironmentState newState,
-            string trigger,
-            string reason,
-            IDiagnosticsLogger logger)
-        {
-            return EnvironmentUpdateStatusAction.RunAsync(cloudEnvironmentId, newState, trigger, reason, logger);
         }
 
         /// <inheritdoc/>

@@ -9,8 +9,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
 {
     public static class EnvironmentJobQueueConstants
     {
-        public const string EnvironmentStateRepairJob = "jobhandler-environment-state-repair-job";
-
         public const string GenericQueueName = "generic-environment-job";
     }
 }

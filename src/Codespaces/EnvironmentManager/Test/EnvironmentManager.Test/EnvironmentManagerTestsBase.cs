@@ -48,7 +48,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IServiceProvider serviceProvider;
         public readonly EnvironmentManager environmentManager;
         private readonly IResourceStartManager resourceStartManager;
-        private readonly IEnvironmentUpdateStatusAction environmentUpdateStatusAction;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
@@ -175,7 +174,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.environmentAccessManager = new Mock<IEnvironmentAccessManager>().Object;
             this.environmentSubscriptionManager = new EnvironmentSubscriptionManager(this.environmentRepository, skuCatalog);
 
-            this.environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
             this.environmentArchivalTimeCalculator = new Mock<IEnvironmentArchivalTimeCalculator>().Object;
 
             var config = new MapperConfiguration(cfg =>
@@ -443,7 +441,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.resourceStartManager,
                 environmentGetAction,
                 environmentListAction,
-                this.environmentUpdateStatusAction,
                 environmentCreateAction,
                 environmentDeleteRestoreAction,
                 environmentIntializeResumeAction,
