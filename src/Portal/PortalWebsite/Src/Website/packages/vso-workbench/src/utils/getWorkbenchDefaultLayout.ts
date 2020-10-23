@@ -24,7 +24,7 @@ const getViews = (environmentInfo: IEnvironment) => {
     if (isGitHubPRUrl(githubUrl)) {
         views.push({ id: 'workbench.panel.comments' }, { id: 'prStatus:github' });
     } else {
-        views.push({ id: 'workbench.panel.terminal' });
+        views.push({ id: 'terminal' });
     }
 
     return views;
