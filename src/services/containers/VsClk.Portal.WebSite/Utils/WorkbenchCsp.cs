@@ -25,22 +25,16 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 'self'
                 'unsafe-eval'
                 'nonce-{InlineJavaScriptNonce}'
-                https://vscodeweb.azureedge.net/insider/
-                https://vscodeweb.azureedge.net/stable/
             ;
             style-src
                 'self'
                 'unsafe-inline'
-                https://vscodeweb.azureedge.net/insider/
-                https://vscodeweb.azureedge.net/stable/
             ;
             img-src
                 'self'
                 data:
                 https://*.gallerycdn.vsassets.io
                 {PartnerFaviconsEndpoint}
-                https://vscodeweb.azureedge.net/insider/
-                https://vscodeweb.azureedge.net/stable/
             ;
             connect-src
                 'self'
@@ -56,22 +50,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
                 https://marketplace.visualstudio.com/_apis/public/gallery/
                 https://az764295.vo.msecnd.net/experiments/vscode-experiments.json
                 https://vscodeexperiments.azureedge.net/experiments/vscode-experiments.json
-                https://vscodeweb.azureedge.net/insider/
-                https://vscodeweb.azureedge.net/stable/
                 https://default.exp-tas.com/vscode/ab
             ;
-            font-src
-                'self'
-                https://vscodeweb.azureedge.net/insider/
-                https://vscodeweb.azureedge.net/stable/
-            ;
-            frame-src
-                https://*.vscode-webview-test.com
-                https://vscodeweb.azureedge.net/insider/
-                https://vscodeweb.azureedge.net/stable/
-            ;
+            font-src 'self';
+            frame-src https://*.vscode-webview-test.com;
             {WorkerSrcOrClildSrc}
-                {ServiceWorkerEndpoint}
+                'self'
                 blob:
             ;
         ";
