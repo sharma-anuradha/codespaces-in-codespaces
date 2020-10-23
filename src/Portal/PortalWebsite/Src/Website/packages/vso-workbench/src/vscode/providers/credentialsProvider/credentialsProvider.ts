@@ -10,6 +10,7 @@ import { LiveShareGithubAuthStrategy } from './strategies/CascadeAuthStrategy';
 import { GitHubStrategy } from './strategies/GitHubStrategy';
 import { NativeVSCodeProvidersStrategy } from './strategies/NativeVSCodeProvidersStrategy';
 import { SettingsSyncStrategy } from './strategies/SettingsSyncStrategy';
+import { NewNativeVSCodeProvidersStrategy } from './strategies/NewNativeVSCodeProvidersStrategy';
 
 const trace = createTrace('credentials-provider:info');
 
@@ -127,6 +128,13 @@ export const credentialsProvider = new CredentialsProvider([
     /**
      * Used to add the default authentication sessions used by the Native VSCode
      * authentication providers, these data is coming from partner info payload.
+     */
+    new NewNativeVSCodeProvidersStrategy(),
+    /**
+     * Used to add the default authentication sessions used by the Native VSCode
+     * authentication providers, these data is coming from partner info payload.
+     * !! Can be removed after VSCode releases 1.51.x to stable.
+     * https://github.com/microsoft/vssaas-planning/issues/987
      */
     new NativeVSCodeProvidersStrategy(),
 ]);

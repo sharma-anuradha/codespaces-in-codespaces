@@ -10,10 +10,11 @@ import { featureFlags, FeatureFlags } from '../../../../../src/config/featureFla
 
 /**
  * The auth strategy that handles the authentication sessions used by
- * the Native VSCode Authentication providers.
+ * the old Native VSCode Authentication providers.
+ * (Will be removed later and fully replaced by NewNativeVSCodeProvidersStrategy when VSCode Stable is updated)
  */
 export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
-    private getSessions = (
+    protected getSessions = (
         sessions: VSCodeDefaultAuthSession[],
         type: TSupportedNativeVSCodeAuthProviders
     ): VSCodeDefaultAuthSession[] => {
@@ -24,11 +25,11 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
         return result;
     };
 
-    private isService = (service:string, serviceName: TSupportedNativeVSCodeAuthProviders) => {
+    protected isService = (service: string, serviceName: TSupportedNativeVSCodeAuthProviders) => {
         return service === `${getVSCodeScheme()}-${serviceName}.login`;
     };
 
-    private getDefaultSession = async (): Promise<VSCodeDefaultAuthSession[] | null> => {
+    protected getDefaultSession = async (): Promise<VSCodeDefaultAuthSession[] | null> => {
         const info = await authService.getPartnerInfo();
         if (!info) {
             throw new Error('Cannot get partner info.');
@@ -48,9 +49,13 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
         return defaultAuthSessions;
     };
 
+    protected isValidAccountKey(account: string): boolean {
+        return account === 'account';
+    }
+
     public async canHandleService(service: string, account: string) {
         // all native providers use `account` for the account argument
-        if (account !== 'account') {
+        if (!this.isValidAccountKey(account)) {
             return false;
         }
 
@@ -75,6 +80,10 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
     }
 
     public async getToken(service: string, account: string): Promise<string | null> {
+        if (!this.isValidAccountKey(account)) {
+            return null;
+        }
+
         const sessions = await this.getDefaultSession();
         if (!sessions) {
             return null;
@@ -84,7 +93,7 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
             const ghTokens = this.getSessions(sessions, 'github');
 
             // Add session that is required for github-browser extension
-            if (await featureFlags.isEnabled(FeatureFlags.ServerlessEnabled)) {
+            if (ghTokens.length && await featureFlags.isEnabled(FeatureFlags.ServerlessEnabled)) {
                 const githubSessionRepo: VSCodeDefaultAuthSession = {
                     id: DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID,
                     accessToken: ghTokens[0].accessToken,
