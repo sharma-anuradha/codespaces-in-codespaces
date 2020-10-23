@@ -17,11 +17,10 @@ export const initAMDConfig = async () => {
     const vscodeCommitId = `${vscodeQuality}-${commitId}`;
     var vscodePath = `/workbench-page/web-standalone/${vscodeCommitId}`;
     var vscodeFullPath = new URL(vscodePath, `${window.location.origin}`).href;
-    // Disabling the CDN until https://github.com/microsoft/vscode-internalbacklog/issues/1538 is fixed
-    // if (vscodeQuality === FeatureSet.Insider) {
-    //     vscodePath = new URL(`/insider/${commits[vscodeQuality]}`, 'https://vscodeweb.azureedge.net').href;
-    //     vscodeFullPath = vscodePath;
-    // }
+    if (vscodeQuality === FeatureSet.Insider) {
+        vscodePath = new URL(`/insider/${commits[vscodeQuality]}`, 'https://vscodeweb.azureedge.net').href;
+        vscodeFullPath = vscodePath;
+    }
 
     self.require = {
         baseUrl: `${vscodeFullPath}/out`,
