@@ -27,9 +27,9 @@ describe('Network UI Tests for Port Forwarding Service', () => {
     await page.click('text=New Codespace');
     await page.waitForSelector('[aria-haspopup="menu"]');
     await page.click('summary.btn.btn-sm.d-block.css-truncate');
-    await page.fill('[placeholder="Search for a repository"]', 'vso-dev1/PlaywrightTestingApps');
+    await page.fill('[placeholder="Search for a repository"]', 'PlaywrightCI/PlaywrightTestingApps');
     await page.keyboard.press('ArrowDown');
-    await page.click('*css=[role="menuitemradio"] >> text="vso-dev1/PlaywrightTestingApps"');
+    await page.click('*css=[role="menuitemradio"] >> text="PlaywrightCI/PlaywrightTestingApps"');
     const environment = await getEnvironment.getCodespaceEnvironment(ENVIRONMENT);
     await page.click('summary.btn.btn-sm.d-block.css-truncate >> text=' + "'" + 'production' + "'");
     await page.click('*css=[role="menuitemradio"] >> text=' + "'" + environment + "'");

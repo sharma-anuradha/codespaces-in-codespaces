@@ -9,8 +9,12 @@ module.exports = async() => {
     ignoreHTTPSErrors: true,
     bypassCSP: true,
   });
+  const context2 = await browser.newContext({
+    ignoreHTTPSErrors: true,
+    bypassCSP: true,
+  });
   const page = await context.newPage();
-  const pageTabTwo = await context.newPage();
+  const pageTabTwo = await context2.newPage();
   await page.goto('https://github.com/codespaces');
   await page.waitForSelector('text="Sign in to GitHub"');
   await page.fill('[autocomplete="username"]', USER);
