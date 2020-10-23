@@ -31,6 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="claimSpan">Claim span to pass.</param>
         /// <param name="jobSchedulePayloadFactory">The original job schedule payload factory to wrap.</param>
         /// <param name="featureFlagName">The feature flag name to use.</param>
+        /// <param name="isDefaultEnabled">Is scheduled job default enabled</param>
         /// <returns>The job schedule instance.</returns>
         IScheduleJob AddRecurringJobPayload(
             string expression,
@@ -38,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
             string queueName,
             TimeSpan claimSpan,
             IJobSchedulePayloadFactory jobSchedulePayloadFactory,
-            string featureFlagName);
+            string featureFlagName,
+            bool isDefaultEnabled = true);
     }
 }

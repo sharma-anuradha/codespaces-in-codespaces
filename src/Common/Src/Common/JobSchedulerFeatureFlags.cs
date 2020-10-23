@@ -55,7 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             string queueName,
             TimeSpan claimSpan,
             IJobSchedulePayloadFactory jobSchedulePayloadFactory,
-            string featureFlagName)
+            string featureFlagName,
+            bool isDefaultEnabled = true)
         {
             return JobSchedulerLease.AddRecurringJobPayload(
                 expression,
@@ -63,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 queueName,
                 claimSpan,
                 jobSchedulePayloadFactory,
-                (dt) => string.IsNullOrEmpty(featureFlagName) ? Task.FromResult(true) : IsFeatureFlagEnabledAsync(featureFlagName, true));
+                (dt) => string.IsNullOrEmpty(featureFlagName) ? Task.FromResult(true) : IsFeatureFlagEnabledAsync(featureFlagName, isDefaultEnabled));
         }
     }
 }
