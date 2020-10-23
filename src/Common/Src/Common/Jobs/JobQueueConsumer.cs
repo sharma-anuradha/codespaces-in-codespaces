@@ -174,10 +174,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             {
                 var jobInstance = (Job)job;
                 var jobTyped = (IJob<T>)job;
-                this.logger.NewChildLogger().FluentAddValue(JobQueueLoggerConst.JobId, job.Id)
-                    .FluentAddValue(JobQueueLoggerConst.JobType, typeTag)
-                    .FluentAddValue(JobQueueLoggerConst.JobRetries, jobInstance.JobPayloadInfo.Retries)
-                    .LogInfo("job_queue_start_job_handler");
                 var jobPayloadOptions = jobInstance.PayloadOptions;
 
                 var jobHandlerOptions = jobInstance.JobHandlerOptions;

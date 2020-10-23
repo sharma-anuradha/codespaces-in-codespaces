@@ -158,13 +158,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         childLogger.FluentAddValue("QueueFoundItems", results.Count());
                         return results.Select(m =>
                         {
+                            // Note: enable this to 'true' if we wannt to track when messages are created.
+                            // Future logger API improvements would allow to mark this as LogDebug adn filter by default.
+#if false
                             this.logger.NewChildLogger().FluentAddValue(JobQueueLoggerConst.JobId, m.Id)
                                 .FluentAddValue("DequeueCount", m.DequeueCount)
                                 .FluentAddValue("NextVisibleTime", m.NextVisibleTime)
                                 .FluentAddValue("ExpirationTime", m.ExpirationTime)
                                 .FluentAddValue("InsertionTime", m.InsertionTime)
                                 .LogInfo($"{LoggingPrefix}_get_message_complete");
-
+#endif
                             return new QueueMessageAdapter(m) as QueueMessage;
                         }).ToArray() as IEnumerable<QueueMessage>;
                     });
