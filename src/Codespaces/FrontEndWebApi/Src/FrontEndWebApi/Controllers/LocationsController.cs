@@ -151,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     return new ForbidResult();
                 }
 
-                var gateway = await GitHubApiGatewayProvider.NewAsync(logger);
+                var gateway = await GitHubApiGatewayProvider.NewAsync(logger, true);
                 if (gateway != null)
                 {
                     var ghSkus = await gateway.GetSkusAsync(username, logger.NewChildLogger());

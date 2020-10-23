@@ -55,13 +55,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers
                 false);
         }
 
-        public async Task<GitHubApiGateway> NewAsync(IDiagnosticsLogger diagnosticsLogger)
+        public async Task<GitHubApiGateway> NewAsync(IDiagnosticsLogger diagnosticsLogger, bool forceGitHubApi = false)
         {
             return await diagnosticsLogger.OperationScopeAsync(
                 "github_apigatewayprovider_new",
                 async (logger) =>
                 {
-                    if (!await IsGitHubApiGatewayEnabled(logger))
+                    if (!forceGitHubApi && !await IsGitHubApiGatewayEnabled(logger))
                     {
                         logger.LogInfo("refusing_github_gateway_featureflag_disabled");
                         return null;
