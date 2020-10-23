@@ -2,9 +2,9 @@ import debug from 'debug';
 
 const defaultLogger = debug.default('vscs');
 
-if (process.env.NODE_ENV === 'development') {
-    debug.enable('vscs:*');
-}
+// if (process.env.NODE_ENV === 'development') {
+debug.enable('vscs:*');
+// }
 
 export function createLogger(namespace?: string) {
     let logger;

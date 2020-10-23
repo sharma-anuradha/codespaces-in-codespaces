@@ -28,7 +28,7 @@ import { InMemoryLiveShareClient } from './inMemoryClient';
 
 declare var self: ServiceWorkerGlobalScope;
 
-const logger = createLogger();
+const logger = createLogger("sw");
 
 const serviceRegistry = new ServiceRegistry();
 

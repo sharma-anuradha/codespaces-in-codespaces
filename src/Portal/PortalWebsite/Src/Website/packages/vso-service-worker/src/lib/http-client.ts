@@ -100,9 +100,12 @@ export class LiveShareHttpClient implements IHttpClient {
                 ...routingDetails,
                 request: requestString,
             });
-            channel.send(Buffer.from(requestString));
 
-            return await this.parseResponseFrom(routingDetails.containerUrl, channel);
+            let parseResponse = this.parseResponseFrom(routingDetails.containerUrl, channel);
+            this.logger.verbose("called this.parseResponseForm");
+            await channel.send(Buffer.from(requestString));
+            this.logger.verbose("called await channel.send");
+            return parseResponse;
         } catch (error) {
             this.logger.error('Failed to respond with asset', {
                 ...routingDetails,
