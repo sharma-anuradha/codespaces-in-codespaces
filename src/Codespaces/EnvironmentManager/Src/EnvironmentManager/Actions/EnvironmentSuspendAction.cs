@@ -196,13 +196,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 // Update the database state.
                 await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
 
-                // Start the cleanup operation to shutdown environment.
-                var resourceCleaningStatus = await ResourceBrokerClient.SuspendAsync(
-                    input.Id,
-                    input.AllocatedComputeResourceId == default ? record.Value.Compute.ResourceId : input.AllocatedComputeResourceId,
-                    logger.NewChildLogger());
-                logger.FluentAddValue("ResourceCleaningStatus", resourceCleaningStatus);
-
                 // Kick off state transition monitoring.
                 var environmentMonitor = ServiceProvider.GetRequiredService<IEnvironmentMonitor>();
 
@@ -210,6 +203,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                     record.Value.Id,
                     record.Value.Compute.ResourceId,
                     logger.NewChildLogger());
+
+                // Start the cleanup operation to shutdown environment.
+                var resourceCleaningStatus = await ResourceBrokerClient.SuspendAsync(
+                    input.Id,
+                    input.AllocatedComputeResourceId == default ? record.Value.Compute.ResourceId : input.AllocatedComputeResourceId,
+                    logger.NewChildLogger());
+                logger.FluentAddValue("ResourceCleaningStatus", resourceCleaningStatus);
 
                 return record.Value;
             }
