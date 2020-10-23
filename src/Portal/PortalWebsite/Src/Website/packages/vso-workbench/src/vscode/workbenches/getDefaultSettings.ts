@@ -1,5 +1,9 @@
 import { getCurrentEnvironmentId, authService } from 'vso-client-core';
 
+const CODESPACES_DEFAULT_SETTINGS = {
+    'workbench.startupEditor': 'readme',
+}
+
 export const getDefaultSettings = async (): Promise<Record<string, any>> => {
     const info = await authService.getCachedPartnerInfo(getCurrentEnvironmentId());
     if (!info) {
@@ -11,5 +15,8 @@ export const getDefaultSettings = async (): Promise<Record<string, any>> => {
         ? info.vscodeSettings.defaultSettings
         : undefined;
 
-    return defaultSettings || {};
+    return {
+        ...CODESPACES_DEFAULT_SETTINGS,
+        ...defaultSettings,
+    }
 };
