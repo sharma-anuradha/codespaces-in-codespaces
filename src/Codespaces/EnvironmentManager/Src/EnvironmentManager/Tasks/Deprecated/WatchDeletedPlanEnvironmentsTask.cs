@@ -40,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="currentIdentityProvider">Target identity provider.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
         /// <param name="configurationReader">Configuration reader.</param>
+        /// <param name="jobSchedulerFeatureFlags">job queue feature flag</param>
         public WatchDeletedPlanEnvironmentsTask(
             IPlanRepository planRepository,
             EnvironmentManagerSettings environmentManagerSettings,
@@ -51,8 +52,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IControlPlaneInfo controlPlaneInfo,
             ICurrentIdentityProvider currentIdentityProvider,
             VsoSuperuserClaimsIdentity superuserIdentity,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             PlanRepository = planRepository;
             EnvironmentManager = environmentManager;

@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="claimedDistributedLease">Used to get a lease for the duration of the telemetry.</param>
         /// <param name="resourceNameBuilder">Used to build the lease name.</param>
         /// <param name="configurationReader">Configuration reader.</param>
+        /// <param name="jobSchedulerFeatureFlags">job queue feature flag</param>
         public LogSubscriptionStatisticsTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -37,14 +38,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             PlanRepository = Requires.NotNull(planRepository, nameof(planRepository));
         }
 
         /// <inheritdoc/>
         protected override string ConfigurationBaseName => "LogSubscriptionStatisticsTask";
+
+        protected override bool IsDeprecated => true;
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogSubscriptionStatisticsTask)}Lease");
 

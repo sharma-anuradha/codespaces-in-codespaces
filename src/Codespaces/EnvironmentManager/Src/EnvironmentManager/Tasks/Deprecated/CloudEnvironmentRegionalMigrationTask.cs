@@ -1,9 +1,8 @@
-// <copyright file="SyncRegionalEnvironmentsToGlobalTask.cs" company="Microsoft">
+// <copyright file="CloudEnvironmentRegionalMigrationTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Diagnostics;
@@ -18,14 +17,14 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 {
     /// <summary>
-    /// Re-synchronoize regional cloud environment records back to the global repository where they are broken in the global repo.
+    /// Migrate cloud environments to their regional control-plane locations.
     /// </summary>
-    public class SyncRegionalEnvironmentsToGlobalTask : EnvironmentTaskBase, ISyncRegionalEnvironmentsToGlobalTask
+    public class CloudEnvironmentRegionalMigrationTask : EnvironmentTaskBase, ICloudEnvironmentRegionalMigrationTask
     {
-        private static readonly TimeSpan QueryDelay = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan QueryDelay = TimeSpan.FromMilliseconds(250);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SyncRegionalEnvironmentsToGlobalTask"/> class.
+        /// Initializes a new instance of the <see cref="CloudEnvironmentRegionalMigrationTask"/> class.
         /// </summary>
         /// <param name="environmentManagerSettings">Target Environment Manager Settings.</param>
         /// <param name="cloudEnvironmentRepository">Target Cloud Environment Repository.</param>
@@ -34,24 +33,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="configurationReader">Target configuration reader.</param>
-        public SyncRegionalEnvironmentsToGlobalTask(
+        /// <param name="jobSchedulerFeatureFlags">job queue feature flag</param>
+        public CloudEnvironmentRegionalMigrationTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
             IControlPlaneInfo controlPlaneInfo,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
         }
 
-        protected override string ConfigurationBaseName => "SyncRegionalEnvironmentsToGlobalTask";
+        protected override string ConfigurationBaseName => "CloudEnvironmentRegionalMigrationTask";
 
-        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(SyncRegionalEnvironmentsToGlobalTask)}Lease");
+        protected override bool IsDeprecated => true;
 
-        private string LogBaseName => EnvironmentLoggingConstants.SyncRegionalEnvironmentsToGlobalTask;
+        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(CloudEnvironmentRegionalMigrationTask)}Lease");
+
+        private string LogBaseName => EnvironmentLoggingConstants.CloudEnvironmentRegionalMigrationTask;
 
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
@@ -86,9 +89,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             logger.FluentAddValue("TaskEnvironmentIdShard", idShard);
 
             await CloudEnvironmentRepository.GlobalRepository.ForEachAsync(
-                (x) => x.Id.StartsWith(idShard) && x.Location == ControlPlaneInfo.Stamp.Location && x.State == CloudEnvironmentState.None,
+                (x) => x.Id.StartsWith(idShard) && x.Location == ControlPlaneInfo.Stamp.Location,
                 logger.NewChildLogger(),
-                CoreRunUnitAsync,
+                (environment, childLogger) =>
+                {
+                    if (environment.IsMigrated)
+                    {
+                        return Task.CompletedTask;
+                    }
+
+                    return CoreRunUnitAsync(environment, childLogger);
+                },
                 (_, __) => Task.Delay(QueryDelay));
         }
 
@@ -100,47 +111,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 {
                     childLogger.AddEnvironmentId(environment.Id);
 
-                    var regionalEnvironment = await CloudEnvironmentRepository.RegionalRepository.GetAsync(environment.Id, logger.NewChildLogger());
+                    environment.IsMigrated = true;
 
-                    if (regionalEnvironment != null)
+                    try
                     {
-                        // Copy the valid property values from the regional environment back to the global environment.
-                        CopyCloudEnvironment(regionalEnvironment, environment);
-
-                        try
+                        await CloudEnvironmentRepository.RegionalRepository.CreateOrUpdateAsync(environment, logger.NewChildLogger());
+                    }
+                    catch (DocumentClientException ex)
+                    {
+                        // Note: If we get a Precondition Failed error, it means that the environment has already been copied to the Regional DB.
+                        if (ex.StatusCode != System.Net.HttpStatusCode.PreconditionFailed)
                         {
-                            await CloudEnvironmentRepository.GlobalRepository.UpdateAsync(environment, logger.NewChildLogger());
-                        }
-                        catch (DocumentClientException ex)
-                        {
-                            // Note: If we get a Precondition Failed error, it means that the environment has been modified behind our
-                            // backs which likely means that we don't need to re-sync it.
-                            if (ex.StatusCode != System.Net.HttpStatusCode.PreconditionFailed)
-                            {
-                                throw;
-                            }
+                            throw;
                         }
                     }
+
+                    await CloudEnvironmentRepository.GlobalRepository.UpdateAsync(environment, logger.NewChildLogger());
                 },
                 swallowException: true);
-        }
-
-        private void CopyCloudEnvironment(CloudEnvironment environment, CloudEnvironment target)
-        {
-            foreach (var property in environment.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                MethodInfo getter, setter;
-
-                if ((getter = property.GetGetMethod(false)) == null ||
-                    (setter = property.GetSetMethod(false)) == null)
-                {
-                    continue;
-                }
-
-                var value = getter.Invoke(environment, new object[0]);
-
-                setter.Invoke(target, new object[1] { value });
-            }
         }
     }
 }

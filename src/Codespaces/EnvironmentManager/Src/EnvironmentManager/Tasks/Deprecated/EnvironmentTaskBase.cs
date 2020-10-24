@@ -26,12 +26,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="claimedDistributedLease"> used to create leases.</param>
         /// <param name="resourceNameBuilder">Used to build the lease name.</param>
         /// <param name="configurationReader">Configuration reader.</param>
+        /// <param name="jobSchedulerFeatureFlags">job queue feature flag</param>
         public EnvironmentTaskBase(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
             : base(configurationReader)
         {
@@ -40,6 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             TaskHelper = taskHelper;
             ClaimedDistributedLease = claimedDistributedLease;
             ResourceNameBuilder = resourceNameBuilder;
+            JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
         }
 
         /// <summary>
@@ -72,6 +75,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// </summary>
         protected ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
 
+        /// <summary>
+        /// Feature flag name
+        /// </summary>
+        protected virtual string FeatureFlagName => "EnvironmentManagerJob";
+
+        /// <summary>
+        /// Is deprecated
+        /// </summary>
+        protected virtual bool IsDeprecated => false;
+
+        private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
+
         /// <inheritdoc/>
         public override void Dispose()
         {
@@ -85,8 +100,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="claimSpan">the duration for the lease.</param>
         /// <param name="logger">the logger.</param>
         /// <returns>a task contained the results of obtaining the lease.</returns>
-        protected Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected async Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
+            if (IsDeprecated && await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(this.FeatureFlagName, IsDeprecated))
+            {
+                return null;
+            }
+
             return ClaimedDistributedLease.Obtain(
                 EnvironmentManagerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }

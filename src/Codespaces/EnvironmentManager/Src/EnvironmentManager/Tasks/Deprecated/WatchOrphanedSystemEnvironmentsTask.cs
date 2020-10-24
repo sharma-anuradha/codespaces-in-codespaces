@@ -3,10 +3,7 @@
 // </copyright>
 
 using System;
-using System.Net;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -44,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="controlPlaneInfo">Control plane info.</param>
         /// <param name="configurationReader">Configuration reader.</param>
+        /// <param name="jobSchedulerFeatureFlags">job queue feature flag</param>
         public WatchOrphanedSystemEnvironmentsTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -53,8 +51,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
             IControlPlaneInfo controlPlaneInfo,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             HeartbeatRepository = heartbeatRepository;
             ResourceBrokerHttpClient = resourceBrokerHttpClient;

@@ -3,12 +3,8 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper.Configuration.Conventions;
-using Microsoft.Azure.Amqp.Framing;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
@@ -21,7 +17,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenera
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
@@ -56,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="configurationReader">Configuration reader.</param>
         /// <param name="azureSubscriptionCatalog">Azure subscription catalog.</param>
         /// <param name="azureClientFactory">Azure client factory.</param>
+        /// <param name="jobSchedulerFeatureFlags">job queue feature flag</param>
         public WatchExportBlobsTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -68,8 +64,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             VsoSuperuserClaimsIdentity superuserIdentity,
             IConfigurationReader configurationReader,
             IAzureSubscriptionCatalog azureSubscriptionCatalog,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IAzureClientFactory azureClientFactory)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             EnvironmentManager = environmentManager;
             ControlPlaneInfo = controlPlaneInfo;

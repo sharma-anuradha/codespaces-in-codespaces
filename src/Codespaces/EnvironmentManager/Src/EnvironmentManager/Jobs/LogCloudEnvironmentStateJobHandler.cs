@@ -1,66 +1,51 @@
-// <copyright file="LogCloudEnvironmentStateTask.cs" company="Microsoft">
+// <copyright file="LogCloudEnvironmentStateJobHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
 {
     /// <summary>
-    /// A task that will recurringly generate telemetry that logs various state information about the CloudEnvironment repository.
+    /// A job that will recurringly generate telemetry that logs various state information about the CloudEnvironment repository.
     /// </summary>
-    public class LogCloudEnvironmentStateTask : EnvironmentTaskBase, ILogCloudEnvironmentStateTask
+    public class LogCloudEnvironmentStateJobHandler : JobHandlerPayloadBase<LogCloudEnvironmentStateJobHandler.Payload>, IJobHandlerTarget
     {
+        public const string LogBaseName = EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="LogCloudEnvironmentStateTask"/> class.
+        /// Initializes a new instance of the <see cref="LogCloudEnvironmentStateJobHandler"/> class.
         /// </summary>
-        /// <param name="environmentManagerSettings">Environment settings used to generate the lease name.</param>
-        /// <param name="cloudEnvironmentRepository">Target Cloud Environment Repository.</param>
         /// <param name="cloudEnvironmentCosmosContainer">Target Cloud Environment Cosmos DB container.</param>
-        /// <param name="skuCatalog">The sku catalog (used to find which SKUs to query over.</param>
         /// <param name="controlPlane">The control plan info. Used to know which AzureLocations to query over.</param>
-        /// <param name="taskHelper">The Task helper.</param>
-        /// <param name="claimedDistributedLease">Used to get a lease for the duration of the telemetry.</param>
-        /// <param name="resourceNameBuilder">Used to build the lease name.</param>
         /// <param name="environmentMetricsLogger">The metrics logger.</param>
-        /// <param name="configurationReader">Configuration reader.</param>
-        public LogCloudEnvironmentStateTask(
-            EnvironmentManagerSettings environmentManagerSettings,
-            ICloudEnvironmentRepository cloudEnvironmentRepository,
+        public LogCloudEnvironmentStateJobHandler(
             ICloudEnvironmentCosmosContainer cloudEnvironmentCosmosContainer,
-            ISkuCatalog skuCatalog,
             IControlPlaneInfo controlPlane,
-            ITaskHelper taskHelper,
-            IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder,
-            IEnvironmentMetricsManager environmentMetricsLogger,
-            IConfigurationReader configurationReader)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
+            IEnvironmentMetricsManager environmentMetricsLogger)
         {
             ControlPlane = Requires.NotNull(controlPlane, nameof(controlPlane));
-            SkuDictionary = Requires.NotNull(skuCatalog, nameof(skuCatalog)).CloudEnvironmentSkus;
             EnvironmentMetricsLogger = Requires.NotNull(environmentMetricsLogger, nameof(environmentMetricsLogger));
             CloudEnvironmentCosmosContainer = Requires.NotNull(cloudEnvironmentCosmosContainer, nameof(cloudEnvironmentCosmosContainer));
         }
 
-        /// <inheritdoc/>
-        protected override string ConfigurationBaseName => "LogCloudEnvironmentStateTask";
+        public IJobHandler JobHandler => this;
 
-        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogCloudEnvironmentStateTask)}Lease");
+        public string QueueId => EnvironmentJobQueueConstants.GenericQueueName;
 
-        private string LogBaseName => EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask;
+        public AzureLocation? Location => null;
 
         private IControlPlaneInfo ControlPlane { get; }
 
@@ -68,30 +53,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
         private ICloudEnvironmentCosmosContainer CloudEnvironmentCosmosContainer { get; }
 
-        private IReadOnlyDictionary<string, ICloudEnvironmentSku> SkuDictionary { get; }
-
-        /// <inheritdoc/>
-        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override async Task HandleJobAsync(Payload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
-            return logger.OperationScopeAsync(
+            await logger.OperationScopeAsync(
                $"{LogBaseName}_run",
                async (childLogger) =>
                {
-                   using (var lease = await ObtainLeaseAsync(LeaseBaseName, claimSpan, childLogger))
-                   {
-                       childLogger.FluentAddValue("LeaseNotFound", lease == null);
-
-                       if (lease != null)
-                       {
-                           await childLogger.OperationScopeAsync(
-                                LogBaseName,
-                                (itemLogger) => RunLogTaskAsync(itemLogger));
-                       }
-                   }
-
-                   return !Disposed;
+                   await childLogger.OperationScopeAsync(
+                        LogBaseName,
+                        (itemLogger) => RunLogTaskAsync(itemLogger));
                },
-               (e, _) => Task.FromResult(!Disposed),
                swallowException: true);
         }
 
@@ -222,6 +193,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             }
 
             return results.ToArray();
+        }
+
+        /// <summary>
+        /// A log cloud environment state payload
+        /// </summary>
+        [JobPayload(JobPayloadNameOption.Name)]
+        public class Payload : JobPayload
+        {
         }
     }
 }

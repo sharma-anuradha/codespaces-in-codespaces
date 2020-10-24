@@ -22,6 +22,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common.Repositories.AzureQueue;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Producers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
@@ -137,10 +138,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // new job handlers
             services.AddSingleton<IJobHandlerTarget, EnvironmentStateRepairJobHandler>();
             services.AddSingleton<IJobHandler, WatchEnvironmentPoolSizeJobHandler>();
+            services.AddSingleton<IJobHandlerTarget, LogCloudEnvironmentStateJobHandler>();
+            services.AddSingleton<IJobHandlerTarget, LogSubscriptionStatisticsJobHandler>();
+            services.AddSingleton<IJobHandler, CloudEnvironmentRegionalMigrationJobHandler>();
+            services.AddSingleton<IJobHandler, SyncRegionalEnvironmentsToGlobalJobHandler>();
 
             // new job payload producer
             services.AddSingleton<IJobSchedulerRegister, EnvironmentStateRepairJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, WatchEnvironmentPoolJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, LogCloudEnvironmentStateJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, LogSubscriptionStatisticsJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, GuidShardJobProducer>();
+
+            services.AddSingleton<IGuidShardJobScheduleDetails, CloudEnvironmentRegionalMigrationJobHandler>();
+            services.AddSingleton<IGuidShardJobScheduleDetails, SyncRegionalEnvironmentsToGlobalJobHandler>();
 
             // payload factories
             services.AddSingleton<WatchEnvironmentPoolPayloadFactory>();

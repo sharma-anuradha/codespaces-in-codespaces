@@ -45,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="secretStoreManager">The secret store manager.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
         /// <param name="configurationReader">Configuration reader.</param>
+        /// <param name="jobSchedulerFeatureFlags">job queue feature flag</param>
         public WatchDeletedPlanSecretStoresTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -57,8 +58,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IPlanRepository planRepository,
             ISecretStoreRepository secretStoreRepository,
             ISecretStoreManager secretStoreManager,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             ControlPlaneInfo = controlPlaneInfo;
             CurrentIdentityProvider = currentIdentityProvider;

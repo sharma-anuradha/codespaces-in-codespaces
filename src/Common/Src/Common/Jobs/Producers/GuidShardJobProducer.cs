@@ -18,9 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Producers
     public class GuidShardJobProducer : IJobSchedulerRegister
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DataPlaneResourceGroupJobProducer"/> class.
+        /// Initializes a new instance of the <see cref="GuidShardJobProducer"/> class.
         /// </summary>
         /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
+        /// <param name="handlers">The job payload handlers</param>
         public GuidShardJobProducer(
             IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IEnumerable<IGuidShardJobScheduleDetails> handlers)

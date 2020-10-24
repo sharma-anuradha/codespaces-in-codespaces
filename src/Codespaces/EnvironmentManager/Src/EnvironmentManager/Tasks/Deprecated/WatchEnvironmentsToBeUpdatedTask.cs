@@ -44,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="serviceUriBuilder">Service URI builder.</param>
         /// <param name="currentIdentityProvider">Current identity provider.</param>
         /// <param name="superuserIdentity">Super user identity.</param>
+        /// <param name="jobSchedulerFeatureFlags">job queue feature flag</param>
         public WatchEnvironmentsToBeUpdatedTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -57,8 +58,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IControlPlaneInfo controlPlaneInfo,
             IServiceUriBuilder serviceUriBuilder,
             ICurrentIdentityProvider currentIdentityProvider,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             VsoSuperuserClaimsIdentity superuserIdentity)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             EnvironmentContinuationOperations = environmentContinuationOperations;
             SkuCatalog = skuCatalog;
