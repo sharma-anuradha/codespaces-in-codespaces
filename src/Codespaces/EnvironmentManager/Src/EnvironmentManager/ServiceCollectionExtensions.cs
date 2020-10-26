@@ -136,10 +136,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IJobHandlerTarget, CreateEnvironmentResourceJobHandler>();
 
             // new job handlers
-            services.AddSingleton<IJobHandlerTarget, EnvironmentStateRepairJobHandler>();
+            services.AddSingleton<IJobHandler, EnvironmentStateRepairJobHandler>();
             services.AddSingleton<IJobHandler, WatchEnvironmentPoolSizeJobHandler>();
-            services.AddSingleton<IJobHandlerTarget, LogCloudEnvironmentStateJobHandler>();
-            services.AddSingleton<IJobHandlerTarget, LogSubscriptionStatisticsJobHandler>();
+            services.AddSingleton<IJobHandler, LogCloudEnvironmentStateJobHandler>();
+            services.AddSingleton<IJobHandler, LogSubscriptionStatisticsJobHandler>();
             services.AddSingleton<IJobHandler, CloudEnvironmentRegionalMigrationJobHandler>();
             services.AddSingleton<IJobHandler, SyncRegionalEnvironmentsToGlobalJobHandler>();
 

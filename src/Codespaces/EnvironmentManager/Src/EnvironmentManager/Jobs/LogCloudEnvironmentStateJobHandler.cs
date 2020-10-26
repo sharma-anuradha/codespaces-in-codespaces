@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -21,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
     /// <summary>
     /// A job that will recurringly generate telemetry that logs various state information about the CloudEnvironment repository.
     /// </summary>
-    public class LogCloudEnvironmentStateJobHandler : JobHandlerPayloadBase<LogCloudEnvironmentStateJobHandler.Payload>, IJobHandlerTarget
+    public class LogCloudEnvironmentStateJobHandler : JobHandlerPayloadBase<LogCloudEnvironmentStateJobHandler.Payload>
     {
         public const string LogBaseName = EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask;
 
@@ -40,12 +39,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
             EnvironmentMetricsLogger = Requires.NotNull(environmentMetricsLogger, nameof(environmentMetricsLogger));
             CloudEnvironmentCosmosContainer = Requires.NotNull(cloudEnvironmentCosmosContainer, nameof(cloudEnvironmentCosmosContainer));
         }
-
-        public IJobHandler JobHandler => this;
-
-        public string QueueId => EnvironmentJobQueueConstants.GenericQueueName;
-
-        public AzureLocation? Location => null;
 
         private IControlPlaneInfo ControlPlane { get; }
 

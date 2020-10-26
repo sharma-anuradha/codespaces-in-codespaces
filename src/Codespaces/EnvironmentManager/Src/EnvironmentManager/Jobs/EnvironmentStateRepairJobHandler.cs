@@ -4,20 +4,18 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
 {
-    public class EnvironmentStateRepairJobHandler : JobHandlerPayloadBase<EnvironmentStateRepairJobProducer.EnvironmentStateRepairPayload>, IJobHandlerTarget
+    public class EnvironmentStateRepairJobHandler : JobHandlerPayloadBase<EnvironmentStateRepairJobProducer.EnvironmentStateRepairPayload>
     {
         public const string LogBaseName = "environment_state_repair_job_handler";
 
@@ -45,12 +43,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
             SuperuserIdentity = Requires.NotNull(superuserIdentity, nameof(superuserIdentity));
             CurrentIdentityProvider = Requires.NotNull(currentIdentityProvider, nameof(currentIdentityProvider));
         }
-
-        public IJobHandler JobHandler => this;
-
-        public string QueueId => EnvironmentJobQueueConstants.GenericQueueName;
-
-        public AzureLocation? Location => null;
 
         private ICloudEnvironmentRepository EnvironmentRepository { get; }
 

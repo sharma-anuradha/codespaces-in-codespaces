@@ -4,7 +4,6 @@
 
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
@@ -16,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
     /// <summary>
     /// Logs information about subscriptions and plans from various collections.
     /// </summary>
-    public class LogSubscriptionStatisticsJobHandler : JobHandlerPayloadBase<LogSubscriptionStatisticsJobHandler.Payload>, IJobHandlerTarget
+    public class LogSubscriptionStatisticsJobHandler : JobHandlerPayloadBase<LogSubscriptionStatisticsJobHandler.Payload>
     {
         public const string LogBaseName = EnvironmentLoggingConstants.LogSubscriptionStatisticsTask;
 
@@ -32,12 +31,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Jobs
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             PlanRepository = Requires.NotNull(planRepository, nameof(planRepository));
         }
-
-        public IJobHandler JobHandler => this;
-
-        public string QueueId => EnvironmentJobQueueConstants.GenericQueueName;
-
-        public AzureLocation? Location => null;
 
         private IPlanRepository PlanRepository { get; }
 
