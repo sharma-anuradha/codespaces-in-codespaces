@@ -9,6 +9,7 @@ ingress:
     - "*.dev.github.dev"
     - "*.dev.builder.code.com"
     - "*.local.builder.code.com"
+    - "*.webview.dev.codespaces.githubusercontent.com"
     - vsclk-online-dev-ci-tm.trafficmanager.net
   tls:
     - hosts:
@@ -23,6 +24,9 @@ ingress:
     - hosts:
       - "*.local.builder.code.com"
       secretName: ssl-cert-local-salesforce-builder-com
+    - hosts:
+      - "*.webview.dev.codespaces.githubusercontent.com"
+      secretName: ssl-cert-webview-github-content-com
 
 githubAuthEndpoint:
   hosts:
