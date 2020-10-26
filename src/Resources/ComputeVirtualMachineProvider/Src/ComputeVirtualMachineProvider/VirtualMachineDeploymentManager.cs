@@ -33,8 +33,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     /// </summary>
     public class VirtualMachineDeploymentManager : IDeploymentManager
     {
-        private const string DeallocationInProgressStatusCode = "PowerState/deallocating";
-        private const string DeallocatedStatusCode = "PowerState/deallocated";
+        private const string StopInProgressStatusCode = "PowerState/stopping";
+        private const string StoppedStatusCode = "PowerState/stopped";
+        private const string DeleteInProgressStatusCode = "ProvisioningState/deleting";
         private const string LogBase = "virtual_machine_manager";
 
         /// <summary>
@@ -323,7 +324,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     }
                     else if (diskResourceInfo == default)
                     {
-                        phase1Resources.Add(VirtualMachineConstants.DiskNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetOsDiskName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
+                        var ephemeralOSDiskProperties = new AzureResourceInfoEphemeralOSDiskProperties(input.AzureResourceInfo.Properties);
+                        if (!ephemeralOSDiskProperties.UsesEphemeralOSDisk)
+                        {
+                            phase1Resources.Add(VirtualMachineConstants.DiskNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetOsDiskName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
+                        }
                     }
 
                     resourceDeletionPlan.Add(0, (phase0Resources, OperationState.NotStarted));
@@ -658,10 +663,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                                             break;
                                         }
 
-                                        var isDeallocated = vmStatuses.Any(x => string.Equals(x.Code, DeallocatedStatusCode, StringComparison.OrdinalIgnoreCase));
+                                        var isStopped = vmStatuses.Any(x => string.Equals(x.Code, StoppedStatusCode, StringComparison.OrdinalIgnoreCase));
 
-                                        // Deleting the virtual machine once its deallocated to prevent file corruption.
-                                        if (isDeallocated)
+                                        // Delete the virtual machine once its stopped to prevent file corruption.
+                                        if (isStopped)
                                         {
                                             await CheckResourceStatus(
                                                 (resourceName) => vmComputeClient.VirtualMachines.BeginDeleteAsync(resourceGroup, resourceName),
@@ -672,18 +677,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                                             break;
                                         }
 
-                                        var isDeallocationInProgress = vmStatuses.Any(x => string.Equals(x.Code, DeallocationInProgressStatusCode, StringComparison.OrdinalIgnoreCase));
+                                        var isStopInProgress = vmStatuses.Any(x => string.Equals(x.Code, StopInProgressStatusCode, StringComparison.OrdinalIgnoreCase));
+                                        var isDeleteInProgress = vmStatuses.Any(x => string.Equals(x.Code, DeleteInProgressStatusCode, StringComparison.OrdinalIgnoreCase));
 
-                                        // If virtual machine is not deallocated, we are going to deallocate it.
-                                        if (!isDeallocationInProgress)
+                                        // If virtual machine is not stopped, we are going to stop it.
+                                        if (!isDeleteInProgress && !isStopInProgress)
                                         {
                                             try
                                             {
-                                                await vmComputeClient.VirtualMachines.BeginDeallocateAsync(resourceGroup, resourceName);
+                                                await vmComputeClient.VirtualMachines.BeginPowerOffAsync(resourceGroup, resourceName);
                                             }
                                             catch (Exception ex)
                                             {
-                                                logger.LogException($"Exception occurred while deallocating Virtual machine {resourceName}", ex);
+                                                logger.LogException($"Exception occurred while stopping virtual machine {resourceName}", ex);
                                             }
                                         }
 

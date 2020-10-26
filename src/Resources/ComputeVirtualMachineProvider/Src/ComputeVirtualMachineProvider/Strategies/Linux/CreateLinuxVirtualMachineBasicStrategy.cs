@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Azure.Management.Compute.Fluent.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
@@ -25,8 +26,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <param name="queueProvider">queue provider.</param>
         public CreateLinuxVirtualMachineBasicStrategy(
             IAzureClientFactory clientFactory,
-            IQueueProvider queueProvider)
-            : base(clientFactory, queueProvider, TemplateName)
+            IQueueProvider queueProvider,
+            IConfigurationReader configurationReader)
+            : base(clientFactory, queueProvider, configurationReader, TemplateName)
         {
         }
 
@@ -44,7 +46,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
            VirtualMachineProviderCreateInput input,
            string virtualMachineName,
            IDictionary<string, string> resourceTags,
-           string vmInitScript)
+           string vmInitScript,
+           OSDisk osDisk)
         {
             var imageReference = new ImageReferenceInner(input.AzureVirtualMachineImage);
 
@@ -54,13 +57,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                     { "adminPublicKeyPath", new Dictionary<string, object>() { { VirtualMachineConstants.Key, PublicKeyPath } } },
                     { "adminPublicKey", new Dictionary<string, object>() { { VirtualMachineConstants.Key, VmPublicSshKey } } },
                     { "location", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.AzureVmLocation.ToString() } } },
-                    { "osDiskName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, VirtualMachineResourceNames.GetOsDiskName(virtualMachineName) } } },
                     { "networkInterfaceName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, VirtualMachineResourceNames.GetNetworkInterfaceName(virtualMachineName) } } },
                     { "virtualMachineName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, virtualMachineName } } },
                     { "virtualMachineSize", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.AzureSkuName } } },
                     { "vmSetupScript", new Dictionary<string, object>() { { VirtualMachineConstants.Key, vmInitScript } } },
                     { "resourceTags", new Dictionary<string, object>() { { VirtualMachineConstants.Key, resourceTags } } },
                     { "imageReference", new Dictionary<string, object>() { { VirtualMachineConstants.Key, imageReference } } },
+                    { "osDisk", new Dictionary<string, object>() { { VirtualMachineConstants.Key, osDisk } } },
                 };
         }
     }

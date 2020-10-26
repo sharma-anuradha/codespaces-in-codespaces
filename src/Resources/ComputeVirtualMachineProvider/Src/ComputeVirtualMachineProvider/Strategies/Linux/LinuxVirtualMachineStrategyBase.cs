@@ -4,12 +4,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
@@ -42,14 +43,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// </summary>
         /// <param name="clientFactory">azure client factory.</param>
         /// <param name="queueProvider">queue provider.</param>
+        /// <param name="configurationReader">A configuration reader instance.</param>
         /// <param name="templateName">template name.</param>
         public LinuxVirtualMachineStrategyBase(
             IClientFactory clientFactory,
             IQueueProvider queueProvider,
+            IConfigurationReader configurationReader,
             string templateName)
         {
             ClientFactory = Requires.NotNull(clientFactory, nameof(clientFactory));
             QueueProvider = Requires.NotNull(queueProvider, nameof(queueProvider));
+            ConfigurationReader = Requires.NotNull(configurationReader, nameof(configurationReader));
             VirtualMachineTemplateJson = GetVmTemplate(templateName);
         }
 
@@ -65,6 +69,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// Gets queue client provider.
         /// </summary>
         protected IQueueProvider QueueProvider { get; }
+
+        /// <summary>
+        /// Gets configuration reader instance.
+        /// </summary>
+        protected IConfigurationReader ConfigurationReader { get; }
 
         /// <inheritdoc/>
         public async Task<(OperationState OperationState, NextStageInput NextInput)> BeginCreateVirtualMachine(
@@ -92,7 +101,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             string vmInitScript = GetVmInitScriptAsync(
                     input);
 
-            var parameters = GetVMParameters(input, virtualMachineName, resourceTags, vmInitScript);
+            var ephemeralOSDisksEnabled = await ConfigurationReader.ReadFeatureFlagAsync("compute-linux-ephemeral-os-disks", logger.NewChildLogger(), false);
+            var osDisk = GetVmOSDisk(virtualMachineName, ephemeralOSDisksEnabled, logger.NewChildLogger());
+
+            var parameters = GetVMParameters(input, virtualMachineName, resourceTags, vmInitScript, osDisk);
 
             var deploymentName = $"Create-LinuxVm-{virtualMachineName}";
 
@@ -104,7 +116,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                 parameters,
                 deploymentName);
 
-            var azureResourceInfo = new AzureResourceInfo(input.AzureSubscription, input.AzureResourceGroup, virtualMachineName);
+            var azureResourceInfo = new AzureResourceInfo()
+            {
+                SubscriptionId = input.AzureSubscription,
+                ResourceGroup = input.AzureResourceGroup,
+                Name = virtualMachineName,
+                Properties = new AzureResourceInfoEphemeralOSDiskProperties
+                {
+                    UsesEphemeralOSDisk = ephemeralOSDisksEnabled,
+                },
+            };
 
             return (OperationState.InProgress, new NextStageInput(result.Name, azureResourceInfo));
         }
@@ -124,7 +145,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
            VirtualMachineProviderCreateInput input,
            string virtualMachineName,
            IDictionary<string, string> resourceTags,
-           string vmInitScript);
+           string vmInitScript,
+           OSDisk osDisk);
 
         private string GetVmTemplate(string templateName)
         {
@@ -151,6 +173,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                 initScript);
 
             return initScript.ToBase64Encoded();
+        }
+
+        private OSDisk GetVmOSDisk(string virtualMachineName, bool ephemeralOSDisksEnabled, IDiagnosticsLogger logger)
+        {
+            var osDisk = new OSDisk(
+                DiskCreateOptionTypes.FromImage,
+                OperatingSystemTypes.Linux,
+                name: VirtualMachineResourceNames.GetOsDiskName(virtualMachineName));
+
+            if (ephemeralOSDisksEnabled)
+            {
+                osDisk.DiffDiskSettings = new DiffDiskSettings(option: DiffDiskOptions.Local);
+                osDisk.Caching = CachingTypes.ReadOnly;
+            }
+            else
+            {
+                osDisk.ManagedDisk = new ManagedDiskParametersInner(storageAccountType: StorageAccountTypes.PremiumLRS);
+            }
+
+            return osDisk;
         }
 
         private string GetFullyQualifiedResourceName(string resourceName)

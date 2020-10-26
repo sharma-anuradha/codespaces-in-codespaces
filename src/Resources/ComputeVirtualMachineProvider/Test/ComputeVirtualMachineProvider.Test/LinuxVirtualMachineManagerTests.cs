@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
@@ -34,11 +35,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             var clientFactory = new AzureClientFactory(testContext.SystemCatalog.AzureSubscriptionCatalog);
             var queueProvider = new VirtualMachineQueueProvider(testContext.ResourceAccessor);
+            var configurationReader = new Mock<IConfigurationReader>().Object;
+
             var azureDeploymentManager = new VirtualMachineDeploymentManager(
                 clientFactory,
                 new Mock<IAzureClientFPAFactory>().Object, // pass mock as its only needed for vnet scenarios.
                 queueProvider,
-                new List<ICreateVirtualMachineStrategy>() { new CreateLinuxVirtualMachineBasicStrategy(clientFactory, queueProvider) });
+                new List<ICreateVirtualMachineStrategy>() { new CreateLinuxVirtualMachineBasicStrategy(clientFactory, queueProvider, configurationReader) });
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
 
             var vmResourceInfo = await Create_Compute_Ok(computeProvider, ComputeOS.Linux, "Standard_F4s_v2", "Canonical.UbuntuServer.18.04-LTS.latest", ComputeVsoAgentImageBlobName);

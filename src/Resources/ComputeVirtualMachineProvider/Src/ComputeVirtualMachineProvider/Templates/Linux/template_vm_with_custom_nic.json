@@ -26,9 +26,6 @@
     "resourceTags": {
       "type": "object"
     },
-    "osDiskName": {
-      "type": "string"
-    },
     "networkInterfaceName": {
       "type": "string"
     },
@@ -39,6 +36,9 @@
       "type": "string"
     },
     "imageReference": {
+      "type": "object"
+    },
+    "osDisk": {
       "type": "object"
     }
   },
@@ -55,13 +55,7 @@
           "vmSize": "[parameters('virtualMachineSize')]"
         },
         "storageProfile": {
-          "osDisk": {
-            "name": "[parameters('osDiskName')]",
-            "createOption": "fromImage",
-            "managedDisk": {
-              "storageAccountType": "Premium_LRS"
-            }
-          },
+          "osDisk": "[parameters('osDisk')]",
           "imageReference": "[parameters('imageReference')]"
         },
         "networkProfile": {

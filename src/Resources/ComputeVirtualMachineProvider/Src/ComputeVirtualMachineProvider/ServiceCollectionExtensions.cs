@@ -39,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             services.AddSingleton<IComputeProvider, VirtualMachineProvider>();
             services.AddSingleton<IQueueProvider, VirtualMachineQueueProvider>();
             services.AddSingleton<IDeploymentManager, VirtualMachineDeploymentManager>();
+
             services.AddSingleton<ICreateVirtualMachineStrategy, CreateLinuxVirtualMachineBasicStrategy>();
             services.AddSingleton<ICreateVirtualMachineStrategy, CreateLinuxVirtualMachineWithNicStrategy>();
             services.AddSingleton<ICreateVirtualMachineStrategy, CreateWindowsVirtualMachineBasicStrategy>();
