@@ -295,6 +295,7 @@ export class WorkbenchPage extends PerformanceComponent<IWorkbenchPageProps, IWo
         trace.info(`render state: ${value}`);
 
         if (
+            value !== EnvironmentStateInfo.Queued &&
             value !== EnvironmentStateInfo.Starting &&
             value !== EnvironmentStateInfo.Provisioning &&
             value !== EnvironmentStateInfo.ShuttingDown &&
